@@ -1,0 +1,412 @@
+[
+  {
+    "id": "demo",
+    "label": "Demo: math and TikZ",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "A little space",
+    "group": "core"
+  },
+  {
+    "id": "math",
+    "label": "Inline and display mathematics",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "End of math",
+    "group": "core"
+  },
+  {
+    "id": "tikz",
+    "label": "TikZ geometry, labels and shading",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "TikZ geometry",
+    "group": "core"
+  },
+  {
+    "id": "flowchart",
+    "label": "TikZ positioning, arrows and decorations",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Flowchart",
+    "group": "core"
+  },
+  {
+    "id": "pgfplots-2d",
+    "label": "PGFPlots: curves and CSV data",
+    "files": [
+      "main.tex",
+      "values.csv"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Plot from data",
+    "group": "core"
+  },
+  {
+    "id": "pgfplots-3d",
+    "label": "PGFPlots: 3D surface",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Surface plot",
+    "group": "core"
+  },
+  {
+    "id": "circuits",
+    "label": "CircuitikZ: resistor and voltage source",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Circuit diagram",
+    "group": "core"
+  },
+  {
+    "id": "feynman-manual",
+    "label": "TikZ-Feynman: manually placed vertices",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Feynman diagram",
+    "group": "core"
+  },
+  {
+    "id": "lua-graph",
+    "label": "LuaLaTeX: automatic graph layout",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "lua",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Automatic graph",
+    "group": "core"
+  },
+  {
+    "id": "xe-fonts",
+    "label": "XeLaTeX: packaged OpenType font",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "xe",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Packaged fonts",
+    "group": "core"
+  },
+  {
+    "id": "unicode-accents",
+    "label": "pdfLaTeX: accented UTF-8 text",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Supported accents",
+    "group": "core"
+  },
+  {
+    "id": "multifile",
+    "label": "Nested input and custom style",
+    "files": [
+      "main.tex",
+      "localstyle.sty",
+      "chapters/intro.tex",
+      "chapters/end.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Nested files work",
+    "group": "core"
+  },
+  {
+    "id": "bibtex",
+    "label": "BibTeX bibliography and references",
+    "files": [
+      "main.tex",
+      "refs.bib"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "TeXbook",
+    "group": "core"
+  },
+  {
+    "id": "biber",
+    "label": "BibLaTeX and Biber",
+    "files": [
+      "main.tex",
+      "refs.bib"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "TeXbook",
+    "group": "core"
+  },
+  {
+    "id": "tables",
+    "label": "Tables, longtable and hyperlinks",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Tables",
+    "group": "core"
+  },
+  {
+    "id": "listings",
+    "label": "Code listings without external Python",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Code listing",
+    "group": "core"
+  },
+  {
+    "id": "invalid-command",
+    "label": "Expected error: undefined control sequence",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "fail",
+    "pages": 0,
+    "group": "core",
+    "reason": "Ordinary syntax error; log must be visible."
+  },
+  {
+    "id": "missing-image",
+    "label": "Expected error: missing image",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "fail",
+    "pages": 0,
+    "group": "core",
+    "reason": "Import referenced figures with the source."
+  },
+  {
+    "id": "externalization",
+    "label": "Expected error: TikZ externalization",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "fail",
+    "pages": 0,
+    "group": "core",
+    "reason": "Disable externalization; compile TikZ inline."
+  },
+  {
+    "id": "minted",
+    "label": "Expected error: external syntax highlighter",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "fail",
+    "pages": 0,
+    "group": "core",
+    "reason": "Use listings, or supply prepared highlighting."
+  },
+  {
+    "id": "missing-package",
+    "label": "Expected error: unavailable package",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "fail",
+    "pages": 0,
+    "group": "core",
+    "reason": "Provide local .sty files or use an installed package."
+  },
+  {
+    "id": "missing-font",
+    "label": "Expected error: unavailable system font",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "xe",
+    "expect": "fail",
+    "pages": 0,
+    "group": "core",
+    "reason": "Use a packaged font; OS fonts are not automatically visible."
+  },
+  {
+    "id": "unicode-greek",
+    "label": "Expected error: raw Greek in pdfLaTeX",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "fail",
+    "pages": 0,
+    "group": "core",
+    "reason": "Use math commands in pdfLaTeX or a tested Unicode engine/font."
+  },
+  {
+    "id": "isolation-producer",
+    "label": "Project isolation: supplied include",
+    "files": [
+      "main.tex",
+      "private-previous-project.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "PRIVATE PREVIOUS PROJECT",
+    "group": "core"
+  },
+  {
+    "id": "isolation-consumer",
+    "label": "Project isolation: previous include unavailable",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "fail",
+    "pages": 0,
+    "group": "core",
+    "reason": "Files from the previous project must not leak into this build."
+  },
+  {
+    "id": "timeout",
+    "label": "Expected timeout: unbounded TeX loop",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "timeout",
+    "pages": 0,
+    "timeoutMs": 2500,
+    "group": "core",
+    "reason": "Worker must stop and release the UI."
+  },
+  {
+    "id": "recovery",
+    "label": "Recovery after failures and timeout",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Recovery succeeded",
+    "group": "core"
+  },
+  {
+    "id": "long-200",
+    "label": "200-page, long-source manuscript",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 200,
+    "contains": "Chapter 200",
+    "group": "stress"
+  },
+  {
+    "id": "images-small",
+    "label": "1 distinct large PNGs / 1 pages",
+    "files": [
+      "main.tex",
+      "figure-0.png"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Image page 1",
+    "group": "stress"
+  },
+  {
+    "id": "images-medium",
+    "label": "4 distinct large PNGs / 4 pages",
+    "files": [
+      "main.tex",
+      "figure-0.png",
+      "figure-1.png",
+      "figure-2.png",
+      "figure-3.png"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 4,
+    "contains": "Image page 4",
+    "group": "stress"
+  },
+  {
+    "id": "images-large",
+    "label": "12 distinct large PNGs / 60 pages",
+    "files": [
+      "main.tex",
+      "figure-0.png",
+      "figure-1.png",
+      "figure-2.png",
+      "figure-3.png",
+      "figure-4.png",
+      "figure-5.png",
+      "figure-6.png",
+      "figure-7.png",
+      "figure-8.png",
+      "figure-9.png",
+      "figure-10.png",
+      "figure-11.png"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 60,
+    "contains": "Image page 60",
+    "group": "stress"
+  },
+  {
+    "id": "space-path",
+    "label": "Image filename containing spaces",
+    "files": [
+      "main.tex",
+      "image with spaces.png"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Space in filename",
+    "group": "core"
+  }
+]

@@ -1,0 +1,7 @@
+\documentclass[11pt]{article}
+\usepackage[margin=24mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{pgfplots}\pgfplotsset{compat=1.18}
+\begin{document}
+\section{Plot from data}\begin{tikzpicture}\begin{axis}[width=11cm,height=6cm,xlabel={$x$},ylabel={$f(x)$},grid=major,legend pos=north west]\addplot[blue,domain=0:6,samples=120]{sin(deg(x))};\addlegendentry{Sine}\addplot[red,mark=*] table[x=x,y=y,col sep=comma]{values.csv};\addlegendentry{Data}\end{axis}\end{tikzpicture}
+\end{document}

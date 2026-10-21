@@ -1,0 +1,7 @@
+node_modules/
+dist/
+data/
+public/compiler/
+public/fixtures/
+.DS_Store
+*.log

@@ -1,0 +1,7 @@
+\documentclass[11pt]{article}
+\usepackage[margin=24mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{pgfplots}\pgfplotsset{compat=1.18}
+\begin{document}
+\section{Surface plot}\begin{tikzpicture}\begin{axis}[width=11cm,height=8cm,view={45}{30}]\addplot3[surf,samples=25,domain=-2:2]{exp(-x*x-y*y)};\end{axis}\end{tikzpicture}
+\end{document}

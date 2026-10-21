@@ -1,0 +1,7 @@
+\documentclass[11pt]{article}
+\usepackage[margin=24mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}\usetikzlibrary{arrows.meta,shadings,calc}
+\begin{document}
+\section{TikZ geometry}\begin{tikzpicture}[>=Stealth]\shade[ball color=blue!30] (0,0) circle(1);\draw[->,thick] (0,0)--(2,1) node[right] {$\vec v$};\draw[red,dashed] (0,0)--(-2,1);\foreach \x in {0,30,...,330}{\fill ({cos(\x)},{sin(\x)}) circle(1pt);}\end{tikzpicture}
+\end{document}

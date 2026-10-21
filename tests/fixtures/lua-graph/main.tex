@@ -1,0 +1,7 @@
+\documentclass[11pt]{article}
+\usepackage[margin=24mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}\usetikzlibrary{graphs,graphdrawing}\usegdlibrary{layered}
+\begin{document}
+\section{Automatic graph}\tikz\graph[layered layout,nodes={draw,circle}]{a->{b,c},b->d,c->d};
+\end{document}
