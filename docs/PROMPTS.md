@@ -109,3 +109,18 @@ links; procedures live in the guides. Setup starts from observed connector/files
 capabilities, not product-name assumptions. The canonical marked reminder is generated
 from shared/project-reminder.json for both the app and /docs/project-reminder.md.
 Manuscript validation is separate from website compiler development checks.
+
+## Collaborator-owned repository access — 2026-10-22
+
+The GitHub setup guide distinguishes a person's collaborator access from each app's
+installation access. For a private repository owned by another personal account, its
+owner must grant the agent product's GitHub App access to that repository. AgentsLaTeX
+access does not imply OpenAI/Claude connector access. Diagnose the connector identity,
+exact repository metadata and known paths before treating a 404 as a missing file.
+IMPORTS.md is absent by design until the first import.
+
+The import skill now delegates connection troubleshooting to that guide and removes
+its stale categorical ChatGPT read-only claim. Verify observed read/write tools.
+Public-site Markdown returned HTTP 200 during diagnosis, but the chat web reader
+could not retrieve it; its raw-GitHub fallback was readable. Keep both routes.
+This is documentation guidance, not a grant of access or a completed browser import.
