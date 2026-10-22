@@ -45,6 +45,7 @@
 .folder-choices { max-height: 190px; overflow: auto; padding: 6px; }
 .folder-choices button { display: flex; width: 100%; justify-content: flex-start; border: 0; background: transparent; min-height: 38px; }
 .folder-choices p { padding: 10px; font-size: 13px; }
+.upload-choices { display: grid; gap: 10px; }
 .markdown-preview { flex: 1; overflow: auto; padding: 30px; line-height: 1.7; color: #e3e4e9; background: #1b1c22; overflow-wrap: anywhere; }
 .markdown-preview p, .markdown-preview ul, .markdown-preview ol, .markdown-preview pre, .markdown-preview table, .markdown-preview blockquote { margin: 0 0 1em; }
 .markdown-preview h1, .markdown-preview h2, .markdown-preview h3 { margin: 1em 0 .5em; line-height: 1.25; }
@@ -573,6 +574,11 @@ kbd {
 .pagination button {
   padding: 2px 5px;
   min-height: 26px;
+}
+.pagination #download {
+  padding: 4px 8px;
+  min-height: 30px;
+  font-size: 12px;
 }
 .pagination input {
   width: 37px;

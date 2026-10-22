@@ -3,7 +3,7 @@
 The main folder (`folder`) and default opening document (`main`) are separate fields
 in `.agentlatex.json`, edited from the settings icon beside Synced. New projects use
 `agentlatex/`; absent `main` resolves to `<folder>/main.tex`. Legacy configurations
-infer the folder from their existing main document. No existing files are moved.
+infer the folder from their existing main document. No existing files are moved. The folder picker uses a labeled ← Back button.
 Missing default documents show a message instead of silently compiling another file.
 
 The top file tree contains the main folder, with linked original repository files
@@ -21,7 +21,7 @@ TeX input/image references. The existing stale-base/conflict protection still ap
 Compile targets the selected `.tex`, including its filename in the tooltip. A chapter
 fragment without a standalone document wrapper fails visibly rather than building
 the default behind the user's back. PDF labels identify when the result belongs to
-another selected file. Download PDF uses the actual compiled file's name.
+another selected file. The purple ↓ PDF button downloads the actual compiled file using its name.
 
 Markdown displays beside its source and updates after editing; the action is Preview.
 HTML is escaped, unsafe link schemes are blocked, and images are shown as placeholders
@@ -29,7 +29,8 @@ to avoid remote requests. No LaTeX-in-Markdown, PDF export, or executing embedde
 The 500 KB preview limit leaves larger sources editable. Other file types disable
 Compile, including the keyboard shortcut. “Agent tags” is now “Highlight agent”.
 
-Import local folder copies the selected folder's contents (not its enclosing folder)
+The single Upload arrow offers Files… or Folder… in a small chooser. Folder upload
+copies the selected folder's contents (not its enclosing folder)
 into the main folder, retaining subdirectories. It asks before replacing draft files;
 it does not watch the user's disk. Download source ZIP includes current main-folder
 and linked files plus agent/configuration guides, preserving repository-relative paths.

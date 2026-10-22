@@ -25,7 +25,7 @@ See [current acceptance](docs/GITHUB_ACCEPTANCE.md).
 - The settings icon beside Synced selects the main folder, default opening document
   and engine separately. New projects use `agentlatex/main.tex`; existing layouts stay
   in place. Without a specified document, the default is `main.tex` in that folder.
-- **Import local folder…** copies local folder contents into the main folder, preserving
+- **Upload ↑ → Files… / Folder…** adds local files or folder contents to the main folder, preserving
   subfolders. It does not watch/sync the disk folder. **Save to GitHub** publishes them.
 - **Download source ZIP** includes the main folder, linked files, browser edits and
   agent/configuration guides, preserving repository paths. It contains no Git history.
