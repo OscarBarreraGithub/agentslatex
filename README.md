@@ -22,7 +22,8 @@ See [current acceptance](docs/GITHUB_ACCEPTANCE.md).
 - Pick files from the visible tree. Upload files/folders into the paper; originals on
   disk are untouched. Settings selects the main document and engine.
 - Browser drafts save automatically. **Save to GitHub** makes a versioned checkpoint;
-  **Refresh** gets collaborators' changes. Overlapping file changes need an explicit
+  clean projects refresh automatically while visible. With a draft, **Updates available**
+  lets you review incoming changes. Overlapping file changes need an explicit
   choice; saves never force-push. Export downloads a source ZIP.
 - **Compile** shows loading/building progress and errors. The previous PDF is labeled
   when stale. Stop cancels a build; corrected source can compile again.
@@ -31,6 +32,10 @@ See [current acceptance](docs/GITHUB_ACCEPTANCE.md).
 - Codex/Claude agents edit and commit ordinary files in that same repository. Root and
   nested instructions require paired Agent comments. **Agent tags** highlights those
   source passages; untagged text is Manual. No custom MCP is needed for this workflow.
+- **Prompts** in the project header supplies copyable instructions to set up GitHub,
+  import a conversation's useful files and summary, or work on this project. Each
+  prompt includes the selected repository. Browser chats without GitHub writes get
+  a download-and-local-agent handoff. See [prompt behavior](docs/PROMPTS.md).
 
 ## Development
 
@@ -65,8 +70,12 @@ drafts are retained in their separate IndexedDB database.
 - [Compiler results](docs/TESTING.md): 32/32 outcomes matched in Chrome and Safari on
   this Mac, including TikZ, 200 pages and 55 MiB of images. Not native LaTeX parity.
 - [Agent LaTeX requirements](latex-specs.md)
+- [Selling points / future splash-screen copy](docs/SELLING_POINTS.md)
+- [Conversation import skill](skills/agentslatex-import-conversation/SKILL.md)
 
-Current sync is explicit, with whole-file conflict choices. Files are limited to
+GitHub saves and conflict choices are explicit; incoming clean updates are automatic.
+Checks run every 30 seconds while active, two minutes while idle, and pause in hidden
+tabs or offline. They back off on errors and respect GitHub retry timing. Files are limited to
 20 MiB each for GitHub transfers. Fine-grained source citations, passage highlighting
 on the PDF, live coediting, custom MCP and phone/Windows acceptance remain separate
 work. This app is independent of SWA; it neither launches nor manages agents.

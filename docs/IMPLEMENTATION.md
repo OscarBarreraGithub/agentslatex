@@ -20,6 +20,17 @@ checks and sign-out. Targeted tests and browser journey; no repeat compiler matr
 
 ## Checkpoint handoff
 
+- AL-6, root: agreed next workspace slice, not implemented. Default agentlatex/ folder,
+  two explorers, references to original repo files (no copy feature), main-only UI,
+  and workspace configuration. Next: verify browser relative-path dependencies, then implement
+  the folder workflow with draft/conflict protection. See SPEC.md.
+- AL-7, root: project Prompts menu, conversation-import skill, searchable agent guides
+  shared IMPORTS.md index, browser-connection guidance and selling-points copy bank. Scoped verification/deployment status is recorded in
+  docs/PROMPTS.md; this does not complete AL-6 or the collaborator acceptance check.
+- AL-8, root: conservative automatic incoming refresh. 30s active / 120s idle,
+  hidden/offline pause, serial requests and server-aware backoff. Dirty drafts wait
+  for explicit review. Outgoing saves and compilation stay explicit. See docs/SYNC.md.
+
 - AL-1, root: implementation and local fixture verified; see GITHUB_ACCEPTANCE.md.
 - AL-2, root: live owner-account sign-in, private project creation, save/reopen and
   external GitHub conflict/refreshed-save checks passed. Next: first collaborator
@@ -27,8 +38,9 @@ checks and sign-out. Targeted tests and browser journey; no repeat compiler matr
 - AL-3, root: Workers Free verified; R2 never activated. Static compiler packaging
   and hosted compile passed. Canonical https://agentlatex.com is live over HTTPS;
   Namecheap nameservers and approved root parking-record replacement are complete.
-- AL-4, root: mobile file-selection/Refresh fixes implemented; their browser recheck,
-  915×412 layout and physical phone/Windows checks remain open.
+- AL-4, root: mobile file-selection/Refresh fixes implemented. Current header/dialog
+  checked in 360×800, 412×915 and 915×412 emulation. Physical phone/Windows and the
+  complete mobile file upload journey remain open.
 
 - AL-5, root: deferred by the owner after the privacy discussion. Keep the current
   backend and record its operator-access boundary accurately; see SPEC.md. No

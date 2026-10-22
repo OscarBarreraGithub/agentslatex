@@ -63,6 +63,7 @@ http
           return send(project, 201);
         }
         if (p === "/api/repositories") return send([]);
+        if (p === "/api/projects/999991/head") return send({ revision: revision() });
         if (p.endsWith("/file")) {
           const b = blobs.get(u.searchParams.get("sha")!);
           res.writeHead(b ? 200 : 404, {

@@ -10,6 +10,8 @@ import { pdfjs } from "./pdf";
 import { api, request, RequestError, escapeHtml as h } from "./api";
 import { projectDraft } from "./drafts";
 import { conflictingPaths } from "./merge";
+import { openProjectPrompts } from "./prompts";
+import { AutoRefresh } from "./auto-refresh";
 import { agentRanges } from "../shared/tagging";
 import {
   safePath,
@@ -52,6 +54,9 @@ export async function mountEditor(
     highlight = false,
     selectionVersion = 0,
     previewUrl = "";
+  let pendingRemote = false, refreshErrorShown = false, fileLoads = 0;
+  let lastActivity = Date.now();
+  const pollingAbort = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
   const key = userId + ":" + id;
   const saved = await projectDraft(key).catch(() => undefined);
@@ -255,29 +260,32 @@ export async function mountEditor(
       { pdf: "pdfLaTeX", lua: "LuaLaTeX", xe: "XeLaTeX" }[engine];
   }
 
+  async function fetchFile(entry: Entry, signal?: AbortSignal) {
+    if (entry.size > 20 * 1024 * 1024)
+      throw Error(entry.path + " exceeds the 20 MB per-file limit.");
+    const r = await request(`/projects/${id}/file?sha=${entry.sha}`, { signal });
+    const content = textFile(entry.path) ? await r.text() : new Uint8Array(await r.arrayBuffer());
+    return { path: entry.path, content };
+  }
   async function getFile(path: string, signal?: AbortSignal) {
     signal?.throwIfAborted();
     const cached = files.get(path);
     if (cached) return cached;
     const entry = snapshot.files.find((f) => f.path === path);
     if (!entry) throw Error("File not found: " + path);
-    if (entry.size > 20 * 1024 * 1024)
-      throw Error(path + " exceeds the 20 MB per-file limit.");
-    const r = await request(`/projects/${id}/file?sha=${entry.sha}`, {
-      signal,
-    });
-    const content = textFile(path)
-      ? await r.text()
-      : new Uint8Array(await r.arrayBuffer());
-    const f = { path, content };
+    const f = await fetchFile(entry, signal);
     files.set(path, f);
     return f;
   }
-  async function showFile(path: string) {
+  async function showFile(path: string, preserveView = false) {
     const v = ++selectionVersion;
-    const f = await getFile(path);
+    let f: FileInput;
+    fileLoads++;
+    try { f = await getFile(path); } finally { fileLoads--; }
     if (disposed || v !== selectionVersion) return;
     selected = path;
+    const scrollTop = editor.scrollDOM.scrollTop;
+    const cursor = editor.state.selection.main.head;
     loadingEditor = true;
     editor.dispatch({
       changes: {
@@ -285,8 +293,10 @@ export async function mountEditor(
         to: editor.state.doc.length,
         insert: typeof f.content === "string" ? f.content : "",
       },
+      ...(preserveView ? { selection: { anchor: Math.min(cursor, typeof f.content === "string" ? f.content.length : 0) } } : {}),
     });
     loadingEditor = false;
+    if (preserveView) editor.scrollDOM.scrollTop = scrollTop;
     $("filename").textContent = path.split("/").at(-1)!;
     $("filename").title = path;
     $("editor").hidden = typeof f.content !== "string";
@@ -302,9 +312,11 @@ export async function mountEditor(
     }
     tree();
     scheduleDraft();
-    app.classList.remove("show-files", "show-pdf");
-    $("mobile-source").setAttribute("aria-pressed", "true");
-    $("mobile-pdf").setAttribute("aria-pressed", "false");
+    if (!preserveView) {
+      app.classList.remove("show-files", "show-pdf");
+      $("mobile-source").setAttribute("aria-pressed", "true");
+      $("mobile-pdf").setAttribute("aria-pressed", "false");
+    }
   }
   async function loadAll(signal?: AbortSignal) {
     for (const path of allPaths()) await getFile(path, signal);
@@ -384,7 +396,12 @@ export async function mountEditor(
       updateSaveState();
     }
   }
-  async function refresh() {
+  function markRemote(pending: boolean) {
+    pendingRemote = pending;
+    $("refresh").textContent = pending ? "Updates available" : "Refresh";
+    $("mobile-refresh").textContent = pending ? "Updates available · Refresh" : "Refresh from GitHub";
+  }
+  async function refresh(automatic = false) {
     if (syncing || refreshing || busy) return;
     refreshing = true;
     $<HTMLButtonElement>("back").disabled = true;
@@ -393,8 +410,47 @@ export async function mountEditor(
     button.disabled = true;
     try {
       const remote = await api<Snapshot>("/projects/" + id);
+      if (disposed) return;
       if (remote.revision === snapshot.revision) {
-        notify("Already up to date.");
+        markRemote(false);
+        if (!automatic) notify("Already up to date.");
+        return;
+      }
+      if (automatic) {
+        // Prepare changed visible content before touching state. Typing, switching files,
+        // opening a dialog, or starting a build while fetching postpones the update.
+        const before = revision, selection = selectionVersion;
+        if (dirty.size) { markRemote(true); return; }
+        const prepared = new Map<string, FileInput>();
+        const settings = remote.files.find(f => f.path === ".agentlatex.json");
+        if (settings) {
+          const cached = snapshot.files.find(f => f.path === settings.path)?.sha === settings.sha ? files.get(settings.path) : undefined;
+          prepared.set(settings.path, cached ?? await fetchFile(settings, pollingAbort.signal));
+        }
+        let nextMain = remote.project.main, nextEngine = remote.project.engine;
+        const settingFile = prepared.get(".agentlatex.json");
+        if (settingFile) {
+          const cfg = projectConfig.parse(JSON.parse(String(settingFile.content)));
+          if (remote.files.some(f => f.path === cfg.main)) { nextMain = cfg.main; nextEngine = cfg.engine; }
+        }
+        const nextPath = remote.files.some(f => f.path === selected) ? selected :
+          remote.files.some(f => f.path === nextMain) ? nextMain : remote.files[0]?.path;
+        if (!nextPath) { markRemote(true); return; }
+        const entry = remote.files.find(f => f.path === nextPath)!;
+        const unchanged = snapshot.files.find(f => f.path === nextPath)?.sha === entry.sha && files.has(nextPath);
+        if (!unchanged) prepared.set(nextPath, await fetchFile(entry, pollingAbort.signal));
+        if (disposed) return;
+        if (dirty.size || revision !== before || selectionVersion !== selection || fileLoads || busy || document.hidden || document.querySelector("dialog[open]")) {
+          markRemote(true); return;
+        }
+        for (const path of files.keys())
+          if (snapshot.files.find(f => f.path === path)?.sha !== remote.files.find(f => f.path === path)?.sha) files.delete(path);
+        for (const [path, file] of prepared) files.set(path, file);
+        snapshot = remote; project = remote.project; main = nextMain; engine = nextEngine;
+        revision++; freshness(); tree(); markRemote(false);
+        // An unchanged open file keeps its exact editor state and scroll position.
+        if (!unchanged) await showFile(nextPath, true);
+        await persist();
         return;
       }
       const conflicts = conflictingPaths(snapshot.files, remote.files, [
@@ -447,11 +503,11 @@ export async function mountEditor(
       await showFile(selected);
       await persist();
       updateSaveState();
+      markRemote(false);
       notify("Changes refreshed.");
     } finally {
-      button.disabled = false;
       refreshing = false;
-      if (!disposed) $<HTMLButtonElement>("back").disabled = false;
+      if (!disposed) { button.disabled = false; $<HTMLButtonElement>("back").disabled = false; }
       updateSaveState();
     }
   }
@@ -648,6 +704,12 @@ export async function mountEditor(
     }
   }
   $("back").onclick = () => back();
+  const promptsButton = document.createElement("button");
+  promptsButton.id = "prompts";
+  promptsButton.textContent = "Prompts";
+  promptsButton.setAttribute("aria-haspopup", "dialog");
+  promptsButton.onclick = () => openProjectPrompts({ ...project, main, engine }, dirty.size > 0);
+  document.querySelector(".workspace-header .actions")!.prepend(promptsButton);
   $("sync").onclick = () => void sync();
   $("refresh").onclick = $("mobile-refresh").onclick = () => void refresh().catch(fail);
   $("build").onclick = $("empty-build").onclick = () => void compile();
@@ -826,7 +888,44 @@ export async function mountEditor(
     tree();
     if (allPaths().includes(main)) await showFile(main);
   }
+  const autoRefresh = new AutoRefresh({
+    visible: () => !document.hidden && navigator.onLine,
+    idle: () => Date.now() - lastActivity > 120_000,
+    ready: () => !disposed && !syncing && !refreshing && !busy && !fileLoads && !pendingRemote && !document.querySelector("dialog[open]"),
+    check: async () => {
+      const response = await request(`/projects/${id}/head`, { signal: pollingAbort.signal }, false);
+      const remote = await response.json() as { revision: string };
+      if (disposed) return;
+      if (remote.revision !== snapshot.revision) {
+        if (dirty.size) markRemote(true);
+        else await refresh(true);
+      }
+      refreshErrorShown = false;
+    },
+    error: (error) => {
+      if (!refreshErrorShown) {
+        notify("Automatic refresh paused. Your draft is safe. " + (error instanceof Error ? error.message : "Use Refresh to try again."));
+        refreshErrorShown = true;
+      }
+      if (error instanceof RequestError && [401, 403, 404].includes(error.status)) return false;
+      return error instanceof RequestError ? error.retryAfterMs : 0;
+    },
+  });
+  const activity = () => { lastActivity = Date.now(); autoRefresh.wake(); };
+  const visibility = () => autoRefresh.wake();
+  document.addEventListener("pointerdown", activity);
+  document.addEventListener("keydown", activity);
+  document.addEventListener("visibilitychange", visibility);
+  window.addEventListener("online", visibility);
+  window.addEventListener("offline", visibility);
+  autoRefresh.wake();
   return async () => {
+    autoRefresh.stop(); pollingAbort.abort();
+    document.removeEventListener("pointerdown", activity);
+    document.removeEventListener("keydown", activity);
+    document.removeEventListener("visibilitychange", visibility);
+    window.removeEventListener("online", visibility);
+    window.removeEventListener("offline", visibility);
     clearTimeout(timer);
     await persist();
     disposed = true;

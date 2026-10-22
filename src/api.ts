@@ -3,6 +3,7 @@ export class RequestError extends Error {
     public status: number,
     message: string,
     public code?: string,
+    public retryAfterMs = 0,
   ) {
     super(message);
   }
@@ -33,7 +34,9 @@ export async function request(
       error: string;
       code?: string;
     };
-    throw new RequestError(r.status, body.error, body.code);
+    const retry = r.headers.get("Retry-After");
+    const retryMs = retry ? (Number.isFinite(Number(retry)) ? Number(retry) * 1000 : Date.parse(retry) - Date.now()) : 0;
+    throw new RequestError(r.status, body.error, body.code, Number.isFinite(retryMs) ? Math.max(0, retryMs) : 0);
   }
   return r;
 }

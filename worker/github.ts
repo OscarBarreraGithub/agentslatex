@@ -4,6 +4,7 @@ export class ApiError extends Error {
     public status: number,
     message: string,
     public code?: string,
+    public retryAfterSeconds = 0,
   ) {
     super(message);
   }
@@ -28,6 +29,10 @@ export async function github<T>(
   });
   if (!res.ok) {
     const data = (await res.json()) as { message?: string };
+    const throttled = res.status === 429 || res.headers.has("retry-after") || res.headers.get("x-ratelimit-remaining") === "0";
+    const wait = Math.max(Number(res.headers.get("retry-after")) || 0,
+      res.headers.get("x-ratelimit-remaining") === "0" ? (Number(res.headers.get("x-ratelimit-reset")) || 0) - Date.now() / 1000 : 0,
+      throttled ? 60 : 0);
     throw new ApiError(
       res.status === 401
         ? 401
@@ -35,11 +40,14 @@ export async function github<T>(
           ? 404
           : res.status === 409 || res.status === 422
             ? 409
-            : res.status === 429 ||
-                res.headers.get("x-ratelimit-remaining") === "0"
+            : throttled
               ? 429
+              : res.status >= 500
+                ? 503
               : 403,
       data.message ?? "GitHub request failed.",
+      undefined,
+      Math.ceil(wait),
     );
   }
   return (res.status === 204 ? undefined : await res.json()) as T;

@@ -1,5 +1,13 @@
 import latexSpecs from "./latex-specs.generated";
-export const taggingInstructions = `# Agent instructions
+import importSkill from "./import-skill.generated";
+export const taggingInstructions = `# Agent instructions — AgentsLaTeX
+
+AgentsLaTeX (agentlatex.com): LaTeX, TeX, PDF, manuscript, figures, bibliography,
+agent attribution and GitHub sync. This is the starting point for agents searching
+for project instructions. For importing a ChatGPT conversation, Python scripts,
+derivations or results, read skills/agentslatex-import-conversation/SKILL.md and the
+root IMPORTS.md index first. Append every import's origin and destination there;
+preserve earlier entries and files. Each conversation import has its own folder.
 
 Read latex-specs.md before editing this paper. Compilation runs in the user's browser
 with BusyTeX / TeX Live 2026. Use ordinary .tex, .bib and image files.
@@ -35,6 +43,28 @@ export function templateFiles(): Record<string, string> {
     "AGENTS.md": taggingInstructions,
     "CLAUDE.md": "@AGENTS.md\n",
     "latex-specs.md": latexSpecs,
+    "skills/agentslatex-import-conversation/SKILL.md": importSkill,
+    "IMPORTS.md": `# Conversation import index
+
+Agents: read skills/agentslatex-import-conversation/SKILL.md before every import.
+Always record what was imported and where it went here. Read the latest branch first.
+Append entries; never replace earlier entries or imported files. Keep each import in
+its own uniquely named folder under the configured workspace's imports/ directory.
+For a continuation, link the earlier import and add only newly recovered work.
+Check for duplicate imports and directory collisions. Keep this entry and its files
+in the same commit. Resolve concurrent index changes by preserving both entries.
+This is a shared working index, not a tamper-proof authorship record.
+
+## Imports
+
+No conversations imported yet. Replace this sentence when adding the first entry.
+
+<!-- Append a heading per import with: unique ID; actual date; topic; chat provider
+and title; source reference if available and safe; destination folder; SUMMARY.md
+link; recovered/reconstructed/missing material; related prior import IDs. The summary
+lists each file's repository-relative path, purpose and origin. Do not publish private
+chat links or credentials. Git history records the commit; no self-referential SHA needed. -->
+`,
     ".agentlatex.json":
       JSON.stringify(
         { version: 1, main: "paper/main.tex", engine: "pdf" },

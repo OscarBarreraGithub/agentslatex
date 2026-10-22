@@ -82,3 +82,17 @@ Stop cancelled a local fixture build and released controls; corrected retry rend
 in 0.45s. That result is local, not a new public cancellation check. Detailed PDF
 Frankenstein attribution remains explicitly deferred. No independent Opus review was
 performed for this deployment checkpoint.
+
+
+## Prompts and automatic refresh — 2026-10-22
+
+The current slice adds project-specific copy prompts, a portable conversation-import
+skill and shared IMPORTS.md convention, and conservative incoming refresh. See
+PROMPTS.md and SYNC.md for exact behavior and scoped evidence. Owner-account and
+second-account acceptance boundaries above still apply.
+
+Chrome responsive emulation covered 360×800, 412×915 and 915×412 with the new project
+header and prompt dialog. Clean incoming updates and dirty-draft preservation passed
+in the local synthetic fixture, including explicit My draft conflict resolution.
+This closes the landscape layout recheck, not physical phone/Windows or every mobile
+file upload workflow. No provider conversation import was performed.

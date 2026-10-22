@@ -5,7 +5,7 @@ Free service limits may make sign-in/sync temporarily unavailable. Do not silent
 upgrade or switch to a billed fallback to restore availability.
 
 - Workers **Free**, not merely a Free domain plan. The account dashboard was checked
-  on 2026-10-21: Free / $0 / Current plan. Confirm this again before deployment.
+  on 2026-10-22: Free / $0 / Current plan. Confirm this again before deployment.
 - D1 uses that Free plan. At its daily limits, queries fail; storage limits block
   additional writes. Keep manuscripts in GitHub and browser drafts.
 - UI and compiler use Static Assets directly. Downloads do not invoke the Worker.
@@ -28,9 +28,10 @@ Removing a payment card does not cancel liability for billed usage. We rely on t
 provider's Free-plan enforcement, not a custom approximate spend counter. This policy
 does not prevent an account owner from changing plans or a provider from changing terms.
 
-Initial pilot: at most five users. A planning estimate of 100 app requests per user-hour
-for eight hours is 4,000/day, versus 100,000/day for the account. This assumes frequent
-one-file saves (two requests each) and refreshes (one plus changed-file downloads).
+Initial pilot: at most five users. Automatic incoming refresh uses 30-second active
+checks, 120-second idle checks, and no hidden/offline polling. Five visible project
+tabs active eight hours produce 4,800 baseline checks/day, versus 100,000/day for the
+account. Add initial loads, saves, changed-file downloads and other apps. See SYNC.md.
 Typing and repeat builds of already loaded files make no API requests. This is a quota
 estimate, not a concurrency benchmark; other applications share the allowance, and
 GitHub throttling, database load and file sizes can impose additional limits.

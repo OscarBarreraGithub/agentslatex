@@ -13,6 +13,10 @@ Read [SPEC.md](SPEC.md) for product scope and [docs/TESTING.md](docs/TESTING.md)
 fixtures and measured acceptance. Actual results outrank guesses about support.
 Never claim a case passed merely because a dependency advertises it.
 
+Product messaging and future home/splash-screen copy live in [docs/SELLING_POINTS.md](docs/SELLING_POINTS.md).
+Project prompt behavior is in [docs/PROMPTS.md](docs/PROMPTS.md). Maintain the import
+skill as the source of truth; regenerate its shared string with scripts/prepare-template.mjs.
+
 Keep source as normal `.tex`, `.bib`, and image files. Keep original papers intact.
 Imported files are browser copies: saving a draft does not update their disk files.
 Use Save to GitHub for a versioned checkpoint, Refresh for collaborator updates, and

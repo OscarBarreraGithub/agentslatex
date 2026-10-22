@@ -678,6 +678,55 @@ dialog::backdrop {
   background: #07080bb0;
   backdrop-filter: blur(5px);
 }
+.prompts-dialog {
+  width: min(720px, calc(100vw - 24px));
+  padding: 22px;
+}
+.prompts-dialog .dialog-title { margin-bottom: 8px; }
+.prompt-project { color: var(--muted); overflow-wrap: anywhere; }
+.prompt-list { display: grid; gap: 10px; }
+.prompt-card { border: 1px solid #3b4050; border-radius: 9px; overflow: hidden; }
+.prompt-card summary {
+  padding: 15px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 550;
+  background: #20232d;
+}
+.prompt-card summary:hover { background: #292d39; }
+.prompt-card summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.prompt-destination { padding: 12px 15px; color: #b7bdcc; font-size: 14px; line-height: 1.5; }
+.prompt-terminal { background: #151a25; color: #eef0f5; }
+.prompt-terminal-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px 6px 15px;
+  border-bottom: 1px solid #353b4c;
+  color: #c9cedb;
+  font-size: 13px;
+}
+.prompt-terminal-bar button { min-height: 44px; background: #2a3042; border-color: #4a5166; color: #fff; }
+.prompt-terminal textarea {
+  display: block;
+  width: 100%;
+  height: min(290px, 35dvh);
+  min-height: 140px;
+  resize: vertical;
+  border: 0;
+  border-radius: 0;
+  padding: 15px;
+  background: transparent;
+  color: inherit;
+  font: 14px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.prompt-terminal textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.prompt-copy-status { padding: 0 15px 12px; font-size: 14px; line-height: 1.5; color: #d0c8ff; }
+.prompt-copy-status:empty { display: none; }
+.prompt-draft { color: #e3c995; line-height: 1.5; margin-bottom: 15px; }
 .dialog-title {
   display: flex;
   justify-content: space-between;
@@ -825,23 +874,29 @@ dialog::backdrop {
     font-size: 34px;
   }
   .workspace-header {
-    height: 58px;
-    flex-wrap: nowrap;
+    height: 100px;
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-rows: 30px 44px;
+    gap: 5px 10px;
+    padding: 8px 10px;
   }
   .project-title strong {
-    max-width: 110px;
-    font-size: 12px;
+    max-width: 100%;
+    font-size: 14px;
   }
   .save-state {
     display: none;
   }
   .workspace-header .actions {
-    margin-left: auto;
+    grid-column: 1 / -1;
+    margin-left: 0;
+    justify-content: flex-end;
   }
   .workspace-header .actions button {
-    font-size: 11px;
-    padding: 5px 8px;
-    min-height: 32px;
+    font-size: 14px;
+    padding: 6px 10px;
+    min-height: 40px;
   }
   #refresh {
     display: none;
@@ -871,7 +926,7 @@ dialog::backdrop {
     background: #2c293c;
   }
   .workspace {
-    height: calc(100dvh - 98px);
+    height: calc(100dvh - 140px);
     display: block;
     position: relative;
   }

@@ -18,7 +18,11 @@ Sign-in → optional existing-paper connection → projects / New project → fi
 CodeMirror editor and PDF viewer. There is no hosted guest editor. Browser drafts are
 separate by numeric GitHub user/repository ID. Save checkpoints the exact loaded base;
 Refresh preserves nonconflicting edits and asks which version to keep for overlapping
-files. Neither operation force-pushes. No automatic polling in this first slice.
+files. Neither operation force-pushes. Incoming updates are checked every 30 seconds
+while active, two minutes while idle, and paused when hidden/offline. A head check
+precedes any tree/file refresh. Clean projects update automatically; drafts show
+Updates available and retain explicit merge choices. No automatic GitHub commits or
+automatic PDF builds. Requests back off on errors and respect Retry-After.
 
 Compile loads pinned TeXlyre BusyTeX 1.4.1 / TeX Live 2026 in a browser worker. Loading,
 compiling and errors are visible; the previous PDF becomes stale after edits/failure.
@@ -30,6 +34,12 @@ require paired `% agentlatex:begin agent id=...` / `% agentlatex:end id=...` com
 Tagged passages are Agent; everything else is Manual. This convention depends on agent
 compliance and is not cryptographic proof of authorship. The source highlight toggle
 shows tags; PDF attribution and detailed provenance are later work.
+
+The project header provides a Prompts dialog with project-specific local GitHub setup,
+conversation import, and ongoing agent-work instructions. Conversation import is a
+portable skill/prompt, not an automatic chat-history integration. It saves accessible
+artifacts and a summary, identifies gaps, and uses an export handoff when writes are
+unavailable. See docs/PROMPTS.md and docs/SELLING_POINTS.md.
 
 ## Infrastructure
 
@@ -74,5 +84,9 @@ page/region evidence, separate human checks, stable passage IDs, and source-vers
 binding. A compile result says nothing about scientific validity. Coediting, custom MCP
 and cloud ChatGPT connectors must not delay the basic GitHub workflow.
 
-Open design todo: the owner will supply the final document/workspace folder structure.
-The current source layout is provisional. Do not reorganize SWA or existing manuscripts.
+Next agreed workspace slice: choose a root folder (default agentlatex/), show its files
+above an optional whole-repository explorer, and add references to original files by
+dragging. No copy feature or OS symlinks. Main-only UI; preserve existing projects.
+Repository-relative compile dependencies need verification. Outgoing automatic saving
+remains proposed; automatic incoming refresh is implemented separately.
+Do not reorganize SWA or existing manuscripts as part of these future changes.

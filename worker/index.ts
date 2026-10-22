@@ -284,7 +284,7 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
     if (existing) return json((await projectFor(env, token, repo.id)).project);
     const files: Record<string, string> = {};
     const templates = templateFiles();
-    for (const name of ["AGENTS.md", "CLAUDE.md", "latex-specs.md"]) {
+    for (const name of ["AGENTS.md", "CLAUDE.md", "latex-specs.md", "skills/agentslatex-import-conversation/SKILL.md", "IMPORTS.md"]) {
       const found = tree.files.find((f) => f.path === name);
       if (!found) files[name] = templates[name];
       else if (name === "AGENTS.md") {
@@ -336,7 +336,7 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
       const tree = await readTree(token, repo, row.branch);
       return json({ project, revision: tree.revision, files: tree.files });
     }
-    if (match[2] === "head") {
+    if (match[2] === "head" && req.method === "GET") {
       const ref = await github<{ object: { sha: string } }>(
         token,
         root(repo) + "/git/ref/heads/" + encodeURIComponent(row.branch),
@@ -421,6 +421,8 @@ export default {
               },
               status,
             );
+      if (e instanceof ApiError && e.retryAfterSeconds > 0)
+        response.headers.set("Retry-After", String(e.retryAfterSeconds));
     }
     const out = new Response(response.body, {
       status: response.status,
