@@ -9,21 +9,25 @@ export function agentRanges(text: string): {
 } {
   const ranges: AgentRange[] = [],
     errors: string[] = [];
-  let open: { id: string; from: number } | undefined;
+  let open: { id: string; from: number; legacy: boolean } | undefined;
   let offset = 0;
   const ids = new Set<string>();
   for (const line of text.split("\n")) {
+    const simpleBegin = /^\s*%\s*agent:begin\s*$/.test(line);
+    const simpleEnd = /^\s*%\s*agent:end\s*$/.test(line);
+    // Keep earlier papers highlightable without rewriting their source on load.
     const begin = line.match(/^\s*%\s*agentlatex:begin agent id=([\w.-]+)\s*$/);
     const end = line.match(/^\s*%\s*agentlatex:end id=([\w.-]+)\s*$/);
-    if (begin) {
+    if (begin || simpleBegin) {
       if (open) errors.push("Nested Agent tags.");
-      if (ids.has(begin[1])) errors.push("Duplicate Agent ID: " + begin[1]);
-      open = { id: begin[1], from: offset + line.length + 1 };
-      ids.add(begin[1]);
+      const id = begin?.[1] ?? `passage-${offset}`;
+      if (begin && ids.has(id)) errors.push("Duplicate Agent ID: " + id);
+      open = { id, from: offset + line.length + 1, legacy: !!begin };
+      if (begin) ids.add(id);
     }
-    if (end) {
-      if (!open || open.id !== end[1])
-        errors.push("Unmatched Agent tag: " + end[1]);
+    if (end || simpleEnd) {
+      if (!open || (end ? !open.legacy || open.id !== end[1] : open.legacy))
+        errors.push("Unmatched agent:end tag.");
       else {
         ranges.push({
           id: open.id,
@@ -35,6 +39,6 @@ export function agentRanges(text: string): {
     }
     offset += line.length + 1;
   }
-  if (open) errors.push("Unclosed Agent tag: " + open.id);
+  if (open) errors.push("Missing agent:end tag.");
   return { ranges, errors };
 }

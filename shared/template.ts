@@ -31,11 +31,8 @@ Invite collaborators in this repository's GitHub settings. They sign in to Agent
 \begin{document}
 \maketitle
 
-% agentlatex:begin agent id=starter-introduction
-% agentlatex:author {"model":"unknown","version":"unknown","reasoning":"unknown"}
 \section{Introduction}
 Your paper starts here.
-% agentlatex:end id=starter-introduction
 
 % Add sources to references.bib beside this document, then uncomment:
 % \bibliographystyle{plain}

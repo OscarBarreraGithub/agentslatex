@@ -82,16 +82,18 @@ no claim that a real ChatGPT/Claude conversation was imported end to end.
 The deployed demo project's Prompts menu and selected-repository import instructions
 were checked at agentlatex.com. Deployment evidence is in GITHUB_ACCEPTANCE.md.
 
-## Model labels
+## Passage labels
 
-Connect agent and import prompts link the current model-tag convention even for older projects.
-Short root/nested reminders retain the key rule; live agent instructions and LaTeX specs contain the details. Each
-paired passage block includes an ordinary `% agentlatex:author` JSON comment with
-model, version and reasoning; unavailable fields are unknown. Prior author records
-are preserved. Imports distinguish original from reconstructed writing. This is
-self-reported metadata; Show AI still uses the existing begin/end markers. Existing
-repository files are not silently rewritten, and no new identity verification or
-model-details UI is implied. The full agent guide is `docs/AGENT_GUIDE.md`.
+Agent-written passages use only `% agent:begin` and `% agent:end`. There are no IDs
+or model/version/reasoning records. The new-project placeholder has no attribution
+block. Show AI also reads the earlier ID-based markers without changing a user's
+source on load. Live guides tell agents how to simplify legacy markers in files they
+are editing while preserving text and attribution boundaries. The canonical reminder
+is refreshed only inside its managed HTML markers; owner preferences stay intact.
+
+For manuscript validation, agents use an available local compiler or ask the user to
+Compile. Guides prohibit driving Safari or other browsers with accessibility tools,
+screen readers or UI automation for this task.
 
 ## Public docs
 

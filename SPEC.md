@@ -33,7 +33,8 @@ HTML disabled and remote images suppressed. Other file types disable Compile.
 
 Agents use their normal GitHub/file tools. Short root/nested AGENTS.md reminders link
 the live guides at https://agentlatex.com/docs; no CLAUDE.md or copied specs are generated. They
-require paired `% agentlatex:begin agent id=...` / `% agentlatex:end id=...` comments.
+require only paired `% agent:begin` / `% agent:end` comments, without IDs or model
+metadata. Earlier tags remain readable; new starter text has no attribution markers.
 Tagged passages are Agent; everything else is Manual. This convention depends on agent
 compliance and is not cryptographic proof of authorship. The source highlight toggle
 shows tags; PDF attribution and detailed provenance are later work.

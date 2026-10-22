@@ -19,43 +19,33 @@ Read [latex-specs.md](https://agentlatex.com/docs/latex-specs.md) before editing
 with BusyTeX / TeX Live 2026. Use ordinary .tex, .bib and image files.
 
 ## Required: mark every agent-written passage
-Every manuscript passage you add or rewrite (prose, equations, captions, footnotes)
-must be enclosed by these ordinary TeX comments, on separate lines:
+Wrap each manuscript passage you add or rewrite (prose, equations, captions,
+footnotes) in these ordinary TeX comments, on separate lines:
 
 ```tex
-% agentlatex:begin agent id=UNIQUE-ID
-% agentlatex:author {"model":"unknown","version":"unknown","reasoning":"unknown"}
+% agent:begin
 Your new or rewritten passage here.
-% agentlatex:end id=UNIQUE-ID
+% agent:end
 ```
 
-Use a fresh unique ID for a new passage. Preserve existing IDs for edits within that
-passage. No nested or overlapping blocks. Use small paragraph/equation blocks, not a
-whole-document wrapper. Preserve untouched text and its existing tags. Do not label
-untouched human writing as Agent. Untagged text is displayed as Manual; this is a
+That is the entire format: no IDs, author JSON, model names, versions or reasoning
+levels. Use small paragraph/equation blocks, without nesting or overlap. Preserve
+untouched writing and its tags. Untagged text is displayed as Manual; this is a
 workflow convention, not proof of authorship. Never remove tags to hide agent work.
-If you edit part of a manual paragraph, isolate and tag your rewritten passage.
+If you edit part of a manual paragraph, isolate and tag the rewritten passage.
 
-## Required: record the model behind each agent passage
-Immediately after each begin marker, add an ordinary TeX comment containing JSON:
+The app still reads older `agentlatex:begin ... id=...` / `agentlatex:end id=...`
+blocks. When editing a file using that old format, simplify its markers to the pair
+above and remove its `agentlatex:author` metadata comments, preserving the enclosed
+text and which passages are tagged. Do not rewrite unrelated manuscripts.
 
-```tex
-% agentlatex:author {"model":"unknown","version":"unknown","reasoning":"unknown"}
-```
-
-Replace each value with what your session actually exposes. Use the exact model ID
-or displayed name, including aliases such as Sol, Astra, Luna, Terra, Haiku, Sonnet,
-Opus or Fable when that is all you know. Record a version/release identifier when
-known. Reasoning is the actual setting (for example low, medium, high or xhigh),
-not a model name. Use "not-applicable" only when reasoning does not apply; otherwise
-use "unknown" for unavailable fields. Never guess an underlying model or version.
-
-Keep begin/end marker syntax unchanged. Preserve existing author records when editing
-a passage; append your own record if its model/version/reasoning differs. Do not
-attribute untouched or imported passages to the importing agent: retain the original
-model when known and use unknown otherwise. Tag newly reconstructed writing with the
-model that reconstructed it. These are self-reported labels, not verified identities.
-
+## Compilation for manuscript work
+Use a compatible compiler directly in your own environment if available. Otherwise
+ask the user to press Compile in AgentsLaTeX. **Do not drive Safari or another browser
+through accessibility APIs, screen readers, computer-control tools or UI automation
+to compile a manuscript.** Do not request accessibility permissions or install browser
+control tools for this. Reading the live guides with a web tool is fine. Be explicit
+when you have not compiled; do not claim a browser run based on a local build.
 
 Pull current GitHub changes before editing. Keep tags with their text in the same
 commit. Never force-push or overwrite another contributor's changes. Resolve conflicts
@@ -63,7 +53,7 @@ explicitly. Verify the remote commit before saying edits are synced. The browser
 GitHub for incoming updates and preserves unsaved drafts; those drafts are unavailable
 to agents until the user saves them. Keep referenced files at their configured paths.
 If compilation is not available in your environment, say so; the user
-can compile in AgentsLaTeX. Check paired IDs and review the diff before committing.
+can compile in AgentsLaTeX. Check paired begin/end markers and review the diff before committing.
 
 Main document and engine are in root .agentlatex.json. Keep manuscript files under agentlatex/main/
 for new projects; preserve existing layouts when importing. Do not commit build
@@ -84,7 +74,10 @@ main-folder AGENTS.md files (reuse existing filename casing). If the exact marke
 [canonical reminder block](https://agentlatex.com/docs/project-reminder.md), including
 both HTML markers, once to each file. Preserve all existing content and preferences.
 A plain link without the marker is not the canonical block; keep that older link and
-append the block once. If the marker already exists, do not append another block.
+append the block once. If both markers already exist, compare with the current
+canonical reminder and replace only the text between and including those markers
+when it differs. Preserve all surrounding instructions; never append a duplicate.
+If only one marker exists, report the malformed block instead of deleting content.
 New files may start with the user's preferences, followed by the reminder.
 Include the live-doc URLs in handoff/compaction notes.
 

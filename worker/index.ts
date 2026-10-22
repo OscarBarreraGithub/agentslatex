@@ -14,6 +14,7 @@ import { connectInstructions } from "../shared/instructions";
 import { ApiError, github, listRepos, readTree, readSetupTree, initializeRepository, commitFiles } from "./github";
 import {
   session,
+  sessionIdentity,
   renewSession,
   login,
   callback,
@@ -179,17 +180,18 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
       },
     });
   }
-  const auth = await session(req, env),
-    token = auth.token;
   if (path === "/api/me") {
+    const row = await sessionIdentity(req, env);
     const response = json({
-      user: { id: auth.row.user_id, login: auth.row.login },
+      user: { id: row.user_id, login: row.login },
       installUrl: `https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/new`,
     });
-    const renewed = await renewSession(req, env, auth.row);
+    const renewed = await renewSession(req, env, row);
     if (renewed) response.headers.set("Set-Cookie", renewed);
     return response;
   }
+  const auth = await session(req, env),
+    token = auth.token;
   if (path === "/api/installation-status") {
     const { installations } = await listRepos(token);
     return json({ installations: installations.length });

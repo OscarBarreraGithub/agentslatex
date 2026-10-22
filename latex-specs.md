@@ -135,26 +135,22 @@ honest. Confirm included files and figures as well as the main source before tre
 an output as matched. The current UI's revision marker is local-session state, not a
 cryptographic provenance receipt.
 
-## Agent passage and model tags
+## Agent passage tags
 
-Follow the project's root AGENTS.md. Wrap each new or rewritten agent passage in
-paired comments, and add model metadata on its own line inside the block:
+Follow the project's root AGENTS.md. Wrap each new or rewritten passage in:
 
 ```tex
-% agentlatex:begin agent id=unique-passage-id
-% agentlatex:author {"model":"unknown","version":"unknown","reasoning":"unknown"}
+% agent:begin
 The new or rewritten passage.
-% agentlatex:end id=unique-passage-id
+% agent:end
 ```
 
-Replace unknown with the exact model ID/displayed name, known version, and actual
-reasoning setting. Aliases are acceptable when that is all the session exposes;
-never infer a hidden version. Reasoning is separate from model (low/medium/high/xhigh,
-for example); use not-applicable only when known, otherwise unknown. Preserve earlier
-author records and append a distinct record when a different model edits the block.
-Imports retain the original model or unknown, not the importing model's identity.
-Newly reconstructed passages identify the reconstructing model. These ordinary
-comments do not affect compilation. They are self-reported, not identity verification.
+Use paired, non-nested blocks. No passage IDs, model/version/reasoning fields or
+author JSON. The comments do not affect compilation. Untagged text is Manual;
+these labels are a writing convention, not identity verification. Old ID-based
+markers still display correctly; when editing such a file, replace those markers
+with the simple pair and drop the old author-metadata comments, preserving the
+passages and their tag boundaries.
 
 ## Scientific attribution and future Frankenstein review
 
@@ -174,7 +170,9 @@ document once with the configured engine if a compatible compiler is available.
 Local compilation is acceptable; distinguish it from a browser run. Inspect affected
 equations, figures and references in the resulting PDF when possible. Report what you
 checked and any unresolved error. If no compiler or PDF viewer is available, state
-that limit and ask the user to Compile in AgentsLaTeX. Do not run benchmark matrices,
+that limit and ask the user to Compile in AgentsLaTeX. Do not use Safari/browser
+accessibility tools, screen readers or UI automation to press Compile, and do not
+request browser-control permissions for manuscript work. Do not run benchmark matrices,
 measure loading times or test failure/retry for an ordinary manuscript edit.
 
 ## Validate changes to the website compiler

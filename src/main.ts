@@ -5,6 +5,7 @@ import { newProject as newProjectInput, normalizeProjectName } from "../shared/c
 import "./style.css";
 import { wordmark } from "./brand";
 import { folderPicker } from "./folder-picker";
+import { checkSignIn } from "./sign-in";
 import { inFolder, joinFolder, defaultMainFolder } from "../shared/workspace";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
@@ -292,13 +293,13 @@ function landing() {
   }
 }
 async function start() {
-  app.innerHTML = '<div class="loading-screen" role="status" aria-label="Opening AgentsLaTeX"><span class="spinner" aria-hidden="true"></span></div>';
+  app.innerHTML = '<div class="loading-screen" role="status" aria-label="Opening AgentsLaTeX"><span class="spinner" aria-hidden="true"></span><span id="connection-status"></span></div>';
   try {
-    me = await api<Me>("/me");
+    me = await checkSignIn(() => { $("connection-status").textContent = "Reconnecting…"; });
   } catch (e) {
     if (e instanceof RequestError && e.status === 401) landing();
     else {
-      app.innerHTML = '<div class="loading-screen"><div class="session-error"><p role="alert">Couldn’t check your sign-in. Please try again.</p><button id="retry-session">Try again</button></div></div>';
+      app.innerHTML = '<div class="loading-screen"><div class="session-error"><p role="alert">Can’t reach AgentsLaTeX right now.</p><p>Your saved drafts are safe.</p><button id="retry-session">Reconnect</button></div></div>';
       $("retry-session").onclick = () => void start();
     }
     return;

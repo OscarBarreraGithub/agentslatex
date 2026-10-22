@@ -42,6 +42,20 @@ test("expired sessions are refused rather than resurrected",async()=>{
   const f=await fixture(now()-1); const response=await worker.fetch(f.req,f.env);
   assert.equal(response.status,401); assert.equal(f.writes(),0);
 });
+test("identity remains available during GitHub token refresh and never reveals credentials", async () => {
+  const f=await fixture(now()+86400, {token:"synthetic", refreshToken:"synthetic-refresh", expiresAt:new Date(0).toISOString()} as {token:string});
+  f.row.refresh_lock=now()+30;
+  const original=globalThis.fetch;
+  globalThis.fetch=async()=>{throw Error("Identity must not depend on GitHub availability");};
+  try {
+    const response=await worker.fetch(f.req,f.env);
+    assert.equal(response.status,200);
+    const body=await response.json() as {user:{id:number}};
+    assert.equal(body.user.id,42);
+    assert.ok(!JSON.stringify(body).includes("synthetic"));
+    assert.equal(f.deleted(),false);
+  } finally {globalThis.fetch=original;}
+});
 test("temporary token-refresh failure preserves the session for retry",async()=>{
   const f=await fixture(now()+86400, {token:"synthetic", refreshToken:"synthetic-refresh", expiresAt:new Date(0).toISOString(), refreshTokenExpiresAt:new Date(Date.now()+86400000).toISOString()} as {token:string});
   const original=globalThis.fetch;

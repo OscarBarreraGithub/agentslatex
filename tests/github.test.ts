@@ -114,7 +114,9 @@ test("template contains a working main, shared instructions and valid Agent mark
   assert.ok(files["agentlatex/main/AGENTS.md"].startsWith("% Add your LaTeX-specific instructions for agents here.\n\n"));
   assert.ok(files["AGENTS.md"].startsWith("% Add your LaTeX-specific instructions for agents here.\n\n"));
   assert.deepEqual(agentRanges(files["agentlatex/main/main.tex"]).errors, []);
-  assert.equal(agentRanges(files["agentlatex/main/main.tex"]).ranges.length, 1);
+  assert.equal(agentRanges(files["agentlatex/main/main.tex"]).ranges.length, 0);
+  assert.ok(!files["agentlatex/main/main.tex"].includes("agentlatex:author"));
+  assert.ok(files["AGENTS.md"].includes("% agent:begin"));
   assert.equal(JSON.parse(files[".agentlatex.json"]).main, "agentlatex/main/main.tex");
 });
 test("connecting preserves existing root/nested instructions and appends live pointers only once", async () => {
@@ -140,6 +142,26 @@ test("tag errors are explicit and unmarked text has no Agent range", () => {
   assert.deepEqual(agentRanges("Manual prose").ranges, []);
   assert.ok(agentRanges("% agentlatex:begin agent id=a\nText").errors.length);
   assert.ok(agentRanges("% agentlatex:end id=b").errors.length);
+});
+test("simple passage tags highlight only agent text and retain old paper compatibility", () => {
+  const text = "Manual\n% agent:begin\nFirst\n% agent:end\nManual again\n% agent:begin\nSecond\n% agent:end";
+  const result = agentRanges(text);
+  assert.deepEqual(result.errors, []);
+  assert.deepEqual(result.ranges.map(r => text.slice(r.from, r.to)), ["First", "Second"]);
+  const old = "% agentlatex:begin agent id=old\nEarlier passage\n% agentlatex:end id=old";
+  assert.deepEqual(agentRanges(old).errors, []);
+  assert.equal(agentRanges(old).ranges.length, 1);
+  for (const invalid of ["% agent:begin\nUnclosed", "% agent:end", "% agent:begin\n% agent:begin\nNested\n% agent:end", "% agent:begin\nMixed\n% agentlatex:end id=old"])
+    assert.ok(agentRanges(invalid).errors.length, invalid);
+});
+test("refreshing old managed instructions preserves user preferences and surrounding text", () => {
+  const before = "# My preferences\nUse my notation.\n";
+  const after = "\n# Other rules\nKeep all figures.\n";
+  const old = before + "<!-- agentlatex:instructions -->\nOld model metadata rule\n<!-- /agentlatex:instructions -->" + after;
+  const updated = appendInstructions(old);
+  assert.ok(updated.startsWith(before)); assert.ok(updated.endsWith(after));
+  assert.ok(updated.includes("% agent:begin")); assert.ok(!updated.includes("Old model metadata rule"));
+  assert.equal(appendInstructions(updated), updated);
 });
 test("reject traversal and absolute paths", () => {
   for (const p of [

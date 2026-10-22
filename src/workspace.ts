@@ -944,7 +944,7 @@ export async function mountEditor(
         files.set(path, {
           path,
           content: path.endsWith(".tex")
-            ? "% Agents: read the root AGENTS.md. Tag every new or rewritten agent passage, including model/version/reasoning author comments.\n"
+            ? "% Agents: read the root AGENTS.md. Wrap new or rewritten passages in % agent:begin / % agent:end comments.\n"
             : "",
         });
         dirty.add(path);

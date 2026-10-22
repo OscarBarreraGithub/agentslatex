@@ -6,9 +6,12 @@ const marker = "<!-- agentlatex:instructions -->";
 const reminder = reminderLines.join("\n");
 const preferences = "% Add your LaTeX-specific instructions for agents here.\n\n\n\n\n\n\n\n";
 
-/** Appends once, without replacing the repository owner's instructions. */
+/** Refresh only our delimited block; preserve the repository owner's instructions. */
 export function appendInstructions(existing?: string): string {
-  if (existing?.includes(marker)) return existing;
+  if (existing?.includes(marker)) return existing.replace(
+    /<!-- agentlatex:instructions -->[\s\S]*?<!-- \/agentlatex:instructions -->/,
+    reminder,
+  );
   return existing === undefined ? preferences + reminder + "\n" : existing + "\n\n" + reminder + "\n";
 }
 

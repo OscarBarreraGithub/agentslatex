@@ -77,7 +77,7 @@ Store new artifacts in a unique folder, with a SUMMARY.md; reuse the import ID o
 Do not copy shared instructions into this repository. Preserve local AGENTS.md preferences.
 The live guide explains GitHub connection and a downloadable-bundle handoff when this
 browser agent cannot write to GitHub. Check actual tools; do not claim an upload without
-verifying the remote files. Preserve source/model attribution and state any missing history.
+verifying the remote files. Preserve source provenance and manual/agent passage labels; state any missing history.
 If neither instruction URL is accessible, ask me to provide the guide before importing.`,
     },
   ];

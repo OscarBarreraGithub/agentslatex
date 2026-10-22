@@ -99,3 +99,9 @@ there is no branch picker. Existing branches are not silently migrated. These ar
 implementation choices to state clearly, not evidence of unfinished synchronization.
 Selling-point ideas are recorded; there is no automatic extraction of every historical
 SWA conversation. No claim of broad load certification or complete native LaTeX parity.
+
+- AL-14 — external review pending: Google Search Console flags Deceptive pages,
+  with no sample URLs. Corrected the stale www parking target and canonical HTTPS
+  redirects. Google confirmed “Request submitted successfully” for the authorized
+  review on 2026-10-22. Next: check Google's result; do not submit duplicates or
+  describe the browser warning as cleared. See GITHUB_ACCEPTANCE.md.

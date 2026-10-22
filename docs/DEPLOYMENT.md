@@ -75,6 +75,21 @@ nameservers to those Cloudflare assigns, and attach the Worker custom domain. Ve
 DNS and HTTPS before making it the live OAuth destination. Keep other domains/apps
 unchanged. No secret belongs in a DNS record or public client environment variable.
 
+Keep `www` as a proxied CNAME to `agentlatex.com`, never a registrar parking target.
+The zone's **Canonical HTTPS — agentlatex.com** Single Redirect uses this filter:
+
+```text
+(http.host eq "www.agentlatex.com") or (http.host eq "agentlatex.com" and not ssl)
+```
+
+Redirect dynamically to `concat("https://agentlatex.com", http.request.uri.path)`
+with status **308** and **Preserve query string** enabled. This is one Free-plan
+zone rule; it does not invoke the application Worker. Verify HTTP apex and both
+www schemes redirect with paths/query strings intact, while HTTPS apex stays 200.
+Keep the owner's Google Search Console verification TXT record when changing DNS.
+Do not infer that TLS or redirects clear a Google Safe Browsing classification:
+inspect Search Console's Security Issues report and follow its review process.
+
 Run the real Connect → create private project → save → compile → reopen journey,
 then a collaborator change/conflict check. A successful deploy is not that evidence.
 The deployed application includes its source archive; private runtime data is excluded.

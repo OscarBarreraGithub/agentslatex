@@ -85,7 +85,8 @@ export function originCheck(req: Request) {
   if (req.headers.get("Origin") !== new URL(req.url).origin)
     throw new ApiError(403, "Reload this page before trying again.");
 }
-export async function session(req: Request, env: Bindings) {
+/** Local identity is independent of GitHub token renewal; repository access is not. */
+export async function sessionIdentity(req: Request, env: Bindings) {
   const raw = cookie(req, sessionName(req));
   if (!raw) throw new ApiError(401, "Connect to GitHub to continue.");
   const row = await env.DB.prepare(
@@ -98,6 +99,10 @@ export async function session(req: Request, env: Bindings) {
       401,
       "Reconnect to GitHub. Your saved draft is still here.",
     );
+  return row;
+}
+export async function session(req: Request, env: Bindings) {
+  const row = await sessionIdentity(req, env);
   let t = await unseal(env, row.token);
   if (t.expiresAt && Date.parse(t.expiresAt) < Date.now() + 60000) {
     if (!t.refreshToken || !t.refreshTokenExpiresAt)

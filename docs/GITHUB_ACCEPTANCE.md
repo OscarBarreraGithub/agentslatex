@@ -482,3 +482,39 @@ Temporary Cloudflare/GitHub tabs were closed; the working demo remains open. Thi
 an actual empty-repository workflow check on an existing installation, not a new
 GitHub-account OAuth test. The user separately reported that their invited abtest
 project appeared automatically after accepting its GitHub collaborator invitation.
+
+## Sign-in recovery and simple agent tags — 2026-10-22
+
+The user reported repeated “Couldn't check your sign-in” retries. Code inspection
+found that the identity endpoint unnecessarily depended on GitHub token renewal; a
+concurrent renewal or temporary upstream failure could strand an otherwise valid
+session. The exact response from the user's failed attempt was not captured. The
+identity endpoint now checks the local session independently; repository operations
+still require GitHub authorization. The browser retries temporary identity failures
+with a bounded delay, respects long Retry-After values, and sends a genuine 401
+directly to sign-in. Persistent failure retains a Reconnect button and saved drafts.
+
+24 focused auth/retry/tag/GitHub/build-prompt tests passed, including an active
+refresh lock with an expired GitHub token, private API access checks, transient
+recovery, bounded failure, 401 and long rate-limit backoff. Client/Worker typechecks
+and the hosted build passed. No compiler stress suite was repeated.
+
+Chrome desktop acceptance on isolated loopback fixture 4394: injected one session
+HTTP 500, then opened the app; it reached the projects list without another click.
+The new starter was plain text with no model metadata. A synthetic manuscript using
+only `% agent:begin` / `% agent:end` highlighted the enclosed paragraph with Show AI
+and left adjacent manual paragraphs unhighlighted. Legacy tags remain supported
+by the focused parser checks; existing private papers were not rewritten. The test
+tab/server were closed; the owner's 4393 preview was preserved.
+
+Live instructions and repair prompts now prohibit manuscript agents from driving
+Safari, accessibility APIs, screen readers or browser UI automation to compile.
+They should use a compatible compiler directly or ask the user to press Compile.
+Website development browser tests remain a separate activity. Managed reminder
+updates replace only the complete marked block and preserve owner preferences.
+
+Google separately flagged “Deceptive pages” without sample URLs. After ownership
+verification and correction of stale www parking and missing canonical HTTPS
+redirects, an owner-approved review was submitted in Chrome. Google displayed
+“Request submitted successfully.” The issue remains flagged; this is submission
+evidence, not a cleared security review or proof of the classification's cause.
