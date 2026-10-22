@@ -40,6 +40,23 @@ Papers live in GitHub plus browser drafts. No cloud compiler or cloud agent exec
 Workers/D1 must stay on Free: at capacity the service stops rather than billing
 overages. See docs/COST_POLICY.md. Domain registration/renewal is separate.
 
+## Privacy boundary — unresolved requirement
+
+The owner requires that service operators cannot access users' private repositories
+or manuscripts. The current deployed design does not meet that requirement. The
+backend decrypts GitHub user tokens and relays plaintext files; D1 also holds account
+and project metadata. Encrypting tokens at rest does not exclude the operator.
+The central GitHub App's installation permissions are another access capability even
+though current code uses only user tokens. Removing server token storage alone is
+insufficient. Browser compilation is local, but GitHub synchronization is not.
+
+Do not describe the current app as zero-access or invite private papers on that basis.
+The browser-only alternative needs direct GitHub requests and a replacement for the
+central App's repository grant; hosted JavaScript still requires operator trust.
+For the stronger boundary, serve a pinned local editor and perform Git authentication
+and synchronization locally. GitHub remains the trusted manuscript host. No privacy
+migration or permission revocation has been deployed yet; preserve current projects.
+
 ## Acceptance and later work
 
 Implementation is not deployment acceptance. Track current verification and remaining

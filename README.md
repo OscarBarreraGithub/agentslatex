@@ -6,10 +6,11 @@ A small GitHub-backed LaTeX workspace. Sign in with GitHub, open a paper, edit s
 on the left and compile its PDF on the right. Compilation runs in a browser worker
 on your computer; no model or cloud compilation service is involved.
 
-**Live pilot:** https://agentlatex.com. GitHub sign-in, private project creation,
-save/reopen, hosted browser compilation and external-change conflict handling passed
-with the owner account. Ready for a first collaborator trial (up to five users);
-second-account access is the next live check. See [current acceptance](docs/GITHUB_ACCEPTANCE.md).
+**Live functional pilot:** https://agentlatex.com. GitHub sign-in, private project
+creation, save/reopen, browser compilation and conflict handling passed with the owner
+account. **Privacy redesign is required before onboarding private papers under a
+no-operator-access promise:** the current backend decrypts GitHub tokens and relays
+repository contents. See [current acceptance](docs/GITHUB_ACCEPTANCE.md).
 
 ## The workflow
 
@@ -68,6 +69,8 @@ Current sync is explicit, with whole-file conflict choices. Files are limited to
 on the PDF, live coediting, custom MCP and phone/Windows acceptance remain separate
 work. This app is independent of SWA; it neither launches nor manages agents.
 
-Application source is AGPL-3.0-or-later. Hosted builds include `/source.zip`, LICENSE
+Application source is public on [GitHub](https://github.com/OscarBarreraGithub/agentslatex);
+the site’s Source link opens that repository. The license is AGPL-3.0-or-later. Hosted
+builds also retain the exact-build `/source.zip`, LICENSE
 and [third-party notices](NOTICE.md). Private manuscripts and credentials stay out of
 that archive and this repository.
