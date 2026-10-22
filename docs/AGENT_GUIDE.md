@@ -73,8 +73,12 @@ replace older files automatically. With write access, add a short live-docs poin
 to the root and configured main folder's AGENTS.md if missing, preserving existing
 contents and filename casing. Include these URLs in a handoff/compaction note.
 
-If the site is unavailable, the same guide is in the public source repository:
-https://github.com/OscarBarreraGithub/agentslatex/blob/main/docs/AGENT_GUIDE.md
+If your web tool cannot read the site, use the same live files from GitHub:
+- [Agent instructions](https://raw.githubusercontent.com/OscarBarreraGithub/agentslatex/refs/heads/main/docs/AGENT_GUIDE.md)
+- [LaTeX specs](https://raw.githubusercontent.com/OscarBarreraGithub/agentslatex/refs/heads/main/latex-specs.md)
+- [GitHub setup](https://raw.githubusercontent.com/OscarBarreraGithub/agentslatex/refs/heads/main/skills/GitHub-setup.md)
+- [Conversation imports](https://raw.githubusercontent.com/OscarBarreraGithub/agentslatex/refs/heads/main/skills/agentslatex-import-conversation/SKILL.md)
+
 If neither is accessible, explain that current guidance could not be checked and
 retain known local rules; never claim validation or compiler support you did not verify.
 Never force a manuscript/layout migration just because the shared guide has changed.

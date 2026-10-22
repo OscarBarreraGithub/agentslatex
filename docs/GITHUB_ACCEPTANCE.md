@@ -343,3 +343,12 @@ correctly. Visual checking could not complete because native browser control los
 window/input access (noWindowsAvailable); do not infer a visual/mobile pass from HTTP
 checks. No private manuscript was read and no new real GitHub repository was created
 for this check. Live documentation fetch verification follows deployment.
+
+Source 017b4fd deployed as Worker 910774d4-7c2c-4076-9ca2-c9c41558c725.
+Public HTTP verified the docs index, all four HTML pages and byte-exact Markdown
+with no-cache/text/plain headers, plus editor-BtEFMMVY.js. The chat web-reader could
+not open agentlatex.com despite successful direct requests; it successfully read
+GitHub's raw copy. An explicit raw-GitHub fallback was therefore added to reminders
+and prompts, and the central guide links all four source counterparts. This is a
+reader compatibility fallback, not a second maintained copy. Visual acceptance stays
+unverified. Local Wrangler was stopped; the owner's synthetic 4393 preview stays up.

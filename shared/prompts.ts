@@ -56,8 +56,8 @@ First read ${docsUrl}/GitHub-setup.md. It guides local and browser
 agents through GitHub access, even before you can read the private repository.
 Read ${docsUrl}/AGENTS.md and ${docsUrl}/latex-specs.md for current instructions.
 Do not copy shared docs into the repository. If the site is unavailable, use the
-same guides at https://github.com/OscarBarreraGithub/agentslatex (docs/AGENT_GUIDE.md,
-latex-specs.md and skills/GitHub-setup.md). If neither is accessible, say so.
+https://raw.githubusercontent.com/OscarBarreraGithub/agentslatex/refs/heads/main/docs/AGENT_GUIDE.md
+which links the same guides on GitHub. If neither is accessible, say so.
 Guide me through any required sign-in step by step; show the actual login URL and
 one-time code before waiting. Preserve existing accounts and check actual read/write
 capabilities. A read-only connection does not let you push edits.
@@ -92,7 +92,7 @@ the live guide specifies; preserve untouched text and earlier attribution.`,
       destination: "Paste into the conversation you want to bring over.",
       text: context + `\nGo through our conversation and preserve its useful work in this project.
 First read ${docsUrl}/import-conversation.md and ${docsUrl}/AGENTS.md.
-Fallback: https://github.com/OscarBarreraGithub/agentslatex/blob/main/skills/agentslatex-import-conversation/SKILL.md
+Fallback: https://raw.githubusercontent.com/OscarBarreraGithub/agentslatex/refs/heads/main/skills/agentslatex-import-conversation/SKILL.md
 Read the latest root IMPORTS.md before importing; create that index only if missing.
 Append what was imported and where it went. Preserve all earlier entries and files.
 Store new artifacts in a unique folder, with a SUMMARY.md; reuse the import ID on retry.
