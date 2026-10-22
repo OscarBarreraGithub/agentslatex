@@ -358,3 +358,11 @@ Fallback follow-up source cd1b67e deployed as Worker
 with GitHub's raw source, confirmed no-cache, and found editor-Cc3gL1rw.js on the
 landing page. Client/Worker typechecks and packaging passed after the pointer change.
 The prior 16 focused contract checks passed before this text-only fallback addition.
+
+Visual retry at the owner's request: Chrome desktop control recovered. The live
+/docs index, Agent instructions and LaTeX requirements pages rendered with readable
+dark-theme text and code examples. Clicking the guide/index links navigated correctly;
+Plain Markdown opened inline as text rather than downloading or requesting sign-in.
+This closes the deferred desktop docs visual check. No rendering fix or deployment
+was needed; it does not establish a mobile-device check or remove the separate
+chat web-reader limitation. The GitHub fallback remains available.
