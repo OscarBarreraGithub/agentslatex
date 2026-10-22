@@ -271,17 +271,16 @@ h2 {
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  padding: 50px 0 110px;
+  padding: 24px 0 clamp(80px, 20vh, 180px);
   text-align: center;
 }
 .landing h1 {
   font-size: 40px;
   letter-spacing: -1.6px;
   line-height: 1.15;
-  max-width: 700px;
+  max-width: 1000px;
   text-wrap: balance;
 }
-.landing h1 span { display: block; }
 .landing p {
   font-size: 17px;
   margin: 16px 0 35px;
@@ -1005,9 +1004,6 @@ dialog::backdrop {
   }
   dialog {
     padding: 22px;
-  }
-  .landing-main {
-    padding-bottom: 80px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

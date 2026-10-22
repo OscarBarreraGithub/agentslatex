@@ -6,12 +6,16 @@ delivery status; do not advertise planned behavior as shipped.
 
 ## Current landing-page copy
 
-Headline: **“Write with agents. Revise with confidence.”**
+Headline: **“Write with agents, revise with confidence.”**
 
 Supporting line: **“Compile, version control, and collaborate. All in your browser.”**
 
-The footer contains the Source link only. The AgEnT LaTeX wordmark is typeset with
-LaTeX/Latin Modern and shipped as inline SVG outlines, with a lowercase g and a raised, smaller n tucked against the T;
+The splash screen has one centered wordmark, positioned above the headline; it has
+no duplicate top-left logo. The footer contains the Source link only.
+The AgEnT LaTeX wordmark is typeset with
+LaTeX and shipped as inline SVG outlines. Latin Modern lettering is paired with a
+sharper Nimbus Roman g; the superscript n is 15% larger than the first raised version
+and remains tucked against the T.
 it does not depend on Georgia, system fonts or a font download. The editable logo
 source is `src/assets/wordmark.tex`; the generated artwork is alongside it.
 
