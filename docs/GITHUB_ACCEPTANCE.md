@@ -104,3 +104,18 @@ returned HTTP 200. The existing signed-in synthetic demo opened on agentlatex.co
 Prompts showed the correct repository and the deployed import-index/browser-connection
 instructions. Eleven affected checks passed (eight GitHub, three refresh/transport),
 plus the skill validator and hosted Client/Worker build. No new paid service or schema.
+
+## Folder workspace and selected-file preview — 2026-10-22
+
+Deployed `94c6fdc` as Worker version
+`54d33de7-5762-4f78-8f54-ec2fa11466d6`. Workers Free / $0 / Current plan was
+rechecked immediately before deployment. Public health and the new workspace asset
+returned HTTP 200. The signed-in Safari synthetic demo displayed the legacy paper
+folder, optional repository explorer, top settings, Highlight agent, and the project
+header without the redundant owner username. The projects screen retains the account
+name and shows the new AgEnT LaTeX wordmark. Existing browser drafts were preserved.
+
+Fifteen focused checks and the hosted Client/Worker build passed. Local Chrome
+verification and bounded remaining drag/device/import checks are in WORKSPACE.md.
+No compiler stress suite was repeated, no paid service or database migration added,
+and no private manuscript was inspected. Version-history UI remains AL-9 TODO.
