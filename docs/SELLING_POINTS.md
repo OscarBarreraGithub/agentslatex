@@ -11,7 +11,7 @@ Headline: **“Write with agents. Revise with confidence.”**
 Supporting line: **“Compile, version control, and collaborate. All in your browser.”**
 
 The footer contains the Source link only. The AgEnT LaTeX wordmark is typeset with
-LaTeX/Latin Modern and shipped as inline SVG outlines, including the lowercase g and n;
+LaTeX/Latin Modern and shipped as inline SVG outlines, with a lowercase g and a raised, smaller n tucked against the T;
 it does not depend on Georgia, system fonts or a font download. The editable logo
 source is `src/assets/wordmark.tex`; the generated artwork is alongside it.
 
