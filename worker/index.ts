@@ -159,24 +159,6 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
   if (path === "/api/health") return json({ ok: true, service: "agentslatex" });
   if (path === "/api/auth/login") return login(req, env);
   if (path === "/api/auth/callback") return callback(req, env);
-  if (path.startsWith("/compiler/")) {
-    if (!/^\/compiler\/1\.4\.1\/[\w.-]+$/.test(path))
-      return new Response("Not found", { status: 404 });
-    const object = await env.COMPILER.get(path.slice("/compiler/".length), {
-      onlyIf: req.headers,
-    });
-    if (!object)
-      return new Response("Compiler file not found", { status: 404 });
-    const headers = new Headers({
-      "Cache-Control": "public,max-age=31536000,immutable",
-      "Cross-Origin-Resource-Policy": "same-origin",
-    });
-    object.writeHttpMetadata(headers);
-    headers.set("ETag", object.httpEtag);
-    if (!("body" in object))
-      return new Response(null, { status: 304, headers });
-    return new Response(object.body, { headers, encodeBody: "manual" });
-  }
   if (!path.startsWith("/api/")) return env.ASSETS.fetch(req);
   if (!["GET", "HEAD"].includes(req.method)) originCheck(req);
   const auth = await session(req, env),

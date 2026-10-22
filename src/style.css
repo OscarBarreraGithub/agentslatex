@@ -939,3 +939,6 @@ dialog::backdrop {
 #file-tree summary::marker {
   color: #797d8c;
 }
+
+#mobile-refresh { display: none; }
+@media (max-width: 760px) { #mobile-refresh { display: inline-flex; } }

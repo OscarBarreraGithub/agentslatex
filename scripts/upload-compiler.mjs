@@ -1,10 +1,13 @@
-// Upload the pinned compiler; gzip keeps downloads and the R2 upload below 300 MB.
+// Legacy local-only utility. Production now uses free Static Assets.
 // Defaults to local Wrangler storage. --remote is an explicit deployment action.
 import { createReadStream, createWriteStream } from "node:fs";
 import { mkdir, stat } from "node:fs/promises";
 import { createGzip } from "node:zlib";
 import { pipeline } from "node:stream/promises";
 import { spawn } from "node:child_process";
+if (process.argv.includes("--remote")) {
+  throw Error("Remote R2 uploads are disabled by the owner's $0 usage policy. Use pnpm build:hosted and Static Assets; do not activate R2.");
+}
 const files = [
   "busytex.js",
   "busytex.wasm",

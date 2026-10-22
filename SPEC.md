@@ -35,8 +35,10 @@ shows tags; PDF attribution and detailed provenance are later work.
 
 Cloudflare Worker serves UI/API; D1 stores expiring sessions, OAuth state and project
 registration metadata. GitHub tokens are encrypted server-side; they never reach browser
-JavaScript. R2 holds versioned compiler assets, not paper sources or generated PDFs.
+JavaScript. Free Static Assets hold the UI and versioned compiler downloads. No R2.
 Papers live in GitHub plus browser drafts. No cloud compiler or cloud agent execution.
+Workers/D1 must stay on Free: at capacity the service stops rather than billing
+overages. See docs/COST_POLICY.md. Domain registration/renewal is separate.
 
 ## Acceptance and later work
 

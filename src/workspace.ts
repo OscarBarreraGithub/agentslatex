@@ -73,7 +73,7 @@ export async function mountEditor(
     renderVersion = 0;
   app.innerHTML = `<header class="workspace-header"><button id="back" class="icon" aria-label="Back to projects">←</button><div class="project-title"><strong>${h(project.name)}</strong><span>${h(project.owner)}</span></div><span id="save-state" class="save-state">Synced</span><div class="actions"><button id="refresh" title="Get changes from GitHub">Refresh</button><button id="sync">Save to GitHub</button><button id="build" class="primary">Compile <kbd>⌘ ↵</kbd></button><button id="stop" hidden>Stop</button></div></header>
  <div class="mobile-tabs"><button id="mobile-files">Files</button><button id="mobile-source" aria-pressed="true">Source</button><button id="mobile-pdf" aria-pressed="false">PDF</button></div>
- <main class="workspace"><aside class="file-pane"><div class="pane-bar"><span>Files</span><div class="actions"><button class="icon" id="new-file" title="New file" aria-label="New file">＋</button><button class="icon" id="upload" title="Upload files" aria-label="Upload files">↑</button></div></div><nav id="file-tree" aria-label="Project files"></nav><div class="file-bottom"><button id="upload-folder">Upload folder</button><a class="button quiet" href="${h(project.url)}/settings/access" target="_blank" rel="noopener">Collaborators ↗</a><a class="button quiet" href="${h(project.url)}" target="_blank" rel="noopener">GitHub ↗</a><button id="export" class="quiet">Export project ↓</button></div></aside>
+ <main class="workspace"><aside class="file-pane"><div class="pane-bar"><span>Files</span><div class="actions"><button class="icon" id="new-file" title="New file" aria-label="New file">＋</button><button class="icon" id="upload" title="Upload files" aria-label="Upload files">↑</button></div></div><nav id="file-tree" aria-label="Project files"></nav><div class="file-bottom"><button id="mobile-refresh" class="quiet">Refresh from GitHub</button><button id="upload-folder">Upload folder</button><a class="button quiet" href="${h(project.url)}/settings/access" target="_blank" rel="noopener">Collaborators ↗</a><a class="button quiet" href="${h(project.url)}" target="_blank" rel="noopener">GitHub ↗</a><button id="export" class="quiet">Export project ↓</button></div></aside>
  <section class="source-pane"><div class="pane-bar"><span id="filename"></span><button id="tags" class="quiet" aria-pressed="false" title="Highlight tagged Agent passages">Agent tags</button></div><div id="editor"></div><div id="file-preview" hidden></div><div class="pane-footer"><span id="main-label"></span><button id="settings" class="quiet">Settings</button></div></section>
  <section class="pdf-pane"><div class="pane-bar"><span>PDF <span id="freshness" class="muted">Not compiled</span></span><div class="pagination"><button id="prev" class="icon" disabled aria-label="Previous PDF page">‹</button><input id="page" type="number" min="1" value="1" aria-label="PDF page" disabled><span id="count">/ —</span><button id="next" class="icon" disabled aria-label="Next PDF page">›</button><button id="download" class="quiet" disabled aria-label="Download PDF">↓</button></div></div>
  <div id="build-state" class="build-state" role="status" hidden><span id="build-label"></span><progress id="build-progress" hidden></progress><p id="build-error" hidden></p><button id="error-log" hidden>Show build log</button></div><div id="pdf-scroll"><div id="pdf-empty"><span class="paper-glyph">Aa</span><p>Ready when you are.</p><button id="empty-build" class="primary">Compile</button></div><canvas id="pdf" hidden></canvas></div><div class="pane-footer"><span id="timing"></span><button id="log-toggle" class="quiet">Build log</button></div></section></main>
@@ -302,7 +302,9 @@ export async function mountEditor(
     }
     tree();
     scheduleDraft();
-    app.classList.remove("show-files");
+    app.classList.remove("show-files", "show-pdf");
+    $("mobile-source").setAttribute("aria-pressed", "true");
+    $("mobile-pdf").setAttribute("aria-pressed", "false");
   }
   async function loadAll(signal?: AbortSignal) {
     for (const path of allPaths()) await getFile(path, signal);
@@ -647,7 +649,7 @@ export async function mountEditor(
   }
   $("back").onclick = () => back();
   $("sync").onclick = () => void sync();
-  $("refresh").onclick = () => void refresh().catch(fail);
+  $("refresh").onclick = $("mobile-refresh").onclick = () => void refresh().catch(fail);
   $("build").onclick = $("empty-build").onclick = () => void compile();
   $("stop").onclick = () => {
     cancelled = true;

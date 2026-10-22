@@ -37,13 +37,13 @@ pnpm install
 pnpm setup
 pnpm build:hosted
 pnpm exec wrangler d1 execute agentslatex --local --file worker/schema.sql
-node scripts/upload-compiler.mjs
 pnpm dev:hosted
 ```
 
 The authenticated app is at **http://127.0.0.1:4391**. Configure the GitHub App and
-ignored `.dev.vars` first; see [deployment](docs/DEPLOYMENT.md). Compiler uploads default
-to local simulated R2. They do not enable or publish cloud storage.
+ignored `.dev.vars` first; see [deployment](docs/DEPLOYMENT.md). The hosted build packages
+the compiler into free static downloads. No R2 subscription or upload is required.
+Hosting must follow the owner's [$0 usage policy](docs/COST_POLICY.md).
 
 For a synthetic UI check without credentials, after building run
 `pnpm exec tsx tests/ui-fixture.ts` and open **http://127.0.0.1:4393**. This loopback-only

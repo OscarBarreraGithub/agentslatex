@@ -23,6 +23,12 @@ This repository is independent of SWA. Do not change other apps, accounts, runni
 agents, or deployments. Private papers and generated builds belong in ignored data/.
 Do not commit credentials, machine paths, compiler binaries, or imported manuscripts.
 
+**Owner's hosting budget: $0 usage charges.** Keep Workers/D1 on the Free plan and
+serve the compiler with Static Assets. Do not activate R2, upgrade plans, enable
+metered add-ons, or introduce paid fallbacks. At free limits, requests must stop;
+preserve drafts. Budget alerts/rate limits are not spending caps. Read
+[docs/COST_POLICY.md](docs/COST_POLICY.md) before deployment or hosting changes.
+
 Use TypeScript and pnpm. Keep the UI to a visible file tree, two panes and a small toolbar.
 User access tokens stay encrypted server-side; authorize every private repository read
 and write through GitHub. Runtime credentials and project data must never enter source.zip.

@@ -21,8 +21,10 @@ checks and sign-out. Targeted tests and browser journey; no repeat compiler matr
 ## Checkpoint handoff
 
 - AL-1, root: implementation and local fixture verified; see GITHUB_ACCEPTANCE.md.
-- AL-2, root: awaiting GitHub user authorization, then verify real private repo creation/sync.
-- AL-3, root: awaiting Cloudflare dashboard sign-in/R2 activation; DNS and deployment pending.
-- AL-4, root: finish mobile file-selection/Refresh controls and remaining acceptance.
+- AL-2, root: GitHub sign-in and selected installation completed; verify real private repo creation/sync.
+- AL-3, root: Workers Free verified; R2 activation cancelled by $0 usage policy. Static
+  compiler packaging and browser compile passed. Production D1 schema/secrets ready;
+  DNS/deployment pending.
+- AL-4, root: mobile file-selection/Refresh fixes implemented, browser verification pending.
 
 No live readiness claim until AL-2/3 and required workflow checks pass.

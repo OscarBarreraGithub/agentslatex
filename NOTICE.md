@@ -10,8 +10,9 @@ those packages. Dependency source, version and license details remain in the pnp
 and installed package metadata. CodeMirror is MIT; PDF.js is Apache-2.0; fflate is MIT.
 
 The hosted application offers its corresponding application source at `/source.zip`.
-This includes the build scripts and pinned dependency lockfile. Unchanged compiler
-source and build instructions are available from the upstream projects:
+This includes the build scripts and pinned dependency lockfile. Hosted JS loaders are
+adapted by `scripts/static-compiler.mjs` to download compressed static parts. WebAssembly
+and package data bytes are unchanged. Upstream source and build instructions:
 
 - https://github.com/TeXlyre/texlyre-busytex/tree/v1.4.1
 - https://github.com/TeXlyre/texlyre-busytex/releases/tag/assets-v1.4.1

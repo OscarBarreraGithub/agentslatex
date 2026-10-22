@@ -5,8 +5,12 @@
 Implemented locally; public deployment and actual account/project journey are pending.
 GitHub App **agentslatex** registered successfully under OscarBarreraGithub. The first
 manifest POST was lost through sign-in; resubmission after sign-in registered it.
-D1 **agentslatex** exists remotely, with schema applied locally. R2 is not yet enabled
-in the account. No production deployment, DNS change or private paper upload occurred.
+D1 **agentslatex** schema and production secrets are installed. GitHub sign-in and
+selected repository installation completed. A placeholder Worker exists; application
+code is not deployed. Cloudflare Free zone is pending registrar nameserver changes.
+Workers Free was verified in the dashboard. R2 remains inactive and is no longer used:
+the owner requires $0 usage charges. Static compiler packaging passed local verification.
+No private paper upload occurred.
 
 ## Passing evidence
 
@@ -20,8 +24,12 @@ in the account. No production deployment, DNS change or private paper upload occ
   selecting My draft preserved its content; subsequent Save succeeded in the fixture.
 - Template rendered in Safari: 1.14s compile, one page. Deliberate undefined command
   displayed Compilation failed and its line number. Corrected retry: 0.39s, one page.
-- All ten compiler objects served through local Wrangler R2 with gzip decoded to the
-  exact original SHA-256. No Worker buffering of the large package is needed.
+- Historical transport check: ten objects through local Wrangler R2 decoded to the
+  original SHA-256. That R2 transport is superseded by the static packaging policy.
+- Static packaging: all parts below 25 MiB; reconstructed WASM and TeX data match
+  original SHA-256; missing-part failure and successful retry passed. Client/Worker
+  typecheck/build and the eight affected GitHub checks passed. Safari compiled the
+  equation/TikZ preview from the new static path: 3.36s, one page, PDF Up to date.
 
 The UI fixture does not contact GitHub. Its save checks are distinct from the mocked
 GitHub API contract tests. Neither establishes a live private repository workflow.
@@ -29,8 +37,8 @@ Historical compiler stress results remain in TESTING.md; they were not repeated.
 
 ## Remaining acceptance
 
-1. Authorize GitHub account, select repositories, and verify real create/import/save.
-2. Enable R2; apply production schema/secrets; deploy, connect domain and verify HTTPS.
+1. Verify real private repository create/import/save with the installed GitHub App.
+2. Deploy on Workers Free, connect domain and verify HTTPS; verify hosted asset downloads.
 3. Verify hosted sign-in, compilation download and actual collaborator access/conflict.
 4. Check import of real file/folder copies, responsive layout, physical Windows/phone.
 5. Exercise expiring-token refresh with actual GitHub credentials.

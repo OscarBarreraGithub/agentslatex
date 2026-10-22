@@ -32,25 +32,31 @@ session encryption key invalidates existing sessions; users must reconnect.
 
 ## Cloudflare
 
-Use a dedicated D1 database `agentslatex` and R2 bucket `agentslatex-compiler`.
-Enable R2 in the account dashboard first; review any billing activation there. Use the
-Free domain plan unless a concrete requirement warrants another plan. R2 storage and
-operations have metered allowances; browser compilation itself uses no Worker CPU.
+Read [COST_POLICY.md](COST_POLICY.md): the owner requires $0 usage charges.
+Verify **Workers Free** in Compute → Workers plans immediately before deployment.
+A Free domain alone is insufficient. If Workers is Paid or the plan cannot be checked,
+stop deployment; do not change other applications' subscriptions. No R2 activation.
+Use the dedicated D1 database `agentslatex` and free Workers Static Assets.
 
 ```sh
 pnpm exec wrangler d1 execute agentslatex --remote --file worker/schema.sql
-pnpm exec wrangler r2 bucket create agentslatex-compiler
-node scripts/upload-compiler.mjs --remote
 pnpm exec wrangler secret put GITHUB_CLIENT_SECRET
 pnpm exec wrangler secret put SESSION_KEY
 pnpm build:hosted
 pnpm exec wrangler deploy
 ```
 
-The upload script uses the existing, pinned local compiler assets. It gzip-compresses
-them and records Content-Encoding; the Worker passes those bytes through without
-recompressing. The largest object transfers about 250 MiB instead of 326 MiB. Local
-and remote uploads use the same keys. The initial package download remains substantial.
+`build:hosted` packages pinned compiler binaries into static files below 25 MiB each.
+An adapter in the generated loader streams/decompresses the parts in the browser;
+compiler bytes remain identical. The versioned static path is `1.4.1-static1`.
+The first download is still substantial; subsequent compiler loads use browser cache.
+Static downloads bypass the Worker, with no R2 storage/operation charges. Do not add
+`/compiler/*` to `run_worker_first` or enable Workers Caching.
+
+After changing the packaging, run `node --test tests/static-compiler.test.mjs` and a
+browser compile; it checks byte identity, asset sizes and failed-download retry.
+Workers/D1 Free limits are provider-enforced: at capacity requests fail instead of
+accruing overages. No paid fallback is configured. Domain renewal remains separate.
 
 Add agentlatex.com to Cloudflare, preserve existing DNS records, update its Namecheap
 nameservers to those Cloudflare assigns, and attach the Worker custom domain. Verify
