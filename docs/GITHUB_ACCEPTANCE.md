@@ -158,3 +158,13 @@ Wordmark follow-up: `f837293`, Worker version
 following T at the owner's request. Hosted asset packaging and live Chrome desktop
 visual verification passed. Only SVG/TeX artwork and copy-bank documentation changed;
 no compiler or application behavior checks were repeated.
+
+Splash refinement: `dd9f272`, Worker version
+`1ed17132-978d-41f5-a832-937215623a4a`, removes the duplicate corner logo from the
+signed-out splash, raises the central content and uses “Write with agents, revise
+with confidence.” The superscript n increased from 25pt to 28.75pt (15%), and the g
+uses sharper Nimbus Roman lettering. Client/Worker typechecks, hosted packaging,
+local desktop/360px-width emulation and live signed-out Chrome visual checks passed.
+The narrow emulation used an automatic 778px height; this is not a physical-device
+check. Workers Free was rechecked before deployment. Temporary tabs/windows and the
+preview server were closed. Authenticated navigation remains unchanged.
