@@ -190,3 +190,11 @@ Eight GitHub/template checks and six workspace checks passed. Client/Worker type
 and hosted packaging passed, including after the inline rename-error correction.
 No compiler stress matrix or broad suite was repeated. Workers Free / $0 / Current
 plan was confirmed in the account dashboard; no hosting or schema change was made.
+
+Deployed code `8186b81` as Worker version
+`f5d32337-6815-46c2-aa54-cc48144a71ec`. Public health returned OK and the deployed
+HTML/editor/workspace/CSS bytes matched the checked build. The Chrome production tab
+was signed out, so this slice's interactive file-action evidence is local; no new
+production-account workflow is claimed. The temporary fixture and verification tab
+were closed. The 15 local logo comparisons await the owner's selection; the live
+wordmark remains unchanged.
