@@ -152,3 +152,9 @@ health returned OK and deployed JS/CSS bytes matched the local build. Workers
 Free / $0 / Current plan was rechecked in the account dashboard before deployment.
 No compiler suite was repeated. Temporary preview server and verification tabs/windows
 were closed; user sessions and drafts were not changed.
+
+Wordmark follow-up: `f837293`, Worker version
+`e1959a04-2b5f-4e9e-984d-cd5542b45786`, raises and reduces the n and tightens the
+following T at the owner's request. Hosted asset packaging and live Chrome desktop
+visual verification passed. Only SVG/TeX artwork and copy-bank documentation changed;
+no compiler or application behavior checks were repeated.
