@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 140" role="img" aria-labelledby="title">
-  <title id="title">AgEnT LaTeX</title>
-  <rect width="540" height="140" rx="18" fill="#17181c"/>
-  <g font-family="Georgia, Times New Roman, serif" font-size="67" fill="#eeeef2">
-    <text x="35" y="88" letter-spacing="-5">AgEnT</text>
-    <text x="285" y="88" letter-spacing="-5">L<tspan font-size="45" dy="-21" dx="-2">a</tspan><tspan font-size="67" dy="21" dx="-4">T</tspan><tspan dy="14" dx="-4">E</tspan><tspan dy="-14" dx="-3">X</tspan></text>
-  </g>
-</svg>

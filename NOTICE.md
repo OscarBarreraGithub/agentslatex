@@ -44,3 +44,10 @@ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
+
+## Wordmark
+
+The wordmark is LaTeX-typeset artwork using Latin Modern (Computer Modern-derived)
+lettering, converted to SVG outlines. The font software is not bundled with the UI.
+Editable source and generated artwork are in `src/assets/wordmark.tex` and
+`src/assets/wordmark.svg`. Latin Modern: https://www.gust.org.pl/projects/e-foundry/latin-modern

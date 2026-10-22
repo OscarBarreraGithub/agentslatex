@@ -1,2 +1,4 @@
-/** Text stays accessible and sharp at every size; no font/image download. */
-export const wordmark = `<span class="wordmark" aria-label="AgEnT LaTeX"><span aria-hidden="true">AgEnT <span class="latex">L<span class="latex-a">a</span>T<span class="latex-e">e</span>X</span></span></span>`;
+import lettering from "./assets/wordmark.svg?raw";
+
+/** Real LaTeX outlines: consistent lettering without font loading or layout shifts. */
+export const wordmark = `<span class="wordmark" role="img" aria-label="AgEnT LaTeX">${lettering}</span>`;

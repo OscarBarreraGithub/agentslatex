@@ -98,7 +98,7 @@ that archive and this repository.
 
 ## The name: AgEnT LaTeX
 
-Our wordmark nods to TeX's typographic lettering: **g = Git**, **n = Notarized**.
+Our wordmark is typeset with LaTeX in Latin Modern and rendered as SVG outlines: **g = Git**, **n = Notarized**.
 Here, “notarized” means keeping a versioned record of changes and attribution;
 it is not a claim of legal notarization or cryptographic proof of authorship.
 

@@ -4,6 +4,17 @@ This is the website's copy bank, drawn from the owner's product requests. It is 
 a complete archive of those conversations. Add future ideas here and retain their
 delivery status; do not advertise planned behavior as shipped.
 
+## Current landing-page copy
+
+Headline: **“Write with agents. Revise with confidence.”**
+
+Supporting line: **“Compile, version control, and collaborate. All in your browser.”**
+
+The footer contains the Source link only. The AgEnT LaTeX wordmark is typeset with
+LaTeX/Latin Modern and shipped as inline SVG outlines, including the lowercase g and n;
+it does not depend on Georgia, system fonts or a font download. The editable logo
+source is `src/assets/wordmark.tex`; the generated artwork is alongside it.
+
 ## Lead selling point: real LaTeX compiled directly in your browser
 
 **Primary copy:** “Real LaTeX, compiled directly in your browser. No LaTeX installation required.”
