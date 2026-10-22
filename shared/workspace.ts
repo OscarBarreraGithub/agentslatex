@@ -24,3 +24,19 @@ export function fileDestination(source: string, folder: string, paths: string[])
   if (target !== source && paths.includes(target)) throw Error("That folder already contains a file with this name.");
   return target;
 }
+export function renamedPath(source: string, name: string, paths: string[]) {
+  name = name.trim();
+  if (!name || /[\\/]/.test(name)) throw Error("Enter a file name, not a folder path.");
+  const target = joinFolder(parentFolder(source), name);
+  if (target !== source && paths.some(p => p === target || p.startsWith(target + "/")))
+    throw Error("That name is already in use. Choose another name.");
+  return target;
+}
+export const missingExtension = (path: string) => {
+  const name = path.split("/").at(-1) ?? "";
+  return !!name && (!name.includes(".") || name.endsWith("."));
+};
+export function unlinkReference(path: string, references: string[], paths: string[]) {
+  return references.flatMap(ref => ref === path ? [] : inFolder(path, ref)
+    ? paths.filter(p => p !== path && inFolder(p, ref)) : [ref]);
+}

@@ -54,3 +54,14 @@ no claim that a real ChatGPT/Claude conversation was imported end to end.
 
 The deployed demo project's Prompts menu and selected-repository import instructions
 were checked at agentlatex.com. Deployment evidence is in GITHUB_ACCEPTANCE.md.
+
+## Model labels
+
+Work and import prompts include the model-tag convention even for older projects.
+New project root/nested agent instructions and latex-specs.md carry it too. Each
+paired passage block includes an ordinary `% agentlatex:author` JSON comment with
+model, version and reasoning; unavailable fields are unknown. Prior author records
+are preserved. Imports distinguish original from reconstructed writing. This is
+self-reported metadata; Show AI still uses the existing begin/end markers. Existing
+repository files are not silently rewritten, and no new identity verification or
+model-details UI is implied. The shared prompt source is `shared/authoring.ts`.

@@ -133,6 +133,27 @@ honest. Confirm included files and figures as well as the main source before tre
 an output as matched. The current UI's revision marker is local-session state, not a
 cryptographic provenance receipt.
 
+## Agent passage and model tags
+
+Follow the project's root AGENTS.md. Wrap each new or rewritten agent passage in
+paired comments, and add model metadata on its own line inside the block:
+
+```tex
+% agentlatex:begin agent id=unique-passage-id
+% agentlatex:author {"model":"unknown","version":"unknown","reasoning":"unknown"}
+The new or rewritten passage.
+% agentlatex:end id=unique-passage-id
+```
+
+Replace unknown with the exact model ID/displayed name, known version, and actual
+reasoning setting. Aliases are acceptable when that is all the session exposes;
+never infer a hidden version. Reasoning is separate from model (low/medium/high/xhigh,
+for example); use not-applicable only when known, otherwise unknown. Preserve earlier
+author records and append a distinct record when a different model edits the block.
+Imports retain the original model or unknown, not the importing model's identity.
+Newly reconstructed passages identify the reconstructing model. These ordinary
+comments do not affect compilation. They are self-reported, not identity verification.
+
 ## Scientific attribution and future Frankenstein review
 
 Compilation does not verify authorship, quotations, citations or scientific claims.

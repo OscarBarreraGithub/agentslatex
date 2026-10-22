@@ -42,3 +42,12 @@ Sources checked 2026-10-21:
 - [D1 limits and billing](https://developers.cloudflare.com/d1/platform/pricing/)
 - [Budget alerts do not cap usage](https://developers.cloudflare.com/billing/manage/budget-alerts/)
 - [R2 metered pricing](https://developers.cloudflare.com/r2/pricing/)
+
+
+## Usage snapshot — 2026-10-22
+
+Read-only dashboard inspection: account requests today 6,252/100,000; D1 rows read
+22.32k/5M and written 4.93k/100k; total D1 storage 6.41 MB/5 GB. AgentsLaTeX alone
+showed 248 invocations and zero errors in the preceding 24 hours, 383 D1 rows read,
+32 written, and 40.96 kB storage. Workers Free / $0 / Current plan was verified.
+These are a historical snapshot, not a concurrency benchmark or a future guarantee.

@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { workspaceConfig, workspacePaths, fileDestination } from "../shared/workspace";
+import { workspaceConfig, workspacePaths, fileDestination, renamedPath, missingExtension, unlinkReference } from "../shared/workspace";
+import { fileContent } from "../src/file-content";
 import { renderMarkdown } from "../src/markdown";
 import { templateFiles } from "../shared/template";
 
@@ -35,4 +36,24 @@ test("Markdown renders normal structure without raw HTML, executable links or im
   assert.ok(!html.includes('href="javascript:'));
   assert.ok(!html.includes('<img'));
   assert.ok(html.includes('rel="noopener noreferrer"'));
+});
+test("forgotten extensions can be renamed without overwriting a file or folder", () => {
+  const paths = ["paper/draft", "paper/main.tex", "paper/figures/a.png"];
+  assert.equal(renamedPath("paper/draft", "draft.tex", paths), "paper/draft.tex");
+  for (const name of ["main.tex", "figures", "../draft.tex", "sub/draft.tex", ""]) {
+    assert.throws(() => renamedPath("paper/draft", name, paths));
+  }
+  assert.equal(missingExtension("paper/draft"), true);
+  assert.equal(missingExtension("paper/draft.tex"), false);
+  const text = new TextEncoder().encode("A draft without an extension.");
+  assert.equal(fileContent("paper/draft", text), "A draft without an extension.");
+  assert.equal(fileContent("paper/draft.tex", text), "A draft without an extension.");
+  const binary = new Uint8Array([0, 255, 13]);
+  assert.equal(fileContent("paper/draft", binary), binary);
+});
+test("unlinking removes only the reference, retaining other links and original paths", () => {
+  const paths = ["paper/main.tex", "shared/a.tex", "shared/b.tex"];
+  assert.deepEqual(unlinkReference("shared/a.tex", ["shared/a.tex", "shared/b.tex"], paths), ["shared/b.tex"]);
+  assert.deepEqual(unlinkReference("shared/a.tex", ["shared"], paths), ["shared/b.tex"]);
+  assert.deepEqual(paths, ["paper/main.tex", "shared/a.tex", "shared/b.tex"]);
 });

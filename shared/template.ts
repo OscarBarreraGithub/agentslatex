@@ -1,5 +1,6 @@
 import latexSpecs from "./latex-specs.generated";
 import importSkill from "./import-skill.generated";
+import { modelTaggingInstructions } from "./authoring";
 export const taggingInstructions = `# Agent instructions — AgentsLaTeX
 
 AgentsLaTeX (agentlatex.com): LaTeX, TeX, PDF, manuscript, figures, bibliography,
@@ -18,6 +19,7 @@ must be enclosed by these ordinary TeX comments, on separate lines:
 
 \`\`\`tex
 % agentlatex:begin agent id=UNIQUE-ID
+% agentlatex:author {"model":"unknown","version":"unknown","reasoning":"unknown"}
 Your new or rewritten passage here.
 % agentlatex:end id=UNIQUE-ID
 \`\`\`
@@ -28,6 +30,8 @@ whole-document wrapper. Preserve untouched text and its existing tags. Do not la
 untouched human writing as Agent. Untagged text is displayed as Manual; this is a
 workflow convention, not proof of authorship. Never remove tags to hide agent work.
 If you edit part of a manual paragraph, isolate and tag your rewritten passage.
+
+${modelTaggingInstructions}
 
 Pull current GitHub changes before editing. Keep tags with their text in the same
 commit. Never force-push or overwrite another contributor's changes. Resolve conflicts
@@ -73,11 +77,11 @@ chat links or credentials. Git history records the commit; no self-referential S
         2,
       ) + "\n",
     "README.md":
-      "# My paper\n\nOpen this repository in [AgentsLaTeX](https://agentlatex.com).\n\nManuscript: `agentlatex/main.tex`. Images: `agentlatex/figures/`. Bibliography: `agentlatex/references.bib`.\n\nAgents: read **AGENTS.md** and **latex-specs.md**. Every agent-written passage must carry the paired Agent tags. Commit source and tags together.\n\nInvite collaborators in this repository’s GitHub settings. They sign in to AgentsLaTeX with their own GitHub account.\n",
+      "# My paper\n\nOpen this repository in [AgentsLaTeX](https://agentlatex.com).\n\nManuscript: `agentlatex/main.tex`. Images: `agentlatex/figures/`. Bibliography: `agentlatex/references.bib`.\n\nAgents: read **AGENTS.md** and **latex-specs.md**. Every agent-written passage must carry the paired Agent tags and an author comment recording model, version and reasoning (unknown if unavailable). Commit source and tags together.\n\nInvite collaborators in this repository’s GitHub settings. They sign in to AgentsLaTeX with their own GitHub account.\n",
     ".gitignore":
       "*.aux\n*.log\n*.out\n*.toc\n*.synctex.gz\n*.fls\n*.fdb_latexmk\n*.bbl\n*.blg\n.DS_Store\n.env*\n",
     "agentlatex/AGENTS.md":
-      "# Manuscript editing\n\nFollow ../AGENTS.md and ../latex-specs.md. Tag **every** new or rewritten agent passage with paired `% agentlatex:begin agent id=...` / `% agentlatex:end id=...` comments. Preserve untouched text and tags.\n",
+      "# Manuscript editing\n\nFollow ../AGENTS.md and ../latex-specs.md. Tag **every** new or rewritten agent passage with paired `% agentlatex:begin agent id=...` / `% agentlatex:end id=...` comments. Inside each block, include `% agentlatex:author` JSON recording model, version and reasoning as specified in the root instructions. Preserve untouched text, tags and earlier author records.\n",
     "agentlatex/CLAUDE.md": "@../AGENTS.md\n",
     "agentlatex/main.tex": String.raw`% Agents: read ../AGENTS.md. Tag every new or rewritten manuscript passage.
 \documentclass[11pt]{article}
@@ -92,6 +96,7 @@ chat links or credentials. Git history records the commit; no self-referential S
 \maketitle
 
 % agentlatex:begin agent id=starter-introduction
+% agentlatex:author {"model":"unknown","version":"unknown","reasoning":"unknown"}
 \section{Introduction}
 Your paper starts here.
 % agentlatex:end id=starter-introduction

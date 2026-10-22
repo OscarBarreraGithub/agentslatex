@@ -4,6 +4,7 @@ The main folder (`folder`) and default opening document (`main`) are separate fi
 in `.agentlatex.json`, edited from the settings icon beside Synced. New projects use
 `agentlatex/`; absent `main` resolves to `<folder>/main.tex`. Legacy configurations
 infer the folder from their existing main document. No existing files are moved. The folder picker uses a labeled ← Back button.
+The Default document and Compiler dropdowns have stronger two-pixel borders.
 Missing default documents show a message instead of silently compiling another file.
 
 The top file tree contains the main folder, with linked original repository files
@@ -14,20 +15,31 @@ TeX resolves relative inputs from the selected document's containing folder.
 
 New file asks for a name and creates it at the main-folder root. File moves inside
 that folder are browser drafts until Save to GitHub, reject occupied destinations,
-and update the default-document path if necessary. The Move file control offers the
-same operation with a folder picker for keyboard/touch use. Moving does not rewrite
+and update the default-document path if necessary. The file toolbar’s ⋯ menu offers Move with a folder picker for keyboard/touch use. Moving does not rewrite
 TeX input/image references. The existing stale-base/conflict protection still applies.
+
+Click the filename to rename it, or use ⋯ → Rename. Names stay in the current folder
+and cannot overwrite an existing file or directory. Renaming the default document
+updates its configured path. Text without an extension stays editable after reload;
+the right pane explains .tex/.md and offers Rename instead of displaying an old PDF.
+
+The same menu offers Delete for main-folder files and Unlink for linked files. Both
+ask for confirmation and change only the draft until Save to GitHub. Unlink removes
+the reference while retaining the original file. Delete removes the file; deleting
+the default picks another available .tex, or leaves the usual main.tex default to be
+created. Deleting/renaming an unsaved new file does not send a nonexistent-path deletion
+to GitHub. After moving or renaming, adjust any TeX references to that path yourself.
 
 Compile targets the selected `.tex`, including its filename in the tooltip. A chapter
 fragment without a standalone document wrapper fails visibly rather than building
 the default behind the user's back. PDF labels identify when the result belongs to
-another selected file. The purple ↓ PDF button downloads the actual compiled file using its name.
+another selected file. The neutral ↓ Download button uses purple text and downloads the actual compiled PDF using its name.
 
 Markdown displays beside its source and updates after editing; the action is Preview.
 HTML is escaped, unsafe link schemes are blocked, and images are shown as placeholders
 to avoid remote requests. No LaTeX-in-Markdown, PDF export, or executing embedded code.
 The 500 KB preview limit leaves larger sources editable. Other file types disable
-Compile, including the keyboard shortcut. “Agent tags” is now “Highlight agent”.
+Compile, including the keyboard shortcut. “Show AI” toggles tagged agent-passage highlighting.
 
 The single Upload arrow offers Files… or Folder… in a small chooser. Folder upload
 copies the selected folder's contents (not its enclosing folder)
@@ -38,7 +50,8 @@ It is not a clone and contains no Git commit history.
 
 Version-history UI remains AL-9 TODO. The wordmark uses g = Git and n = Notarized,
 meaning a recorded history/attribution convention, not cryptographic certification.
-All letters share the same serif font and text color; g and n have no special styling.
+The wordmark uses TeX-rendered letter outlines in one color; its superscript n and g
+letterform follow the owner’s current typography selection.
 
 ## Scoped verification
 

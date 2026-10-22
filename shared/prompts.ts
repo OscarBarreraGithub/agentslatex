@@ -1,5 +1,6 @@
 import type { Project } from "./contracts";
 import importSkill from "./import-skill.generated";
+import { modelTaggingInstructions } from "./authoring";
 
 export interface ProjectPrompt {
   id: string;
@@ -62,7 +63,7 @@ First read skills/agentslatex-import-conversation/SKILL.md and root IMPORTS.md i
 this repository. Keep an entry in IMPORTS.md of what was imported and where it went.
 Do not overwrite previous imports. The instructions below also work if these files
 have not yet been added to this project.\n\n` +
-        importSkill.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "").trim(),
+        importSkill.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "").trim() + "\n\n" + modelTaggingInstructions,
     },
     {
       id: "work",
@@ -86,7 +87,7 @@ pending updates. Do not claim to see unsaved browser text or browser build resul
 If a local compiler is available, follow latex-specs.md and check the changed document.
 Otherwise say it needs browser compilation. Finish with changed files, the commit link,
 validation actually performed, and any remaining issue. Wait for my task if none was
-given; opening the project does not authorize inventing manuscript changes.`,
+given; opening the project does not authorize inventing manuscript changes.\n\n` + modelTaggingInstructions,
     },
   ];
 }

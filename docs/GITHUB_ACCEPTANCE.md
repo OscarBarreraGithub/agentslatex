@@ -168,3 +168,25 @@ local desktop/360px-width emulation and live signed-out Chrome visual checks pas
 The narrow emulation used an automatic 778px height; this is not a physical-device
 check. Workers Free was rechecked before deployment. Temporary tabs/windows and the
 preview server were closed. Authenticated navigation remains unchanged.
+
+
+## File actions, author labels and toolbar cleanup — 2026-10-22
+
+Local Chrome fixture passed extensionless creation/editing, saved reload, visible
+rename-collision failure and corrected retry, preserved text after renaming to .tex,
+and compilation (0.37s, one page, excluding compiler loading). Delete → Save removed
+the synthetic file. Link → Save → Unlink → Save kept the original repository bytes
+unchanged and removed only its reference; fixture API read-back confirmed both cases.
+No private paper was used. Physical drag and second-account checks remain open.
+
+The toolbar uses Show AI and a neutral Download button with purple text. Settings has
+two-pixel dropdown borders and no redundant helper sentence. These were visually
+checked on desktop and 360×800 Chrome emulation. The author-comment template compiled
+in 0.91s (one page); Work prompts displayed model/version/reasoning instructions.
+New-project guides and existing-project Work/Import prompts now include honest model
+labels with unknown fallbacks. Existing repositories are not automatically rewritten.
+
+Eight GitHub/template checks and six workspace checks passed. Client/Worker typechecks
+and hosted packaging passed, including after the inline rename-error correction.
+No compiler stress matrix or broad suite was repeated. Workers Free / $0 / Current
+plan was confirmed in the account dashboard; no hosting or schema change was made.

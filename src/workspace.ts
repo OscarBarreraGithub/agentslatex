@@ -5,7 +5,8 @@ import { stex } from "@codemirror/legacy-modes/mode/stex";
 import { Compartment } from "@codemirror/state";
 import { folderPicker } from "./folder-picker";
 import { renderMarkdown } from "./markdown";
-import { parentFolder, inFolder, joinFolder, workspaceConfig, workspacePaths, fileDestination } from "../shared/workspace";
+import { parentFolder, inFolder, joinFolder, workspaceConfig, workspacePaths, fileDestination, renamedPath, missingExtension, unlinkReference } from "../shared/workspace";
+import { fileContent } from "./file-content";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { zipSync, strToU8 } from "fflate";
 import type { FileInput } from "texlyre-busytex";
@@ -22,11 +23,7 @@ import {
   type Snapshot,
   type Entry,
 } from "../shared/contracts";
-import { isTextFile, inferMain } from "./project.mjs";
-const textFile = (p: string) =>
-  isTextFile(p) ||
-  /\.(md|json|yaml|yml|gitignore)$/i.test(p) ||
-  p.endsWith(".gitignore");
+import { inferMain } from "./project.mjs";
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const bytes = (f: FileInput) =>
@@ -86,9 +83,9 @@ export async function mountEditor(
   app.innerHTML = `<header class="workspace-header"><button id="back" class="icon" aria-label="Back to projects">←</button><div class="project-title"><strong>${h(project.name)}</strong></div><div class="workspace-status"><span id="save-state" class="save-state">Synced</span><button id="settings" class="icon" aria-label="Project settings" title="Main folder and default document">⚙</button></div><div class="actions"><button id="refresh" title="Get changes from GitHub">Refresh</button><button id="sync">Save to GitHub</button><button id="build" class="primary">Compile <kbd>⌘ ↵</kbd></button><button id="stop" hidden>Stop</button></div></header>
  <div class="mobile-tabs"><button id="mobile-files">Files</button><button id="mobile-source" aria-pressed="true">Source</button><button id="mobile-pdf" aria-pressed="false">PDF</button></div>
  <main class="workspace"><aside class="file-pane"><div class="pane-bar"><span id="folder-label">Files</span><div class="actions"><button class="icon" id="new-file" title="New file" aria-label="New file">＋</button><button class="icon" id="upload" title="Upload files or a folder" aria-label="Upload" aria-haspopup="dialog">↑</button></div></div><nav id="file-tree" aria-label="Main folder files"></nav><button id="show-repo" class="quiet" aria-expanded="false">See entire repo</button><section id="repo-explorer" hidden><nav id="repo-tree" aria-label="Entire repository files"></nav></section><div class="file-bottom"><button id="mobile-refresh" class="quiet">Refresh from GitHub</button><a class="button quiet" href="${h(project.url)}/settings/access" target="_blank" rel="noopener">Collaborators ↗</a><a class="button quiet" href="${h(project.url)}" target="_blank" rel="noopener">GitHub ↗</a><button id="export" class="quiet" title="Download main-folder files, linked files and browser edits as a ZIP; excludes Git history">Download source ZIP ↓</button></div></aside>
- <section class="source-pane"><div class="pane-bar"><span id="filename"></span><div class="actions"><button id="move-file" class="icon" title="Move file" aria-label="Move file">↪</button><button id="tags" class="quiet" aria-pressed="false" title="Highlight tagged Agent passages">Highlight agent</button></div></div><div id="editor"></div><div id="file-preview" hidden></div><div class="pane-footer"><span id="main-label"></span></div></section>
- <section class="pdf-pane"><div class="pane-bar"><span><span id="preview-title">PDF</span> <span id="freshness" class="muted">Not compiled</span></span><div class="pagination"><button id="prev" class="icon" disabled aria-label="Previous PDF page">‹</button><input id="page" type="number" min="1" value="1" aria-label="PDF page" disabled><span id="count">/ —</span><button id="next" class="icon" disabled aria-label="Next PDF page">›</button><button id="download" class="primary" disabled aria-label="Download PDF" title="Download current PDF">↓ PDF</button></div></div>
- <div id="build-state" class="build-state" role="status" hidden><span id="build-label"></span><progress id="build-progress" hidden></progress><p id="build-error" hidden></p><button id="error-log" hidden>Show build log</button></div><article id="markdown-preview" class="markdown-preview" hidden></article><div id="pdf-scroll"><div id="pdf-empty"><span class="paper-glyph">Aa</span><p>Ready when you are.</p><button id="empty-build" class="primary">Compile</button></div><canvas id="pdf" hidden></canvas></div><div class="pane-footer"><span id="timing"></span><button id="log-toggle" class="quiet">Build log</button></div></section></main>
+ <section class="source-pane"><div class="pane-bar"><button id="filename" class="quiet" aria-label="Rename selected file"></button><div class="actions"><button id="file-actions" class="icon" title="File actions" aria-label="File actions" aria-haspopup="dialog">⋯</button><button id="tags" class="quiet" aria-pressed="false" title="Show tagged AI-written passages">Show AI</button></div></div><div id="editor"></div><div id="file-preview" hidden></div><div class="pane-footer"><span id="main-label"></span></div></section>
+ <section class="pdf-pane"><div class="pane-bar"><span><span id="preview-title">PDF</span> <span id="freshness" class="muted">Not compiled</span></span><div class="pagination"><button id="prev" class="icon" disabled aria-label="Previous PDF page">‹</button><input id="page" type="number" min="1" value="1" aria-label="PDF page" disabled><span id="count">/ —</span><button id="next" class="icon" disabled aria-label="Next PDF page">›</button><button id="download" disabled aria-label="Download PDF" title="Download current PDF">↓ Download</button></div></div>
+ <div id="build-state" class="build-state" role="status" hidden><span id="build-label"></span><progress id="build-progress" hidden></progress><p id="build-error" hidden></p><button id="error-log" hidden>Show build log</button></div><div id="extension-hint" hidden><p>Your file doesn't have an extension. It should end with <code>.tex</code> or <code>.md</code>.</p><button id="rename-missing">Rename file</button></div><article id="markdown-preview" class="markdown-preview" hidden></article><div id="pdf-scroll"><div id="pdf-empty"><span class="paper-glyph">Aa</span><p>Ready when you are.</p><button id="empty-build" class="primary">Compile</button></div><canvas id="pdf" hidden></canvas></div><div class="pane-footer"><span id="timing"></span><button id="log-toggle" class="quiet">Build log</button></div></section></main>
  <dialog id="editor-dialog"></dialog><input id="file-input" type="file" multiple hidden><input id="folder-input" type="file" multiple webkitdirectory hidden>`;
   let log = "No build yet.",
     cancelled = false;
@@ -197,7 +194,10 @@ export async function mountEditor(
       button.title = tex ? "Compile " + selected : md ? "Preview " + selected : "Select a .tex or .md file";
     }
     $<HTMLButtonElement>("tags").disabled = !tex;
-    $<HTMLButtonElement>("move-file").disabled = busy || syncing || refreshing || !project.writable || !inFolder(selected, folder);
+    const unavailable = busy || syncing || refreshing || !project.writable || !selected || !allPaths().includes(selected);
+    $<HTMLButtonElement>("file-actions").disabled = unavailable;
+    $<HTMLButtonElement>("filename").disabled = unavailable || !inFolder(selected, folder);
+    $<HTMLButtonElement>("rename-missing").disabled = unavailable || !inFolder(selected, folder);
   }
   function previewMarkdown() {
     if (disposed || !/\.md$/i.test(selected)) return;
@@ -206,14 +206,18 @@ export async function mountEditor(
   }
   function previewMode() {
     const md = /\.md$/i.test(selected);
+    const missing = missingExtension(selected), alternate = md || missing;
     $("markdown-preview").hidden = !md;
-    $("pdf-scroll").hidden = md;
-    $("preview-title").textContent = md ? "Markdown" : "PDF";
-    $("freshness").hidden = md;
-    document.querySelector<HTMLElement>(".pagination")!.hidden = md;
-    $("log-toggle").hidden = md;
-    $("timing").hidden = md;
-    if (md) { $("build-state").hidden = true; previewMarkdown(); }
+    $("extension-hint").hidden = !missing;
+    $("rename-missing").hidden = !inFolder(selected, folder);
+    $("pdf-scroll").hidden = alternate;
+    $("preview-title").textContent = md ? "Markdown" : missing ? "Preview" : "PDF";
+    $("freshness").hidden = alternate;
+    document.querySelector<HTMLElement>(".pagination")!.hidden = alternate;
+    $("log-toggle").hidden = alternate;
+    $("timing").hidden = alternate;
+    if (alternate) $("build-state").hidden = true;
+    if (md) previewMarkdown();
   }
   function freshness() {
     const same = builtPath === selected;
@@ -284,6 +288,12 @@ export async function mountEditor(
     dirty.add(".agentlatex.json");
   }
   function changed() { revision++; tree(); freshness(); updateSaveState(); scheduleDraft(); }
+  function removeDraftFile(path: string) {
+    files.delete(path);
+    // Unsaved new files have no GitHub entry to delete.
+    if (snapshot.files.some(f => f.path === path)) dirty.add(path);
+    else dirty.delete(path);
+  }
   async function linkFile(path: string) {
     if (!allPaths().includes(path) || busy || syncing || refreshing) throw Error("Try again when the project is ready.");
     if (!inFolder(path, folder) && !references.includes(path)) { references.push(path); writeSettings(); changed(); }
@@ -301,16 +311,57 @@ export async function mountEditor(
     if (busy || refreshing || syncing) throw Error("Wait for the current operation to finish.");
     if (!inFolder(path, folder) || (destination !== folder && !inFolder(destination, folder))) throw Error("Move files within the main folder.");
     const target = fileDestination(path, destination, allPaths());
+    await relocateFile(path, target);
+  }
+  async function relocateFile(path: string, target: string) {
+    if (busy || refreshing || syncing || fileLoads || !project.writable) throw Error("Wait for the project to be ready for editing.");
     if (path === target) return;
     const before = revision;
     const file = await getFile(path);
     if (revision !== before || busy || syncing || refreshing || allPaths().includes(target)) throw Error("The project changed. Please try the move again.");
-    files.set(target, { ...file, path: target }); files.delete(path);
-    dirty.add(path); dirty.add(target);
+    files.set(target, { path: target, content: fileContent(target, bytes(file)) }); removeDraftFile(path);
+    dirty.add(target);
     if (main === path) { main = target; writeSettings(); }
     if (selected === path) selected = target;
     changed(); await showFile(selected, true); await persist();
-    notify("File moved in your draft. Check any TeX paths that refer to it, then Save to GitHub.");
+    notify("File updated in your draft. Check any TeX paths that refer to it, then Save to GitHub.");
+  }
+  function renameSelected() {
+    const path = selected;
+    if (!path || !inFolder(path, folder) || !project.writable || busy || syncing || refreshing || fileLoads) return;
+    const d = dialog("Rename file", `<form id="rename-form"><label class="field">File name<input id="rename-path" value="${h(path.split("/").at(-1)!)}" required></label><p id="rename-error" class="inline-error" role="alert" hidden></p><button class="primary wide">Rename</button></form>`);
+    $<HTMLInputElement>("rename-path").select();
+    $("rename-form").onsubmit = e => {
+      e.preventDefault();
+      $("rename-error").hidden = true;
+      void (async () => {
+        const target = renamedPath(path, $<HTMLInputElement>("rename-path").value, allPaths());
+        await relocateFile(path, target); d.close();
+      })().catch(e => { $("rename-error").textContent = (e as Error).message; $("rename-error").hidden = false; });
+    };
+  }
+  function removeSelected() {
+    const path = selected, linked = !inFolder(path, folder);
+    if (!path || !project.writable || busy || syncing || refreshing || fileLoads) return;
+    const action = linked ? "Unlink" : "Delete";
+    const d = dialog(action + " file?", `<p>${h(path)}</p><p class="hint">${linked ? "The original file stays in the repository." : "Removed from your draft. GitHub changes only when you Save to GitHub."}${path === main ? " Choose another default document in settings afterward." : ""}</p><div class="dialog-actions"><button id="cancel-remove">Cancel</button><button id="confirm-remove" class="${linked ? "" : "danger"}">${action}</button></div>`);
+    $("cancel-remove").onclick = () => d.close();
+    $("confirm-remove").onclick = () => void (async () => {
+      if (busy || syncing || refreshing || fileLoads || !allPaths().includes(path)) throw Error("The project changed. Please try again.");
+      if (linked) {
+        references = unlinkReference(path, references, allPaths()); writeSettings();
+      } else {
+        const oldMain = main, oldReferences = JSON.stringify(references);
+        removeDraftFile(path);
+        references = unlinkReference(path, references, allPaths());
+        if (main === path) main = visiblePaths().find(p => /\.tex$/i.test(p)) ?? joinFolder(folder, "main.tex");
+        if (main !== oldMain || JSON.stringify(references) !== oldReferences) writeSettings();
+      }
+      selectionVersion++; d.close(); changed();
+      const next = visiblePaths().includes(main) ? main : visiblePaths().find(p => !p.endsWith("/.gitkeep"));
+      if (next) await showFile(next); else clearSelection();
+      await persist(); notify(linked ? "Unlinked in your draft. The original file is unchanged." : "Deleted from your draft. Save to GitHub when ready.");
+    })().catch(fail);
   }
   function dropTarget(el: HTMLElement, destination: string) {
     el.ondragover = e => {
@@ -335,7 +386,7 @@ export async function mountEditor(
     if (entry.size > 20 * 1024 * 1024)
       throw Error(entry.path + " exceeds the 20 MB per-file limit.");
     const r = await request(`/projects/${id}/file?sha=${entry.sha}`, { signal });
-    const content = textFile(entry.path) ? await r.text() : new Uint8Array(await r.arrayBuffer());
+    const content = fileContent(entry.path, new Uint8Array(await r.arrayBuffer()));
     return { path: entry.path, content };
   }
   async function getFile(path: string, signal?: AbortSignal) {
@@ -605,7 +656,7 @@ export async function mountEditor(
     $<HTMLButtonElement>("next").disabled = !pdf || page >= pdf.numPages;
   }
   async function render() {
-    if (!pdf || disposed || /\.md$/i.test(selected)) return;
+    if (!pdf || disposed || /\.md$/i.test(selected) || missingExtension(selected)) return;
     const v = ++renderVersion;
     renderTask?.cancel();
     try {
@@ -741,9 +792,7 @@ export async function mountEditor(
             );
             return {
               path,
-              content: textFile(path)
-                ? await f.text()
-                : new Uint8Array(await f.arrayBuffer()),
+              content: fileContent(path, new Uint8Array(await f.arrayBuffer())),
             };
           }),
       );
@@ -874,7 +923,7 @@ export async function mountEditor(
         files.set(path, {
           path,
           content: path.endsWith(".tex")
-            ? "% Agents: read the root AGENTS.md. Tag every new or rewritten agent passage.\n"
+            ? "% Agents: read the root AGENTS.md. Tag every new or rewritten agent passage, including model/version/reasoning author comments.\n"
             : "",
         });
         dirty.add(path);
@@ -892,15 +941,25 @@ export async function mountEditor(
     $("show-repo").setAttribute("aria-expanded", String(open));
     $("show-repo").textContent = open ? "Hide entire repo" : "See entire repo";
   };
-  $("move-file").onclick = () => {
+  function moveSelected() {
     let destination = folder;
     const d = dialog("Move file", `<p class="hint">${h(selected)}</p><div id="move-picker" class="folder-picker"></div><button id="confirm-move" class="primary wide">Move here</button>`);
     folderPicker($("move-picker"), allPaths().filter(p => inFolder(p, folder)), folder, p => { destination = p; });
     $("confirm-move").onclick = () => void moveFile(selected, destination).then(() => d.close()).catch(fail);
+  }
+  $("filename").onclick = $("rename-missing").onclick = renameSelected;
+  $("file-actions").onclick = () => {
+    const linked = !inFolder(selected, folder);
+    const d = dialog("File actions", `<p class="hint">${h(selected)}</p><div class="file-action-list">${linked ? "" : '<button id="rename-file">Rename…</button><button id="move-file">Move…</button>'}<button id="remove-file" class="${linked ? "" : "danger"}">${linked ? "Unlink" : "Delete"}…</button></div>`);
+    if (!linked) {
+      $("rename-file").onclick = () => { d.close(); renameSelected(); };
+      $("move-file").onclick = () => { d.close(); moveSelected(); };
+    }
+    $("remove-file").onclick = () => { d.close(); removeSelected(); };
   };
   $("settings").onclick = () => {
     let nextFolder = folder;
-    const d = dialog("Project settings", `<form id="settings-form"><label class="field">Main folder</label><div id="settings-folder" class="folder-picker"></div><label class="field">Default document<select id="main-select"></select></label><label class="field">Compiler<select id="engine-select"><option value="pdf">pdfLaTeX</option><option value="lua">LuaLaTeX</option><option value="xe">XeLaTeX</option></select></label><p class="hint">The default document opens with the project. Compile builds the selected file.</p><button class="primary wide">Done</button></form>`);
+    const d = dialog("Project settings", `<form id="settings-form"><label class="field">Main folder</label><div id="settings-folder" class="folder-picker"></div><label class="field">Default document<select id="main-select"></select></label><label class="field">Compiler<select id="engine-select"><option value="pdf">pdfLaTeX</option><option value="lua">LuaLaTeX</option><option value="xe">XeLaTeX</option></select></label><button class="primary wide">Done</button></form>`);
     function choices(preserve = false) {
       const defaultPath = joinFolder(nextFolder, "main.tex");
       $("main-select").innerHTML = `<option value="">main.tex (default)</option>` + allPaths().filter(p => inFolder(p, nextFolder) && /\.tex$/i.test(p) && p !== defaultPath).map(p => `<option value="${h(p)}">${h(nextFolder ? p.slice(nextFolder.length + 1) : p)}</option>`).join("");
