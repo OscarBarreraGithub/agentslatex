@@ -23,6 +23,7 @@ await writeFile(
 );
 await copyFile("LICENSE", "dist/LICENSE");
 await copyFile("NOTICE.md", "dist/NOTICE.md");
+await copyFile("public/alien-icon.png", "dist/alien-icon.png");
 await cp("public/docs", "dist/docs", { recursive: true });
 // Offer this deployed version's source, without runtime data or credentials.
 const paths = execFileSync(
