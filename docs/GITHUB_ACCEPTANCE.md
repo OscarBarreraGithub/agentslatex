@@ -2,14 +2,13 @@
 
 ## Current status
 
-**Live functional pilot at https://agentlatex.com; privacy requirement unresolved.**
-The owner now requires no operator access to private repositories. The deployed
-server-side GitHub token/proxy design does not provide that boundary; see SPEC.md.
-Do not onboard private papers under a no-access promise. No permissions or existing
-projects were revoked during this read-only privacy audit.
+**Live functional pilot at https://agentlatex.com.** The owner explicitly deferred
+encryption and chose to keep the current trusted-backend design. Its technical access
+to authorized GitHub repositories remains; see SPEC.md. Privacy redesign is a future
+item, not a pilot gate, and the site must not be presented as zero-access or end-to-end
+encrypted. Existing authentication, permissions and projects are unchanged.
 
-Owner-account
-Connect → private project → edit → Save to GitHub → Compile → reopen passed on the
+Owner-account Connect → private project → edit → Save to GitHub → Compile → reopen passed on the
 public deployment. A real external GitHub commit caused a stale save to be refused;
 explicit conflict resolution and a subsequent save succeeded. Second-account access
 still needs the first invited user. This is not a general production/load certification.

@@ -40,22 +40,28 @@ Papers live in GitHub plus browser drafts. No cloud compiler or cloud agent exec
 Workers/D1 must stay on Free: at capacity the service stops rather than billing
 overages. See docs/COST_POLICY.md. Domain registration/renewal is separate.
 
-## Privacy boundary — unresolved requirement
+## Privacy boundary — current decision
 
-The owner requires that service operators cannot access users' private repositories
-or manuscripts. The current deployed design does not meet that requirement. The
-backend decrypts GitHub user tokens and relays plaintext files; D1 also holds account
-and project metadata. Encrypting tokens at rest does not exclude the operator.
-The central GitHub App's installation permissions are another access capability even
-though current code uses only user tokens. Removing server token storage alone is
-insufficient. Browser compilation is local, but GitHub synchronization is not.
+After discussing operator access and encryption, the owner explicitly chose to leave
+the application as it is for now and defer encryption. This supersedes the earlier
+privacy redesign gate for the pilot; it does not establish a zero-access guarantee.
 
-Do not describe the current app as zero-access or invite private papers on that basis.
-The browser-only alternative needs direct GitHub requests and a replacement for the
-central App's repository grant; hosted JavaScript still requires operator trust.
-For the stronger boundary, serve a pinned local editor and perform Git authentication
-and synchronization locally. GitHub remains the trusted manuscript host. No privacy
-migration or permission revocation has been deployed yet; preserve current projects.
+The backend decrypts GitHub user tokens and relays plaintext files during reads and
+saves. D1 holds encrypted credentials, account and project metadata, not manuscript
+contents. The central GitHub App's installation permissions also grant access. Service
+operators therefore retain the technical ability to retrieve authorized repository
+contents. Browser compilation is local. Human inspection is not part of the normal
+workflow, and must require the affected user's explicit authorization. Do not record
+manuscript contents in application logs or analytics.
+
+Describe storage precisely: papers are saved in GitHub and drafts in the browser;
+manuscript contents are not persisted in the application's own database. Do not say
+“files are never saved,” “operators cannot read papers,” or “end-to-end encrypted.”
+
+Deferred AL-5: evaluate direct user-controlled GitHub authentication or client-side
+end-to-end encryption, including collaborator access, recovery and agent compatibility.
+GitHub identity alone is not a user-held encryption secret. No migration, permission
+revocation or change to the running authentication flow is authorized by this deferral.
 
 ## Acceptance and later work
 

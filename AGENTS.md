@@ -29,10 +29,11 @@ metered add-ons, or introduce paid fallbacks. At free limits, requests must stop
 preserve drafts. Budget alerts/rate limits are not spending caps. Read
 [docs/COST_POLICY.md](docs/COST_POLICY.md) before deployment or hosting changes.
 
-**Privacy requirement:** the service operator must not have repository/manuscript
-access. The current GitHub-proxy backend does not meet this requirement. Read the
-privacy boundary in SPEC.md before changing authentication or inviting private papers.
-Do not claim server-encrypted tokens provide zero operator access.
+**Privacy decision:** the owner has deferred encryption and approved retaining the
+current trusted-backend design for now. Read the privacy boundary in SPEC.md. Do not
+claim zero operator access or end-to-end encryption. Do not inspect another user's
+manuscript without their explicit authorization; backend access is not permission to
+browse their work. Keep manuscript contents out of application logs and analytics.
 
 Use TypeScript and pnpm. Keep the UI to a visible file tree, two panes and a small toolbar.
 User access tokens stay encrypted server-side; authorize every private repository read

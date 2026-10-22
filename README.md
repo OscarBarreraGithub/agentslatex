@@ -8,9 +8,11 @@ on your computer; no model or cloud compilation service is involved.
 
 **Live functional pilot:** https://agentlatex.com. GitHub sign-in, private project
 creation, save/reopen, browser compilation and conflict handling passed with the owner
-account. **Privacy redesign is required before onboarding private papers under a
-no-operator-access promise:** the current backend decrypts GitHub tokens and relays
-repository contents. See [current acceptance](docs/GITHUB_ACCEPTANCE.md).
+account. The owner has deferred encryption and retained the current design: our
+backend handles authorized GitHub credentials and file transfers, so it has technical
+access to connected repositories. Manuscript contents are not persisted in our own
+database; compilation stays in the browser. This is not end-to-end encryption.
+See [current acceptance](docs/GITHUB_ACCEPTANCE.md).
 
 ## The workflow
 

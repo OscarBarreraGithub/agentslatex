@@ -30,10 +30,11 @@ checks and sign-out. Targeted tests and browser journey; no repeat compiler matr
 - AL-4, root: mobile file-selection/Refresh fixes implemented; their browser recheck,
   915×412 layout and physical phone/Windows checks remain open.
 
-AL-5, root: privacy audit found central token/proxy and App installation access.
-Define and implement a user-controlled authentication/data path before claiming no
-operator access; see SPEC.md. Existing projects and permissions remain unchanged.
+- AL-5, root: deferred by the owner after the privacy discussion. Keep the current
+  backend and record its operator-access boundary accurately; see SPEC.md. No
+  encryption migration or permission revocation is underway.
 
-The functional owner workflow passed; privacy acceptance is now blocking private-paper onboarding. This is not evidence of multi-user
-load, second-account acceptance or complete device coverage. No further infrastructure
-purchase is needed for the pilot. Detailed PDF attribution remains a later slice.
+The functional owner workflow passed and the owner retained the current design for
+the pilot. This is not evidence of multi-user load, second-account acceptance or
+complete device coverage. No further infrastructure purchase is needed for the pilot.
+Detailed PDF attribution remains a later slice.
