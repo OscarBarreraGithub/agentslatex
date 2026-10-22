@@ -10,6 +10,14 @@ import into that existing project, not a request to create another repository.
 Assume the person is new to GitHub. Explain the next concrete step in plain language;
 pause for their login or a missing decision, not for every routine file operation.
 
+**Browser-agent integration is currently supported for repository owners only.**
+If the target belongs to another account and this is a browser GitHub-connector
+workflow, explain that limitation up front and use the downloadable-bundle handoff
+below. Do not send collaborators through repeated sign-ins or app-permission changes.
+Codex/Claude Code can import through their own authorized Git access; collaborators
+can also continue editing in agentlatex.com. This is a support limit, not a ban on
+collaborator access.
+
 ## Establish what is available
 
 Review this conversation and its attached/generated files to the extent your tools

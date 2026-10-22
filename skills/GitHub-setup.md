@@ -5,6 +5,22 @@ our shared project folder. Explain only the next necessary step in plain languag
 skip setup that is already complete. Signing into AgentsLaTeX does not authenticate
 a separate agent, connector or terminal.
 
+## Current browser-agent limitation: repository owners only
+
+For now, AgentsLaTeX supports ChatGPT/Claude browser GitHub integration only for
+repositories owned by the browser connector's signed-in GitHub account. If the user
+is a collaborator on another account's repository, point this out immediately:
+
+> Browser-agent GitHub integration currently supports repository owners only.
+> You can still edit this project in AgentsLaTeX or use Codex/Claude Code with your
+> GitHub access. For this browser conversation, I can prepare an import bundle.
+
+This is our current supported scope, not a claim that GitHub technically forbids
+collaborator access through every connector. Do not turn it into repeated sign-ins,
+broader permissions or owner-installation troubleshooting by default. Use the local
+Git route below or the import guide's bundle handoff. No custom MCP is being added
+for this limitation.
+
 ## Start with the capabilities available here
 
 Inspect your tools before asking the user to install or connect anything:
@@ -26,7 +42,7 @@ tool can target the supplied branch before promising a push. Preserve existing
 accounts and local work. Do not create a replacement repository if access is denied;
 guide the user to accept the collaborator invitation or request access from its owner.
 
-## The repository opens on GitHub or AgentsLaTeX, but this connector returns 404
+## The repository opens elsewhere, but this connector returns 404
 
 These are separate permissions: the person's GitHub access, AgentsLaTeX's GitHub App,
 and the agent product's GitHub App. A collaborator invitation grants the person access;
@@ -38,21 +54,14 @@ metadata and a known file such as .agentlatex.json on the supplied branch. If ac
 works through another authorized connection but not this connector, diagnose connector
 access before suggesting new paths or replacing project files.
 
-For a repository owned by another personal account, that owner must install/configure
-the agent product's GitHub App on the owning account and include this repository.
-The collaborator cannot select someone else's private repository in their own
-account's installation settings. For an organization, its app policy determines who
-can approve access. Guide the owner through GitHub Settings → Applications → Installed
-GitHub Apps → the app used by this agent → Configure, or the installation link shown
-by the connector. Select only the intended repository; do not change AgentsLaTeX's
-installation or request all repositories to repair the other app's access.
-
-After the owner grants access, retry the exact repository through the collaborator's
-connector; refresh/reconnect only if needed. Verify available write tools separately.
+For collaborator-owned repositories, explain the current support limitation above
+and offer the handoff. For the user's own repository, check that the agent product's
+GitHub App includes it, then retry the exact repository; refresh/reconnect only if
+needed. AgentsLaTeX's installation is separate. Verify write tools separately.
 If repository reads work but IMPORTS.md is absent, that is normal before the first
 import. An inaccessible repository is not evidence that every requested file is absent.
-If the connector still cannot access it, report the remaining limitation and use the
-downloadable-bundle/local-agent handoff without copying or making the repository public.
+If access still fails, use the downloadable-bundle/local-agent handoff without
+creating a replacement repository or making the repository public.
 
 Reference: [GitHub Apps act with the intersection of user and app permissions](https://docs.github.com/en/apps/using-github-apps/authorizing-github-apps).
 

@@ -7,6 +7,12 @@ after resuming/compaction, together with the repository's root and relevant nest
 AGENTS.md files. Preserve local preferences and the user's instructions. These docs
 describe the app; they do not authorize unrelated work or override the owner.
 
+**Current limitation: browser-agent GitHub integration supports repository owners
+only.** If this project belongs to another account, explain the limitation before
+trying repeated connection repairs. Offer an authorized Codex/Claude Code checkout
+or a conversation-import bundle. Collaborators can still edit in agentlatex.com;
+this is a supported-workflow limit, not a GitHub permission rule forbidding collaborators.
+
 For agent connection and GitHub setup, read [GitHub-setup.md](https://agentlatex.com/docs/GitHub-setup.md).
 For conversation imports, read [import-conversation.md](https://agentlatex.com/docs/import-conversation.md).
 Read [latex-specs.md](https://agentlatex.com/docs/latex-specs.md) before editing this paper. Compilation runs in the user's browser

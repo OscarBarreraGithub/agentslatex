@@ -112,6 +112,12 @@ Manuscript validation is separate from website compiler development checks.
 
 ## Collaborator-owned repository access — 2026-10-22
 
+Current owner decision: browser-agent GitHub integration supports repository owners
+only for now. The entry guide and import skill state this up front and direct
+collaborators to authorized Codex/Claude Code Git access or a downloadable import
+bundle. Editing directly in agentlatex.com remains available to collaborators.
+No custom MCP or repeated owner-app setup is part of this supported workflow.
+
 The GitHub setup guide distinguishes a person's collaborator access from each app's
 installation access. For a private repository owned by another personal account, its
 owner must grant the agent product's GitHub App access to that repository. AgentsLaTeX

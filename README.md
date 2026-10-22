@@ -14,6 +14,12 @@ access to connected repositories. Manuscript contents are not persisted in our o
 database; compilation stays in the browser. This is not end-to-end encryption.
 See [current acceptance](docs/GITHUB_ACCEPTANCE.md).
 
+**Browser-agent integration: repository owners only for now.** ChatGPT/Claude browser
+GitHub connectors are currently supported for repositories owned by the signed-in
+GitHub account. Collaborators can still edit in agentlatex.com and use Codex or Claude
+Code with their own GitHub access. For browser conversation imports into someone
+else's repository, use the downloadable-bundle handoff. [Agent setup guide](skills/GitHub-setup.md).
+
 ## The workflow
 
 - Connect to GitHub, then choose repositories the app may access.

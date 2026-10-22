@@ -3,6 +3,11 @@
 Account = GitHub identity. One project = one repository; new repositories are private
 and user-owned. Existing repositories are connected in place. GitHub controls access.
 No guest project editing on the hosted site. No custom agent MCP in this slice.
+Owner decision: browser-agent GitHub integration is supported for repository owners
+only for now. Collaborators use agentlatex.com, an authorized Codex/Claude Code Git
+workflow, or the browser-import bundle handoff. No new MCP implementation is planned
+for this limitation. The user confirmed Codex can edit the shared test repository;
+this does not establish browser-connector access or every two-user save scenario.
 
 Deliver connect → projects + New project / Connect existing → editor.
 Visible file tree, ordinary agentlatex/main/ files, browser compilation, clear progress/errors.

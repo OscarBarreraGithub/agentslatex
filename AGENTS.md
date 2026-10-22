@@ -5,6 +5,11 @@ left, the real compiled PDF on the right. TeX compilation runs on the user's dev
 inside a browser Web Worker, using TeXlyre BusyTeX 1.4.1 / TeX Live 2026. It does not
 call a model or send papers to a compilation server.
 
+**Current integration limit:** browser-agent GitHub integration is supported for
+repository owners only. For collaborator-owned repositories, explain this early and
+use an authorized Codex/Claude Code checkout or the import-bundle handoff. This does
+not restrict collaborators editing in agentlatex.com. See [GitHub setup](skills/GitHub-setup.md).
+
 **Before writing or importing LaTeX, read [latex-specs.md](latex-specs.md).** It is the
 agent authoring contract: supported engines/packages, figures, bibliography, TikZ,
 known failures, practical alternatives, and how to validate the result.
