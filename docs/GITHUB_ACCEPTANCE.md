@@ -429,3 +429,22 @@ capability-first setup, one canonical marked reminder source, proportional manus
 validation, and a concise Connect agent prompt. The title is “agent latex”; the favicon
 reuses the existing drawn-alien web icon. Workers Free / $0 / Current plan was checked
 again. No compiler/runtime behavior changed and no stress matrix was repeated.
+
+Deployed source a3ea7cd as Worker 111311c9-d7ee-48d6-a4af-38e409ec99dd. The live
+asset check caught the favicon missing because hosted Vite disables publicDir copying;
+43caa97 adds the explicit asset copy. Final Worker a2c12d58-eb6d-432c-95db-e4870568cb41
+serves the exact icon, revised guides, canonical reminder and editor-DdpcoS3E.js.
+This was one focused packaging correction, not a compiler change.
+
+Real GitHub test on the already-installed owner account: created a new private,
+synthetic agentlatex-setup-check-20261022 repository with README; selected only that
+additional repository while preserving the four prior installation selections. The
+live app listed it, initialized agentlatex/main through Connect existing, and opened
+the synced editor. GitHub read-back confirmed root config/instructions and manuscript
+folder while preserving README. Browser compilation rendered one page in 0.82 seconds;
+title and alien favicon were visually confirmed. The synthetic private project is
+retained for inspection; no real manuscript was used. This verifies the real creation,
+selected-access and initialization components, but uses an existing installation and
+Connect existing rather than the full fresh-account fallback. The owner was asked to
+retry that original failing account; its first-installation check remains pending.
+The isolated 4394 fixture was stopped; the owner's 4393 preview remains untouched.
