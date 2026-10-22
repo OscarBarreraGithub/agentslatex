@@ -134,7 +134,7 @@ export async function mountEditor(
     doc: "",
     extensions: [
       basicSetup,
-      lineNumbers({ domEventHandlers: { dblclick: (view, line) => {
+      lineNumbers({ domEventHandlers: { click: (view, line) => {
         if (!/\.tex$/i.test(selected)) return false;
         void forwardSync(view.state.doc.lineAt(line.from).number).catch(fail);
         return true;

@@ -308,6 +308,8 @@ h2 {
   gap: 14px;
   color: var(--muted);
 }
+.session-error { padding: 24px; text-align: center; }
+.session-error p { margin-bottom: 16px; }
 .spinner {
   border: 2px solid #3b3b46;
   border-top-color: #c5bef0;

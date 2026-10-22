@@ -302,3 +302,18 @@ available because the owner has it open in their own browser tab; it contains on
 synthetic fixture projects. Version-history UI and full Frankenstein attribution
 remain deferred; physical Windows/phone, real collaborator and large GitHub import
 acceptance remain explicitly unverified rather than inferred from local fixtures.
+
+## Refresh and navigation follow-up — 2026-10-22
+
+Startup now checks the session before rendering the signed-out landing page. Chrome
+with a 3.5-second synthetic session delay showed only the neutral loading indicator
+on authenticated navigation and refresh, followed by the project list. A synthetic
+500 response showed Try again (not the splash), and retry restored the list. Sign-out
+still reached the landing page after the 401 response. Project rows now omit the
+owner/branch subtitle; the account remains in the header.
+
+One click on source line number 12 moved the cached synthetic PDF from page 200 to
+the matching passage on page 3. PDF-to-source remains double-click. Client/Worker
+typechecks and hosted build passed; no compiler or cache policy changes and no
+compiler stress-suite rerun. PDF retention remains latest-per-project, capped at
+five builds / 64 MiB, separate from drafts.

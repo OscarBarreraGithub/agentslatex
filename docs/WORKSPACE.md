@@ -100,7 +100,8 @@ Renaming still does not rewrite references in other source files automatically.
 
 ## Switching projects and cached PDFs
 
-Home shows project rows, newest GitHub push first, with the saved update time. A
+Home shows project names and saved update times, newest GitHub push first, without
+the repeated owner/branch subtitle. The signed-in account remains in the header. A
 per-GitHub-user project-list cache appears after session validation, then refreshes
 in the background. Opening a project always rechecks GitHub authorization and its
 snapshot. Clean file bytes are reused only for matching blob hashes; unsaved drafts
@@ -108,6 +109,9 @@ remain separate. Connect existing lists authorized unlinked repos by default, wi
 already-connected projects in a collapsed section that opens the existing editor.
 
 GitHub connection lands directly on Your projects, without an introductory chooser.
+Refresh checks the session on a neutral loading screen; the splash appears only
+after a signed-out response. A failed session check offers Try again, preserving
+the existing session and local drafts rather than presenting it as a sign-out.
 Sign out removes the current server session, expires its cookie and clears that user's
 cached project list. Local drafts remain scoped to the user so signing out does not
 discard unsaved work. Connecting again always opens GitHub's account picker; it does
@@ -130,8 +134,8 @@ from hyperref); external links open separately. The upstream rendering queue buf
 nearby pages and releases distant canvases. Each canvas is limited to 4 MiPixels;
 page placeholders remain lightweight. No PDF scripting or annotation-editing UI.
 
-Double-click PDF text to jump to the corresponding source line. Double-click a TeX
-line number to locate it in the PDF with a temporary soft glow. Normal double-click
+Double-click PDF text to jump to the corresponding source line. Click a TeX
+line number once to locate it in the PDF with a temporary soft glow. Normal double-click
 word selection in the source is preserved. There is no Show in PDF button/menu.
 SyncTeX comes from the browser build and is bound to that build's inputs. If source
 has changed, compile again before navigation. Included/linked files resolve by exact

@@ -65,7 +65,7 @@ async function projects() {
         .slice().sort((a, b) => (Date.parse(b.updatedAt ?? "") || 0) - (Date.parse(a.updatedAt ?? "") || 0))
         .map(
           (p) =>
-            `<button class="project-card" data-project="${p.id}"><span class="project-info"><strong>${h(p.name)}</strong><small>${h(p.owner)} / ${h(p.branch)}</small></span><span class="project-updated" title="Last saved update on GitHub">${p.updatedAt && Number.isFinite(Date.parse(p.updatedAt)) ? `Updated ${h(new Date(p.updatedAt).toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}` : ""}</span><span class="arrow" aria-hidden="true">→</span></button>`,
+            `<button class="project-card" data-project="${p.id}"><span class="project-info"><strong>${h(p.name)}</strong></span><span class="project-updated" title="Last saved update on GitHub">${p.updatedAt && Number.isFinite(Date.parse(p.updatedAt)) ? `Updated ${h(new Date(p.updatedAt).toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}` : ""}</span><span class="arrow" aria-hidden="true">→</span></button>`,
         )
         .join("")
     : `<div class="empty-projects"><span class="empty-symbol">＋</span><h2>A place for your next paper.</h2><button class="primary" id="first-project">Create a project</button></div>`;
@@ -232,7 +232,7 @@ async function openProject(id: number) {
     app.innerHTML = `<div class="loading-screen"><p>${h((e as Error).message)}</p><a class="button primary" href="/?project=${id}">Reload project</a><a class="button" href="/">Back to projects</a></div>`;
   }
 }
-async function start() {
+function landing() {
   app.innerHTML = `<div class="landing"><div class="landing-main"><div class="hero-wordmark">${wordmark}</div><h1>Write with agents, revise with confidence.</h1><p>Compile, version control, and collaborate. All in your browser.</p><a class="button primary connect-button" href="/api/auth/login"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 .7a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.2.8-.6v-2.1c-3.3.7-4-1.4-4-1.4-.5-1.3-1.3-1.6-1.3-1.6-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.4-1.3-5.4-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11.2 11.2 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.8 5.5-5.4 5.8.4.4.8 1.1.8 2.2v3c0 .4.2.7.8.6A11.5 11.5 0 0 0 12 .7Z"/></svg>Connect to GitHub</a></div><footer><a href="https://github.com/OscarBarreraGithub/agentslatex" target="_blank" rel="noopener noreferrer">Source</a></footer></div>`;
   if (new URLSearchParams(location.search).get("signin") === "retry")
     toast(
@@ -245,14 +245,21 @@ async function start() {
     note.textContent = "Signed out. Connect again to choose a GitHub account.";
     document.querySelector(".connect-button")!.after(note);
   }
+}
+async function start() {
+  app.innerHTML = '<div class="loading-screen" role="status" aria-label="Opening AgentsLaTeX"><span class="spinner" aria-hidden="true"></span></div>';
   try {
     me = await api<Me>("/me");
-    const params = new URLSearchParams(location.search);
-    const id = Number(params.get("project"));
-    if (id > 0) await openProject(id);
-    else await projects();
   } catch (e) {
-    if (!(e instanceof RequestError && e.status === 401)) failure(e);
+    if (e instanceof RequestError && e.status === 401) landing();
+    else {
+      app.innerHTML = '<div class="loading-screen"><div class="session-error"><p role="alert">Couldn’t check your sign-in. Please try again.</p><button id="retry-session">Try again</button></div></div>';
+      $("retry-session").onclick = () => void start();
+    }
+    return;
   }
+  const id = Number(new URLSearchParams(location.search).get("project"));
+  if (id > 0) await openProject(id);
+  else await projects().catch(failure);
 }
 void start();
