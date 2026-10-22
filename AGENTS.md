@@ -20,8 +20,9 @@ skill as the source of truth; regenerate its shared string with scripts/prepare-
 Keep source as normal `.tex`, `.bib`, and image files. Keep original papers intact.
 Imported files are browser copies: saving a draft does not update their disk files.
 Use Save to GitHub for a versioned checkpoint, Refresh for collaborator updates, and
-Export for a source ZIP. Never force-push. Preserve drafts when synchronization fails.
+Download source ZIP for a portable source bundle. Never force-push. Preserve drafts when synchronization fails.
 Read docs/GITHUB_ACCEPTANCE.md before claiming the hosted workflow is ready.
+Main-folder, default-document and preview behavior is documented in docs/WORKSPACE.md.
 
 This repository is independent of SWA. Do not change other apps, accounts, running
 agents, or deployments. Private papers and generated builds belong in ignored data/.

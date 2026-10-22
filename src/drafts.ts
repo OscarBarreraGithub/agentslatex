@@ -7,6 +7,8 @@ export interface ProjectDraft {
   dirty: string[];
   selected: string;
   main: string;
+  folder?: string;
+  references?: string[];
   engine: "pdf" | "lua" | "xe";
 }
 export async function projectDraft(

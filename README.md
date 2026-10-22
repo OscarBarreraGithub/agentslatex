@@ -1,4 +1,4 @@
-# AgentsLaTeX
+# AgEnT LaTeX
 
 **Agents: read [AGENTS.md](AGENTS.md), then [latex-specs.md](latex-specs.md).**
 
@@ -19,18 +19,27 @@ See [current acceptance](docs/GITHUB_ACCEPTANCE.md).
 - Connect to GitHub, then choose repositories the app may access.
 - **New project** creates a private repository with a working paper and agent guides.
   **Connect existing** preserves an existing repository's layout and adds instructions.
-- Pick files from the visible tree. Upload files/folders into the paper; originals on
-  disk are untouched. Settings selects the main document and engine.
+- The tree opens your main folder. **See entire repo** adds a second explorer; files
+  there open on GitHub, or can be linked without copying. New files start in the main
+  folder and can be moved into its subfolders.
+- The settings icon beside Synced selects the main folder, default opening document
+  and engine separately. New projects use `agentlatex/main.tex`; existing layouts stay
+  in place. Without a specified document, the default is `main.tex` in that folder.
+- **Import local folder…** copies local folder contents into the main folder, preserving
+  subfolders. It does not watch/sync the disk folder. **Save to GitHub** publishes them.
+- **Download source ZIP** includes the main folder, linked files, browser edits and
+  agent/configuration guides, preserving repository paths. It contains no Git history.
 - Browser drafts save automatically. **Save to GitHub** makes a versioned checkpoint;
   clean projects refresh automatically while visible. With a draft, **Updates available**
   lets you review incoming changes. Overlapping file changes need an explicit
   choice; saves never force-push. Export downloads a source ZIP.
-- **Compile** shows loading/building progress and errors. The previous PDF is labeled
+- **Compile** builds the selected `.tex`; `.md` shows a Markdown preview. Other file
+  types disable Compile. Progress and errors stay visible. The previous PDF is labeled
   when stale. Stop cancels a build; corrected source can compile again.
 - Invite collaborators using GitHub's repository settings. They use their own GitHub
   login. GitHub controls repository access; the app cannot grant broader access.
 - Codex/Claude agents edit and commit ordinary files in that same repository. Root and
-  nested instructions require paired Agent comments. **Agent tags** highlights those
+  nested instructions require paired Agent comments. **Highlight agent** highlights those
   source passages; untagged text is Manual. No custom MCP is needed for this workflow.
 - **Prompts** in the project header supplies copyable instructions to set up GitHub,
   import a conversation's useful files and summary, or work on this project. Each
@@ -85,3 +94,19 @@ the site’s Source link opens that repository. The license is AGPL-3.0-or-later
 builds also retain the exact-build `/source.zip`, LICENSE
 and [third-party notices](NOTICE.md). Private manuscripts and credentials stay out of
 that archive and this repository.
+
+
+## The name: AgEnT LaTeX
+
+Our wordmark nods to TeX's typographic lettering: **g = Git**, **n = Notarized**.
+Here, “notarized” means keeping a versioned record of changes and attribution;
+it is not a claim of legal notarization or cryptographic proof of authorship.
+
+In TeX, the typesetting system behind LaTeX, the letters represent Greek tau,
+epsilon and chi (τ, ε, χ). T corresponds to tau, pronounced like an English t;
+X corresponds to chi, with the ch sound of Scottish “loch” or German “Bach”.
+TeX is therefore traditionally pronounced approximately “tekh” (/tɛx/), not “tecks”.
+Donald Knuth's distinctive logo lowers the E and brings the letters close together.
+The name evokes Greek *technē*, meaning art or craft. See the
+[TeX Users Group's history](https://www.tug.org/whatis.html) and
+[Knuth's TeXbook source](https://ctan.org/tex-archive/systems/knuth/dist/tex/texbook.tex).

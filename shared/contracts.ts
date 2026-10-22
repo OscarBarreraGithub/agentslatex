@@ -12,9 +12,12 @@ export const safePath = z
     "Use a project-relative path.",
   );
 export const sha = z.string().regex(/^[a-f0-9]{40}$/);
+export const folderPath = z.union([z.literal(""), safePath]);
 export const projectConfig = z.object({
   version: z.literal(1),
-  main: safePath,
+  folder: folderPath.optional(),
+  main: safePath.optional(),
+  references: z.array(safePath).default([]),
   engine: z.enum(["pdf", "lua", "xe"]).default("pdf"),
 });
 export const newProject = z.object({
@@ -28,7 +31,8 @@ export const newProject = z.object({
 });
 export const connectProject = z.object({
   repositoryId: z.number().int().positive(),
-  main: safePath,
+  folder: folderPath.optional(),
+  main: safePath.optional(),
   engine: z.enum(["pdf", "lua", "xe"]).default("pdf"),
 });
 export const saveProject = z.object({

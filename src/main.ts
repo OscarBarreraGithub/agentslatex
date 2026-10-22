@@ -1,12 +1,15 @@
 import { api, escapeHtml as h, RequestError } from "./api";
 import type { Me, Project, Repo, Entry } from "../shared/contracts";
 import "./style.css";
+import { wordmark } from "./brand";
+import { folderPicker } from "./folder-picker";
+import { inFolder, joinFolder } from "../shared/workspace";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 let me: Me;
 let dispose: undefined | (() => Promise<void>);
-const mark = '<span class="mark" aria-hidden="true">a<span>λ</span></span>';
+const mark = wordmark;
 export function toast(message: string) {
   let n = document.getElementById("toast");
   if (!n) {
@@ -25,7 +28,7 @@ function failure(e: unknown) {
   toast(e instanceof Error ? e.message : String(e));
 }
 function shell() {
-  app.innerHTML = `<header class="home-header"><a class="brand" href="/">${mark}<span>agentslatex</span></a><div class="account"><span>${h(me.user.login)}</span><button id="logout" class="quiet">Sign out</button></div></header><main id="home" class="home"></main><dialog id="modal"></dialog>`;
+  app.innerHTML = `<header class="home-header"><a class="brand" href="/">${mark}</a><div class="account"><span>${h(me.user.login)}</span><button id="logout" class="quiet">Sign out</button></div></header><main id="home" class="home"></main><dialog id="modal"></dialog>`;
   $("logout").onclick = () =>
     void (async () => {
       await dispose?.();
@@ -130,19 +133,19 @@ async function existing() {
             const tree = await api<{ files: Entry[] }>(
               "/repositories/" + id + "/files",
             );
-            const tex = tree.files.filter((f) => f.path.endsWith(".tex"));
-            if (!tex.length)
-              throw Error(
-                "This repository has no .tex file yet. Add your paper in GitHub, then connect it.",
-              );
-            const preferred =
-              tex.find((f) => f.path === "paper/main.tex") ??
-              tex.find((f) => f.path === "main.tex") ??
-              tex[0];
+            let folder = "agentlatex";
             const dialog = modal(
-              "Choose the main document",
-              `<form id="connect-form"><label class="field">Main .tex file<select id="connect-main">${tex.map((f) => `<option ${f.path === preferred.path ? "selected" : ""}>${h(f.path)}</option>`).join("")}</select></label><p class="hint">Keeps your files in place and adds agent instructions.</p><button class="primary wide" id="connect-submit">Connect project</button></form>`,
+              "Choose your main folder",
+              `<form id="connect-form"><div id="connect-folder" class="folder-picker"></div><label class="field">Default document<select id="connect-main"></select></label><p class="hint">Files stay in place. A new agentlatex folder starts with main.tex.</p><button class="primary wide" id="connect-submit">Connect project</button></form>`,
             );
+            const fillDocuments = () => {
+              const preferred = joinFolder(folder, "main.tex");
+              $("connect-main").innerHTML = `<option value="">main.tex (default)</option>` + tree.files
+                .filter(f => inFolder(f.path, folder) && /\.tex$/i.test(f.path) && f.path !== preferred)
+                .map(f => `<option value="${h(f.path)}">${h(folder ? f.path.slice(folder.length + 1) : f.path)}</option>`).join("");
+            };
+            folderPicker($("connect-folder"), tree.files.map(f => f.path), folder, value => { folder = value; fillDocuments(); });
+            fillDocuments();
             $("connect-form").onsubmit = (e) => {
               e.preventDefault();
               void (async () => {
@@ -152,7 +155,8 @@ async function existing() {
                 try {
                   const p = await api<Project>("/connect", {
                     repositoryId: id,
-                    main: $<HTMLSelectElement>("connect-main").value,
+                    folder,
+                    main: $<HTMLSelectElement>("connect-main").value || undefined,
                   });
                   dialog.close();
                   await openProject(p.id);
@@ -191,7 +195,7 @@ async function openProject(id: number) {
   }
 }
 async function start() {
-  app.innerHTML = `<div class="landing"><a class="brand" href="/">${mark}<span>agentslatex</span></a><div class="landing-main"><div class="hero-mark">a<span>λ</span></div><h1>Your next paper.</h1><p>LaTeX, together.</p><a class="button primary connect-button" href="/api/auth/login"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 .7a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.2.8-.6v-2.1c-3.3.7-4-1.4-4-1.4-.5-1.3-1.3-1.6-1.3-1.6-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.4-1.3-5.4-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11.2 11.2 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.8 5.5-5.4 5.8.4.4.8 1.1.8 2.2v3c0 .4.2.7.8.6A11.5 11.5 0 0 0 12 .7Z"/></svg>Connect to GitHub</a></div><footer>Built around your files. Compiled in your browser. <a href="https://github.com/OscarBarreraGithub/agentslatex" target="_blank" rel="noopener noreferrer">Source</a></footer></div>`;
+  app.innerHTML = `<div class="landing"><a class="brand" href="/">${mark}</a><div class="landing-main"><div class="hero-wordmark">${wordmark}</div><h1>Your next paper.</h1><p>LaTeX, together.</p><a class="button primary connect-button" href="/api/auth/login"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 .7a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.2.8-.6v-2.1c-3.3.7-4-1.4-4-1.4-.5-1.3-1.3-1.6-1.3-1.6-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.4-1.3-5.4-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11.2 11.2 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.8 5.5-5.4 5.8.4.4.8 1.1.8 2.2v3c0 .4.2.7.8.6A11.5 11.5 0 0 0 12 .7Z"/></svg>Connect to GitHub</a></div><footer>Built around your files. Compiled in your browser. <a href="https://github.com/OscarBarreraGithub/agentslatex" target="_blank" rel="noopener noreferrer">Source</a></footer></div>`;
   if (new URLSearchParams(location.search).get("signin") === "retry")
     toast(
       "Sign-in did not finish. Please connect to GitHub again. Your drafts are safe.",

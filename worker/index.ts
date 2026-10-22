@@ -8,6 +8,7 @@ import {
   type Project,
   type Entry,
 } from "../shared/contracts";
+import { parentFolder, inFolder, joinFolder } from "../shared/workspace";
 import { templateFiles, taggingInstructions } from "../shared/template";
 import { ApiError, github, listRepos, readTree, commitFiles } from "./github";
 import {
@@ -265,17 +266,19 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
         "Start paper with AgentsLaTeX",
       );
     }
-    await register(env, repo, "paper/main.tex", "pdf");
+    await register(env, repo, "agentlatex/main.tex", "pdf");
     return json((await projectFor(env, token, repo.id)).project, 201);
   }
   if (path === "/api/connect" && req.method === "POST") {
     const input = connectProject.parse(await body(req));
     const repo = await repoFor(token, input.repositoryId, true);
     const tree = await readTree(token, repo);
-    if (
-      !tree.files.some((f) => f.path === input.main && f.path.endsWith(".tex"))
-    )
-      throw new ApiError(400, "Choose a .tex file from this repository.");
+    const folder = input.folder ?? (input.main ? parentFolder(input.main) : "agentlatex");
+    const main = input.main ?? joinFolder(folder, "main.tex");
+    if (!inFolder(main, folder) || !/\.tex$/i.test(main))
+      throw new ApiError(400, "Choose a .tex document inside the main folder.");
+    if (input.main && !tree.files.some(f => f.path === main))
+      throw new ApiError(400, "That document was not found. Choose it again.");
     const existing = await env.DB.prepare(
       "SELECT repo_id FROM projects WHERE repo_id=?",
     )
@@ -283,7 +286,7 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
       .first();
     if (existing) return json((await projectFor(env, token, repo.id)).project);
     const files: Record<string, string> = {};
-    const templates = templateFiles();
+    const templates = templateFiles(folder);
     for (const name of ["AGENTS.md", "CLAUDE.md", "latex-specs.md", "skills/agentslatex-import-conversation/SKILL.md", "IMPORTS.md"]) {
       const found = tree.files.find((f) => f.path === name);
       if (!found) files[name] = templates[name];
@@ -297,13 +300,13 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
           files[name] = text + "\n\n@AGENTS.md\n";
       }
     }
-    if (!tree.files.some((f) => f.path === ".agentlatex.json"))
-      files[".agentlatex.json"] =
-        JSON.stringify(
-          { version: 1, main: input.main, engine: input.engine },
-          null,
-          2,
-        ) + "\n";
+    if (!tree.files.some(f => f.path === main)) {
+      for (const [path, content] of Object.entries(templates))
+        if (inFolder(path, folder) && !tree.files.some(f => f.path === path) && !(path in files)) files[path] = content;
+    }
+    const priorConfig = tree.files.find(f => f.path === ".agentlatex.json");
+    const preserved = priorConfig ? JSON.parse(await blobText(token, repo, priorConfig)) : {};
+    files[".agentlatex.json"] = JSON.stringify({ ...preserved, version: 1, folder, main, engine: input.engine }, null, 2) + "\n";
     if (Object.keys(files).length)
       await putTexts(
         token,
@@ -313,7 +316,7 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
         files,
         "Connect paper to AgentsLaTeX",
       );
-    await register(env, repo, input.main, input.engine);
+    await register(env, repo, main, input.engine);
     return json((await projectFor(env, token, repo.id)).project);
   }
   const repository = path.match(/^\/api\/repositories\/(\d+)\/files$/);

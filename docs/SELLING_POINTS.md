@@ -30,8 +30,8 @@ summary are the default.
 | Collaborate through GitHub | “Invite collaborators to the same private project.” | GitHub controls access; second-account acceptance still outstanding. |
 | Compile on your device | “Build PDFs in your browser without a cloud compilation service.” | Implemented; substantial first compiler download, device-dependent speed. |
 | Show agent-written passages | “Keep track of which passages your agent wrote.” | Agent comment convention and source highlights; compliance-dependent, not proof. |
-| One clean workspace | “Focus on your paper while keeping the rest of the repository within reach.” | Planned folder selection and two explorers. |
-| Reuse existing figures | “Use the original file, wherever it lives in your repository.” | Planned workspace references; no copying or OS symlinks. |
+| One clean workspace | “Focus on your paper while keeping the rest of the repository within reach.” | Main-folder selection and optional second repository explorer. |
+| Reuse existing figures | “Use the original file, wherever it lives in your repository.” | References to original repository files; no copying or OS symlinks. |
 | Updates arrive automatically | “Your agent pushes; your paper catches up.” | Clean-project refresh every 30s active / 2min idle; drafts wait for explicit review. |
 | Trace and review scientific claims | “Follow a passage back to its sources and record your review.” | Later Frankenstein work; PDF evidence/approval UI not delivered. |
 

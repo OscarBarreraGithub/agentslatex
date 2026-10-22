@@ -26,7 +26,7 @@ test("save never writes when the remote base has advanced", async () => {
         repo,
         "main",
         base,
-        [{ path: "paper/main.tex", sha: next }],
+        [{ path: "agentlatex/main.tex", sha: next }],
         "Edit",
       ),
       /newer changes/,
@@ -64,7 +64,7 @@ test("save uses the exact parent and refuses a racing ref update", async () => {
         repo,
         "main",
         base,
-        [{ path: "paper/main.tex", sha: next }],
+        [{ path: "agentlatex/main.tex", sha: next }],
         "Edit",
       ),
       /changed while saving/,
@@ -93,13 +93,13 @@ test("unchanged remote files preserve local edits; only overlapping changes conf
 });
 test("template contains a working main, shared instructions and valid Agent markers", () => {
   const files = templateFiles();
-  assert.ok(files["paper/main.tex"].includes("\\documentclass"));
+  assert.ok(files["agentlatex/main.tex"].includes("\\documentclass"));
   assert.equal(files["CLAUDE.md"], "@AGENTS.md\n");
   assert.ok(files["AGENTS.md"].includes("Every manuscript passage"));
-  assert.ok(files["paper/AGENTS.md"].includes("every"));
-  assert.deepEqual(agentRanges(files["paper/main.tex"]).errors, []);
-  assert.equal(agentRanges(files["paper/main.tex"]).ranges.length, 1);
-  assert.equal(JSON.parse(files[".agentlatex.json"]).main, "paper/main.tex");
+  assert.ok(files["agentlatex/AGENTS.md"].includes("every"));
+  assert.deepEqual(agentRanges(files["agentlatex/main.tex"]).errors, []);
+  assert.equal(agentRanges(files["agentlatex/main.tex"]).ranges.length, 1);
+  assert.equal(JSON.parse(files[".agentlatex.json"]).main, "agentlatex/main.tex");
 });
 test("tag errors are explicit and unmarked text has no Agent range", () => {
   assert.deepEqual(agentRanges("Manual prose").ranges, []);

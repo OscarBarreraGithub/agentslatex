@@ -11,10 +11,21 @@ let created = false;
 const contents = new Map<string, Buffer>();
 const blobs = new Map<string, Buffer>();
 const hash = (b: Buffer) => createHash("sha1").update(b).digest("hex");
-for (const [p, s] of Object.entries(templateFiles()))
+for (const [p, s] of Object.entries(templateFiles("paper")))
   contents.set(p, Buffer.from(s));
+// Exercise a legacy project plus a selected standalone file with relative inputs.
+contents.set(".agentlatex.json", Buffer.from(JSON.stringify({ version: 1, main: "paper/main.tex", engine: "pdf" })));
+contents.set("paper/alternate.tex", Buffer.from(String.raw`\documentclass{article}
+\begin{document}
+SELECTED DOCUMENT TEST
+\input{sections/intro}
+\input{../shared/evidence}
+\end{document}`));
+contents.set("paper/sections/intro.tex", Buffer.from("Local relative input works."));
+contents.set("shared/evidence.tex", Buffer.from("Linked repository input works."));
+contents.set("paper/notes.md", Buffer.from("# Research notes\n\n**Markdown preview** with a list.\n\n- First result\n- Second result\n\n<script>alert('unsafe')</script>\n\n![External image](https://example.com/pixel)\n"));
 const project = {
-  id: 999991,
+  id: 999992,
   owner: "local-ui-fixture",
   name: "test-paper",
   branch: "main",
@@ -51,7 +62,7 @@ http
           : {};
         if (p === "/api/me")
           return send({
-            user: { id: 999991, login: "Local UI fixture" },
+            user: { id: 999992, login: "Local UI fixture" },
             installations: 1,
             installUrl: "#",
           });
@@ -63,7 +74,7 @@ http
           return send(project, 201);
         }
         if (p === "/api/repositories") return send([]);
-        if (p === "/api/projects/999991/head") return send({ revision: revision() });
+        if (p === "/api/projects/999992/head") return send({ revision: revision() });
         if (p.endsWith("/file")) {
           const b = blobs.get(u.searchParams.get("sha")!);
           res.writeHead(b ? 200 : 404, {
@@ -109,7 +120,7 @@ http
           rev++;
           return send({ revision: revision() });
         }
-        if (p === "/api/projects/999991")
+        if (p === "/api/projects/999992")
           return send({ project, revision: revision(), files: entries() });
         return send({ error: "Fixture route not found" }, 404);
       }

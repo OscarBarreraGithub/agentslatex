@@ -2,6 +2,10 @@ import { EditorView, basicSetup } from "codemirror";
 import { Decoration, ViewPlugin, type DecorationSet } from "@codemirror/view";
 import { StreamLanguage } from "@codemirror/language";
 import { stex } from "@codemirror/legacy-modes/mode/stex";
+import { Compartment } from "@codemirror/state";
+import { folderPicker } from "./folder-picker";
+import { renderMarkdown } from "./markdown";
+import { parentFolder, inFolder, joinFolder, workspaceConfig, workspacePaths, fileDestination } from "../shared/workspace";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { zipSync, strToU8 } from "fflate";
 import type { FileInput } from "texlyre-busytex";
@@ -15,7 +19,6 @@ import { AutoRefresh } from "./auto-refresh";
 import { agentRanges } from "../shared/tagging";
 import {
   safePath,
-  projectConfig,
   type Snapshot,
   type Entry,
 } from "../shared/contracts";
@@ -41,6 +44,8 @@ export async function mountEditor(
     project = snapshot.project,
     main = project.main,
     engine: Engine = project.engine;
+  let folder = parentFolder(main), references: string[] = [], builtPath = "", markdownTimer: ReturnType<typeof setTimeout> | undefined;
+  const language = new Compartment();
   let selected = main,
     files = new Map<string, FileInput>(),
     dirty = new Set<string>(),
@@ -67,6 +72,8 @@ export async function mountEditor(
     selected = saved.selected;
     main = saved.main;
     engine = saved.engine;
+    folder = saved.folder ?? parentFolder(main);
+    references = saved.references ?? [];
   }
   const compiler = new Compiler();
   let buildAbort: AbortController | undefined;
@@ -76,12 +83,12 @@ export async function mountEditor(
     pdfBytes: Uint8Array | undefined,
     page = 1,
     renderVersion = 0;
-  app.innerHTML = `<header class="workspace-header"><button id="back" class="icon" aria-label="Back to projects">←</button><div class="project-title"><strong>${h(project.name)}</strong><span>${h(project.owner)}</span></div><span id="save-state" class="save-state">Synced</span><div class="actions"><button id="refresh" title="Get changes from GitHub">Refresh</button><button id="sync">Save to GitHub</button><button id="build" class="primary">Compile <kbd>⌘ ↵</kbd></button><button id="stop" hidden>Stop</button></div></header>
+  app.innerHTML = `<header class="workspace-header"><button id="back" class="icon" aria-label="Back to projects">←</button><div class="project-title"><strong>${h(project.name)}</strong></div><div class="workspace-status"><span id="save-state" class="save-state">Synced</span><button id="settings" class="icon" aria-label="Project settings" title="Main folder and default document">⚙</button></div><div class="actions"><button id="refresh" title="Get changes from GitHub">Refresh</button><button id="sync">Save to GitHub</button><button id="build" class="primary">Compile <kbd>⌘ ↵</kbd></button><button id="stop" hidden>Stop</button></div></header>
  <div class="mobile-tabs"><button id="mobile-files">Files</button><button id="mobile-source" aria-pressed="true">Source</button><button id="mobile-pdf" aria-pressed="false">PDF</button></div>
- <main class="workspace"><aside class="file-pane"><div class="pane-bar"><span>Files</span><div class="actions"><button class="icon" id="new-file" title="New file" aria-label="New file">＋</button><button class="icon" id="upload" title="Upload files" aria-label="Upload files">↑</button></div></div><nav id="file-tree" aria-label="Project files"></nav><div class="file-bottom"><button id="mobile-refresh" class="quiet">Refresh from GitHub</button><button id="upload-folder">Upload folder</button><a class="button quiet" href="${h(project.url)}/settings/access" target="_blank" rel="noopener">Collaborators ↗</a><a class="button quiet" href="${h(project.url)}" target="_blank" rel="noopener">GitHub ↗</a><button id="export" class="quiet">Export project ↓</button></div></aside>
- <section class="source-pane"><div class="pane-bar"><span id="filename"></span><button id="tags" class="quiet" aria-pressed="false" title="Highlight tagged Agent passages">Agent tags</button></div><div id="editor"></div><div id="file-preview" hidden></div><div class="pane-footer"><span id="main-label"></span><button id="settings" class="quiet">Settings</button></div></section>
- <section class="pdf-pane"><div class="pane-bar"><span>PDF <span id="freshness" class="muted">Not compiled</span></span><div class="pagination"><button id="prev" class="icon" disabled aria-label="Previous PDF page">‹</button><input id="page" type="number" min="1" value="1" aria-label="PDF page" disabled><span id="count">/ —</span><button id="next" class="icon" disabled aria-label="Next PDF page">›</button><button id="download" class="quiet" disabled aria-label="Download PDF">↓</button></div></div>
- <div id="build-state" class="build-state" role="status" hidden><span id="build-label"></span><progress id="build-progress" hidden></progress><p id="build-error" hidden></p><button id="error-log" hidden>Show build log</button></div><div id="pdf-scroll"><div id="pdf-empty"><span class="paper-glyph">Aa</span><p>Ready when you are.</p><button id="empty-build" class="primary">Compile</button></div><canvas id="pdf" hidden></canvas></div><div class="pane-footer"><span id="timing"></span><button id="log-toggle" class="quiet">Build log</button></div></section></main>
+ <main class="workspace"><aside class="file-pane"><div class="pane-bar"><span id="folder-label">Files</span><div class="actions"><button class="icon" id="new-file" title="New file" aria-label="New file">＋</button><button class="icon" id="upload" title="Upload files" aria-label="Upload files">↑</button></div></div><nav id="file-tree" aria-label="Main folder files"></nav><button id="show-repo" class="quiet" aria-expanded="false">See entire repo</button><section id="repo-explorer" hidden><div class="pane-bar"><span>Entire repository</span><span title="Files open on GitHub; drag into the main folder to link">↗</span></div><nav id="repo-tree" aria-label="Entire repository files"></nav></section><div class="file-bottom"><button id="mobile-refresh" class="quiet">Refresh from GitHub</button><button id="upload-folder" title="Copy a local folder’s contents into the main folder; Save to GitHub publishes them">Import local folder…</button><a class="button quiet" href="${h(project.url)}/settings/access" target="_blank" rel="noopener">Collaborators ↗</a><a class="button quiet" href="${h(project.url)}" target="_blank" rel="noopener">GitHub ↗</a><button id="export" class="quiet" title="Download main-folder files, linked files and browser edits as a ZIP; excludes Git history">Download source ZIP ↓</button></div></aside>
+ <section class="source-pane"><div class="pane-bar"><span id="filename"></span><div class="actions"><button id="move-file" class="icon" title="Move file" aria-label="Move file">↪</button><button id="tags" class="quiet" aria-pressed="false" title="Highlight tagged Agent passages">Highlight agent</button></div></div><div id="editor"></div><div id="file-preview" hidden></div><div class="pane-footer"><span id="main-label"></span></div></section>
+ <section class="pdf-pane"><div class="pane-bar"><span><span id="preview-title">PDF</span> <span id="freshness" class="muted">Not compiled</span></span><div class="pagination"><button id="prev" class="icon" disabled aria-label="Previous PDF page">‹</button><input id="page" type="number" min="1" value="1" aria-label="PDF page" disabled><span id="count">/ —</span><button id="next" class="icon" disabled aria-label="Next PDF page">›</button><button id="download" class="quiet" disabled aria-label="Download PDF">↓</button></div></div>
+ <div id="build-state" class="build-state" role="status" hidden><span id="build-label"></span><progress id="build-progress" hidden></progress><p id="build-error" hidden></p><button id="error-log" hidden>Show build log</button></div><article id="markdown-preview" class="markdown-preview" hidden></article><div id="pdf-scroll"><div id="pdf-empty"><span class="paper-glyph">Aa</span><p>Ready when you are.</p><button id="empty-build" class="primary">Compile</button></div><canvas id="pdf" hidden></canvas></div><div class="pane-footer"><span id="timing"></span><button id="log-toggle" class="quiet">Build log</button></div></section></main>
  <dialog id="editor-dialog"></dialog><input id="file-input" type="file" multiple hidden><input id="folder-input" type="file" multiple webkitdirectory hidden>`;
   let log = "No build yet.",
     cancelled = false;
@@ -120,11 +127,11 @@ export async function mountEditor(
     doc: "",
     extensions: [
       basicSetup,
-      StreamLanguage.define(stex),
+      language.of(StreamLanguage.define(stex)),
       oneDark,
       EditorView.lineWrapping,
       tagPlugin,
-      EditorView.contentAttributes.of({ "aria-label": "LaTeX source editor" }),
+      EditorView.contentAttributes.of({ "aria-label": "Source editor" }),
       EditorView.updateListener.of((u) => {
         if (!u.docChanged || loadingEditor) return;
         const f = files.get(selected);
@@ -135,6 +142,7 @@ export async function mountEditor(
         freshness();
         scheduleDraft();
         updateSaveState();
+        if (/\.md$/i.test(selected)) { clearTimeout(markdownTimer); markdownTimer = setTimeout(previewMarkdown, 250); }
       }),
     ],
     parent: $("editor"),
@@ -151,6 +159,8 @@ export async function mountEditor(
       dirty: [...dirty],
       selected,
       main,
+      folder,
+      references,
       engine,
     });
   }
@@ -176,15 +186,41 @@ export async function mountEditor(
     $<HTMLButtonElement>("sync").disabled =
       syncing || refreshing || !dirty.size || !project.writable;
     $("save-state").classList.toggle("changed", !!dirty.size);
+    updateBuildControls();
+  }
+  function updateBuildControls() {
+    const tex = /\.tex$/i.test(selected), md = /\.md$/i.test(selected);
+    for (const id of ["build", "empty-build"]) {
+      const button = $<HTMLButtonElement>(id);
+      button.disabled = busy || refreshing || syncing || !(tex || md) || !files.has(selected);
+      button.textContent = md ? "Preview" : "Compile";
+      button.title = tex ? "Compile " + selected : md ? "Preview " + selected : "Select a .tex or .md file";
+    }
+    $<HTMLButtonElement>("tags").disabled = !tex;
+    $<HTMLButtonElement>("move-file").disabled = busy || syncing || refreshing || !project.writable || !inFolder(selected, folder);
+  }
+  function previewMarkdown() {
+    if (disposed || !/\.md$/i.test(selected)) return;
+    const source = files.get(selected)?.content;
+    if (typeof source === "string") $("markdown-preview").innerHTML = renderMarkdown(source);
+  }
+  function previewMode() {
+    const md = /\.md$/i.test(selected);
+    $("markdown-preview").hidden = !md;
+    $("pdf-scroll").hidden = md;
+    $("preview-title").textContent = md ? "Markdown" : "PDF";
+    $("freshness").hidden = md;
+    document.querySelector<HTMLElement>(".pagination")!.hidden = md;
+    $("log-toggle").hidden = md;
+    $("timing").hidden = md;
+    if (md) { $("build-state").hidden = true; previewMarkdown(); }
   }
   function freshness() {
-    $("freshness").textContent = !pdf
-      ? "Not compiled"
-      : builtRevision === revision
-        ? "Up to date"
-        : "Earlier edit";
-    $("freshness").className =
-      pdf && builtRevision === revision ? "current" : "muted";
+    const same = builtPath === selected;
+    $("freshness").textContent = !pdf ? "Not compiled" : !same
+      ? "From " + builtPath.split("/").at(-1)
+      : builtRevision === revision ? "Up to date" : "Earlier edit";
+    $("freshness").className = pdf && same && builtRevision === revision ? "current" : "muted";
   }
   function dialog(title: string, content: string) {
     const d = $<HTMLDialogElement>("editor-dialog");
@@ -196,68 +232,103 @@ export async function mountEditor(
   const allPaths = () =>
     [...new Set([...snapshot.files.map((f) => f.path), ...files.keys()])]
       .filter((p) => !(dirty.has(p) && !files.has(p)))
-      .sort((a, b) => {
-        const aPaper = a.startsWith("paper/"),
-          bPaper = b.startsWith("paper/");
-        return Number(bPaper) - Number(aPaper) || a.localeCompare(b);
-      });
+      .sort((a, b) => a.localeCompare(b));
+  const visiblePaths = () => workspacePaths(allPaths(), folder, references);
   function tree() {
-    const expanded = new Map(
-      [...document.querySelectorAll<HTMLDetailsElement>("[data-folder]")].map(
-        (d) => [d.dataset.folder!, d.open],
-      ),
-    );
+    const expanded = new Map([...app.querySelectorAll<HTMLDetailsElement>("[data-folder]")].map(d => [d.dataset.folder!, d.open]));
     type Node = { dirs: Map<string, Node>; paths: string[] };
-    const root: Node = { dirs: new Map(), paths: [] };
-    for (const path of allPaths()) {
-      const parts = path.split("/");
-      let node = root;
-      for (const name of parts.slice(0, -1)) {
-        if (!node.dirs.has(name))
-          node.dirs.set(name, { dirs: new Map(), paths: [] });
-        node = node.dirs.get(name)!;
+    function draw(paths: string[], base: string, repo: boolean) {
+      const root: Node = { dirs: new Map(), paths: [] };
+      for (const path of paths) {
+        const relative = base ? path.slice(base.length + 1) : path;
+        const parts = relative.split("/"); let node = root;
+        for (const name of parts.slice(0, -1)) {
+          if (!node.dirs.has(name)) node.dirs.set(name, { dirs: new Map(), paths: [] });
+          node = node.dirs.get(name)!;
+        }
+        if (!path.endsWith("/.gitkeep")) node.paths.push(path);
       }
-      if (!path.endsWith("/.gitkeep")) node.paths.push(path);
+      function renderFolder(node: Node, prefix: string, depth: number): string {
+        return [...node.dirs].sort(([a], [b]) => a.localeCompare(b)).map(([name, child]) => {
+          const path = prefix ? prefix + "/" + name : name, key = (repo ? "repo:" : "main:") + path;
+          const open = expanded.get(key) ?? selected.startsWith(path + "/");
+          return `<details data-folder="${h(key)}" ${open ? "open" : ""}><summary data-drop-folder="${repo ? "" : h(path)}" style="padding-left:${8 + depth * 10}px">${h(name)}</summary>${renderFolder(child, path, depth + 1)}</details>`;
+        }).join("") + node.paths.sort((a, b) => Number(b === main) - Number(a === main) || a.localeCompare(b)).map(path => {
+          const content = `<span class="file-type">${/\.tex$/i.test(path) ? "T" : "≡"}</span><span>${h(path.split("/").at(-1)!)}</span>${path === main ? '<span class="main-dot" title="Default document">•</span>' : ""}`;
+          return repo ? `<div class="repo-file"><a class="file-row" style="--depth:${depth}" draggable="true" data-reference="${h(path)}" href="${h(project.url)}/blob/${encodeURIComponent(project.branch)}/${path.split("/").map(encodeURIComponent).join("/")}" target="_blank" rel="noopener noreferrer" title="Open ${h(path)} on GitHub">${content}</a>${inFolder(path, folder) ? "" : `<button class="link-file icon" data-link="${h(path)}" aria-label="Link ${h(path)} to main folder" title="Link original file">＋</button>`}</div>`
+            : `<button class="file-row ${path === selected ? "selected" : ""}" style="--depth:${depth}" draggable="true" data-path="${h(path)}" title="${h(path)}" aria-current="${path === selected ? "page" : "false"}">${content}</button>`;
+        }).join("");
+      }
+      return renderFolder(root, base, 0);
     }
-    const fileButton = (path: string, depth: number) =>
-      `<button class="file-row ${path === selected ? "selected" : ""}" style="--depth:${depth}" data-path="${h(path)}" title="${h(path)}" aria-current="${path === selected ? "page" : "false"}"><span class="file-type">${path.endsWith(".tex") ? "T" : /\.(png|jpg|jpeg|svg|pdf)$/i.test(path) ? "◇" : "≡"}</span><span>${h(path.split("/").at(-1)!)}</span>${path === main ? '<span class="main-dot" title="Main document">•</span>' : ""}</button>`;
-    function folder(node: Node, prefix = "", depth = 0): string {
-      return (
-        [...node.dirs]
-          .sort(([a], [b]) =>
-            a === "paper" ? -1 : b === "paper" ? 1 : a.localeCompare(b),
-          )
-          .map(([name, child]) => {
-            const path = prefix + name;
-            const open =
-              expanded.get(path) ??
-              (path === "paper" || selected.startsWith(path + "/"));
-            return `<details data-folder="${h(path)}" ${open ? "open" : ""}><summary style="padding-left:${8 + depth * 10}px">${h(name)}</summary>${folder(child, path + "/", depth + 1)}</details>`;
-          })
-          .join("") +
-        node.paths
-          .sort((a, b) =>
-            a === main
-              ? -1
-              : b === main
-                ? 1
-                : Number(b.endsWith(".tex")) - Number(a.endsWith(".tex")) ||
-                  a.localeCompare(b),
-          )
-          .map((p) => fileButton(p, depth))
-          .join("")
-      );
-    }
-    $("file-tree").innerHTML = folder(root);
-    document
-      .querySelectorAll<HTMLButtonElement>("[data-path]")
-      .forEach(
-        (b) => (b.onclick = () => void showFile(b.dataset.path!).catch(fail)),
-      );
-    $("main-label").textContent =
-      main.split("/").at(-1) +
-      " · " +
-      { pdf: "pdfLaTeX", lua: "LuaLaTeX", xe: "XeLaTeX" }[engine];
+    $("folder-label").textContent = folder || "Repository root";
+    $("folder-label").title = "Main folder: " + (folder || "repository root");
+    $("file-tree").innerHTML = draw(allPaths().filter(p => inFolder(p, folder)), folder, false) || '<p class="tree-empty">No files in this folder.</p>';
+    const linked = visiblePaths().filter(p => !inFolder(p, folder));
+    if (linked.length) $("file-tree").insertAdjacentHTML("beforeend", `<div class="folder-label">Linked files</div>${linked.map(p => `<button class="file-row" data-path="${h(p)}" title="Original repository file"><span>↗</span><span>${h(p)}</span></button>`).join("")}`);
+    $("repo-tree").innerHTML = draw(allPaths(), "", true);
+    app.querySelectorAll<HTMLButtonElement>("[data-path]").forEach(b => b.onclick = () => void showFile(b.dataset.path!).catch(fail));
+    app.querySelectorAll<HTMLButtonElement>("[data-link]").forEach(b => b.onclick = () => void linkFile(b.dataset.link!).catch(fail));
+    app.querySelectorAll<HTMLElement>("[draggable=true]").forEach(el => el.ondragstart = e => {
+      e.dataTransfer?.setData("application/x-agentlatex-file", JSON.stringify({ path: el.dataset.path ?? el.dataset.reference, reference: !!el.dataset.reference }));
+      if (e.dataTransfer) e.dataTransfer.effectAllowed = "all";
+    });
+    app.querySelectorAll<HTMLElement>("#file-tree [data-drop-folder]").forEach(el => dropTarget(el, el.dataset.dropFolder!));
+    dropTarget($("file-tree"), folder);
+    $("main-label").textContent = "Opens: " + main.split("/").at(-1) + " · " + { pdf: "pdfLaTeX", lua: "LuaLaTeX", xe: "XeLaTeX" }[engine];
+  }
+  function writeSettings() {
+    const previous = files.get(".agentlatex.json")?.content;
+    const preserved = typeof previous === "string" ? JSON.parse(previous) : {};
+    files.set(".agentlatex.json", { path: ".agentlatex.json", content: JSON.stringify({ ...preserved, version: 1, folder, main, references, engine }, null, 2) + "\n" });
+    dirty.add(".agentlatex.json");
+  }
+  function changed() { revision++; tree(); freshness(); updateSaveState(); scheduleDraft(); }
+  async function linkFile(path: string) {
+    if (!allPaths().includes(path) || busy || syncing || refreshing) throw Error("Try again when the project is ready.");
+    if (!inFolder(path, folder) && !references.includes(path)) { references.push(path); writeSettings(); changed(); }
+    await showFile(path); notify("Linked the original file. Nothing was copied.");
+  }
+  function clearSelection() {
+    selected = ""; loadingEditor = true;
+    editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: "" } });
+    loadingEditor = false;
+    $("editor").hidden = false; $("file-preview").hidden = true;
+    $("filename").textContent = "Choose or create a file";
+    tree(); updateBuildControls(); previewMode(); freshness();
+  }
+  async function moveFile(path: string, destination: string) {
+    if (busy || refreshing || syncing) throw Error("Wait for the current operation to finish.");
+    if (!inFolder(path, folder) || (destination !== folder && !inFolder(destination, folder))) throw Error("Move files within the main folder.");
+    const target = fileDestination(path, destination, allPaths());
+    if (path === target) return;
+    const before = revision;
+    const file = await getFile(path);
+    if (revision !== before || busy || syncing || refreshing || allPaths().includes(target)) throw Error("The project changed. Please try the move again.");
+    files.set(target, { ...file, path: target }); files.delete(path);
+    dirty.add(path); dirty.add(target);
+    if (main === path) { main = target; writeSettings(); }
+    if (selected === path) selected = target;
+    changed(); await showFile(selected, true); await persist();
+    notify("File moved in your draft. Check any TeX paths that refer to it, then Save to GitHub.");
+  }
+  function dropTarget(el: HTMLElement, destination: string) {
+    el.ondragover = e => {
+      if (!e.dataTransfer?.types.includes("application/x-agentlatex-file")) return;
+      e.preventDefault(); e.stopPropagation();
+      e.dataTransfer.dropEffect = "move";
+    };
+    el.ondrop = e => {
+      const raw = e.dataTransfer?.getData("application/x-agentlatex-file"); if (!raw) return;
+      e.preventDefault(); e.stopPropagation();
+      void (async () => {
+        const value = JSON.parse(raw), path = safePath.parse(value.path);
+        if (!allPaths().includes(path) || busy || syncing || refreshing) throw Error("Try again when the project is ready.");
+        if (value.reference) {
+          await linkFile(path);
+        } else await moveFile(path, destination);
+      })().catch(fail);
+    };
   }
 
   async function fetchFile(entry: Entry, signal?: AbortSignal) {
@@ -284,6 +355,7 @@ export async function mountEditor(
     try { f = await getFile(path); } finally { fileLoads--; }
     if (disposed || v !== selectionVersion) return;
     selected = path;
+    editor.dispatch({ effects: language.reconfigure(/\.tex$/i.test(path) ? StreamLanguage.define(stex) : []) });
     const scrollTop = editor.scrollDOM.scrollTop;
     const cursor = editor.state.selection.main.head;
     loadingEditor = true;
@@ -311,6 +383,7 @@ export async function mountEditor(
         : `<p>${h(path)}</p><a class="button" href="${previewUrl}" download="${h(path.split("/").at(-1)!)}">Download file</a>`;
     }
     tree();
+    updateBuildControls(); previewMode(); freshness();
     scheduleDraft();
     if (!preserveView) {
       app.classList.remove("show-files", "show-pdf");
@@ -319,8 +392,9 @@ export async function mountEditor(
     }
   }
   async function loadAll(signal?: AbortSignal) {
-    for (const path of allPaths()) await getFile(path, signal);
-    return [...files.values()];
+    const paths = visiblePaths();
+    for (const path of paths) await getFile(path, signal);
+    return paths.map(path => files.get(path)!);
   }
   function download(data: Uint8Array, name: string, type: string) {
     const url = URL.createObjectURL(
@@ -427,14 +501,15 @@ export async function mountEditor(
           const cached = snapshot.files.find(f => f.path === settings.path)?.sha === settings.sha ? files.get(settings.path) : undefined;
           prepared.set(settings.path, cached ?? await fetchFile(settings, pollingAbort.signal));
         }
-        let nextMain = remote.project.main, nextEngine = remote.project.engine;
+        let nextMain = remote.project.main, nextEngine = remote.project.engine, nextFolder = parentFolder(nextMain), nextReferences: string[] = [];
         const settingFile = prepared.get(".agentlatex.json");
         if (settingFile) {
-          const cfg = projectConfig.parse(JSON.parse(String(settingFile.content)));
-          if (remote.files.some(f => f.path === cfg.main)) { nextMain = cfg.main; nextEngine = cfg.engine; }
+          const cfg = workspaceConfig(JSON.parse(String(settingFile.content)), remote.project.main);
+          nextMain = cfg.main; nextEngine = cfg.engine; nextFolder = cfg.folder; nextReferences = cfg.references;
         }
-        const nextPath = remote.files.some(f => f.path === selected) ? selected :
-          remote.files.some(f => f.path === nextMain) ? nextMain : remote.files[0]?.path;
+        const remoteVisible = workspacePaths(remote.files.map(f => f.path), nextFolder, nextReferences);
+        const nextPath = remoteVisible.includes(selected) ? selected :
+          remoteVisible.includes(nextMain) ? nextMain : remoteVisible[0];
         if (!nextPath) { markRemote(true); return; }
         const entry = remote.files.find(f => f.path === nextPath)!;
         const unchanged = snapshot.files.find(f => f.path === nextPath)?.sha === entry.sha && files.has(nextPath);
@@ -446,7 +521,7 @@ export async function mountEditor(
         for (const path of files.keys())
           if (snapshot.files.find(f => f.path === path)?.sha !== remote.files.find(f => f.path === path)?.sha) files.delete(path);
         for (const [path, file] of prepared) files.set(path, file);
-        snapshot = remote; project = remote.project; main = nextMain; engine = nextEngine;
+        snapshot = remote; project = remote.project; main = nextMain; engine = nextEngine; folder = nextFolder; references = nextReferences;
         revision++; freshness(); tree(); markRemote(false);
         // An unchanged open file keeps its exact editor state and scroll position.
         if (!unchanged) await showFile(nextPath, true);
@@ -496,11 +571,12 @@ export async function mountEditor(
       revision++;
       freshness();
       tree();
-      if (!allPaths().includes(selected))
-        selected = allPaths().includes(main)
+      if (!visiblePaths().includes(selected))
+        selected = visiblePaths().includes(main)
           ? main
-          : (allPaths().find((p) => p.endsWith(".tex")) ?? allPaths()[0]);
-      await showFile(selected);
+          : (visiblePaths().find((p) => p.endsWith(".tex")) ?? visiblePaths()[0] ?? "");
+      if (selected) await showFile(selected);
+      else clearSelection();
       await persist();
       updateSaveState();
       markRemote(false);
@@ -529,7 +605,7 @@ export async function mountEditor(
     $<HTMLButtonElement>("next").disabled = !pdf || page >= pdf.numPages;
   }
   async function render() {
-    if (!pdf || disposed) return;
+    if (!pdf || disposed || /\.md$/i.test(selected)) return;
     const v = ++renderVersion;
     renderTask?.cancel();
     try {
@@ -564,7 +640,10 @@ export async function mountEditor(
     }
   }
   async function compile() {
-    if (busy) return;
+    if (busy || syncing || refreshing) return;
+    if (/\.md$/i.test(selected)) { previewMode(); previewMarkdown(); return; }
+    if (!/\.tex$/i.test(selected) || !files.has(selected)) return;
+    const target = selected;
     busy = true;
     cancelled = false;
     buildAbort = new AbortController();
@@ -585,7 +664,7 @@ export async function mountEditor(
           content:
             typeof f.content === "string" ? f.content : f.content.slice(),
         })),
-        main,
+        target,
         engine,
         progress,
       );
@@ -615,6 +694,7 @@ export async function mountEditor(
       pdf = await pdfTask.promise;
       page = Math.min(page, pdf.numPages);
       builtRevision = version;
+      builtPath = target;
       await render();
       freshness();
       $<HTMLButtonElement>("download").disabled = false;
@@ -632,8 +712,7 @@ export async function mountEditor(
       busy = false;
       if (disposed) return;
       $<HTMLButtonElement>("back").disabled = false;
-      $<HTMLButtonElement>("build").disabled = false;
-      $<HTMLButtonElement>("empty-build").disabled = false;
+      updateBuildControls();
       $("stop").hidden = true;
       $("build-progress").hidden = true;
     }
@@ -643,7 +722,7 @@ export async function mountEditor(
       const chosen = [...(input.files ?? [])];
       if (!chosen.length) return;
       const root = chosen[0].webkitRelativePath.split("/")[0];
-      const prefix = main.startsWith("paper/") ? "paper/" : "";
+      const prefix = folder ? folder + "/" : "";
       const incoming = await Promise.all(
         chosen
           .filter(
@@ -740,7 +819,7 @@ export async function mountEditor(
     if (pdfBytes)
       download(
         pdfBytes,
-        main
+        builtPath
           .split("/")
           .at(-1)!
           .replace(/\.tex$/, ".pdf"),
@@ -764,11 +843,12 @@ export async function mountEditor(
       void importFiles($(id)).catch(fail);
   $("export").onclick = () =>
     void (async () => {
-      await loadAll();
+      const exported = await loadAll();
+      for (const p of [".agentlatex.json", "AGENTS.md", "CLAUDE.md", "latex-specs.md", "IMPORTS.md", "skills/agentslatex-import-conversation/SKILL.md"]) if (allPaths().includes(p) && !exported.some(f => f.path === p)) exported.push(await getFile(p));
       download(
         zipSync(
           Object.fromEntries(
-            [...files.values()].map((f) => [f.path, bytes(f)]),
+            exported.map((f) => [f.path, bytes(f)]),
           ),
           { level: 6 },
         ),
@@ -779,12 +859,14 @@ export async function mountEditor(
   $("new-file").onclick = () => {
     const d = dialog(
       "New file",
-      `<form id="new-file-form"><label class="field">File path<input id="new-path" placeholder="paper/section.tex" required></label><button class="primary wide">Create file</button></form>`,
+      `<form id="new-file-form"><label class="field">File name<input id="new-path" placeholder="section.tex" required></label><p class="hint">Added to ${h(folder || "repository root")}. Drag it into a subfolder to move it.</p><button class="primary wide">Create file</button></form>`,
     );
     $("new-file-form").onsubmit = (e) => {
       e.preventDefault();
       void (async () => {
-        const path = safePath.parse($<HTMLInputElement>("new-path").value);
+        const name = $<HTMLInputElement>("new-path").value.trim();
+        if (name.includes("/") || name.includes("\\")) throw Error("Enter a file name; move it into a folder afterward.");
+        const path = joinFolder(folder, name);
         if (allPaths().includes(path)) throw Error("That file already exists.");
         files.set(path, {
           path,
@@ -794,39 +876,47 @@ export async function mountEditor(
         });
         dirty.add(path);
         d.close();
-        tree();
+        revision++; freshness(); tree();
         await showFile(path);
         updateSaveState();
         await persist();
       })().catch(fail);
     };
   };
+  $("show-repo").onclick = () => {
+    const open = $("repo-explorer").hidden;
+    $("repo-explorer").hidden = !open;
+    $("show-repo").setAttribute("aria-expanded", String(open));
+    $("show-repo").textContent = open ? "Hide entire repo" : "See entire repo";
+  };
+  $("move-file").onclick = () => {
+    let destination = folder;
+    const d = dialog("Move file", `<p class="hint">${h(selected)}</p><div id="move-picker" class="folder-picker"></div><button id="confirm-move" class="primary wide">Move here</button>`);
+    folderPicker($("move-picker"), allPaths().filter(p => inFolder(p, folder)), folder, p => { destination = p; });
+    $("confirm-move").onclick = () => void moveFile(selected, destination).then(() => d.close()).catch(fail);
+  };
   $("settings").onclick = () => {
-    const d = dialog(
-      "Paper settings",
-      `<form id="settings-form"><label class="field">Main document<select id="main-select">${allPaths()
-        .filter((p) => p.endsWith(".tex"))
-        .map((p) => `<option ${p === main ? "selected" : ""}>${h(p)}</option>`)
-        .join(
-          "",
-        )}</select></label><label class="field">Compiler<select id="engine-select"><option value="pdf">pdfLaTeX</option><option value="lua">LuaLaTeX</option><option value="xe">XeLaTeX</option></select></label><button class="primary wide">Done</button></form>`,
-    );
+    let nextFolder = folder;
+    const d = dialog("Project settings", `<form id="settings-form"><label class="field">Main folder</label><div id="settings-folder" class="folder-picker"></div><label class="field">Default document<select id="main-select"></select></label><label class="field">Compiler<select id="engine-select"><option value="pdf">pdfLaTeX</option><option value="lua">LuaLaTeX</option><option value="xe">XeLaTeX</option></select></label><p class="hint">The default document opens with the project. Compile builds the selected file.</p><button class="primary wide">Done</button></form>`);
+    function choices(preserve = false) {
+      const defaultPath = joinFolder(nextFolder, "main.tex");
+      $("main-select").innerHTML = `<option value="">main.tex (default)</option>` + allPaths().filter(p => inFolder(p, nextFolder) && /\.tex$/i.test(p) && p !== defaultPath).map(p => `<option value="${h(p)}">${h(nextFolder ? p.slice(nextFolder.length + 1) : p)}</option>`).join("");
+      if (preserve && main !== defaultPath) $<HTMLSelectElement>("main-select").value = main;
+    }
+    folderPicker($("settings-folder"), allPaths(), folder, p => { nextFolder = p; choices(); });
+    choices(true);
     $<HTMLSelectElement>("engine-select").value = engine;
-    $("settings-form").onsubmit = (e) => {
+    $("settings-form").onsubmit = e => {
       e.preventDefault();
-      main = $<HTMLSelectElement>("main-select").value;
-      engine = $<HTMLSelectElement>("engine-select").value as Engine;
-      files.set(".agentlatex.json", {
-        path: ".agentlatex.json",
-        content: JSON.stringify({ version: 1, main, engine }, null, 2) + "\n",
-      });
-      dirty.add(".agentlatex.json");
-      revision++;
-      freshness();
-      tree();
-      updateSaveState();
-      scheduleDraft();
-      d.close();
+      void (async () => {
+        folder = nextFolder;
+        main = $<HTMLSelectElement>("main-select").value || joinFolder(folder, "main.tex");
+        engine = $<HTMLSelectElement>("engine-select").value as Engine;
+        writeSettings(); changed(); d.close();
+        if (allPaths().includes(main)) await showFile(main);
+        else { clearSelection(); notify("No main.tex in this folder yet. Create it or choose a default document in settings."); }
+        await persist();
+      })().catch(fail);
     };
   };
   $("mobile-files").onclick = () => app.classList.toggle("show-files");
@@ -862,32 +952,24 @@ export async function mountEditor(
   window.addEventListener("beforeunload", beforeUnload);
   const resize = new ResizeObserver(() => void render());
   resize.observe($("pdf-scroll"));
-  tree();
-  updateSaveState();
-  if (!allPaths().includes(selected))
-    selected = allPaths().find((p) => p.endsWith(".tex")) ?? allPaths()[0];
-  await showFile(selected);
-  // Project settings travel with the source, including edits made outside the browser.
+  // Read portable settings before choosing the opening document.
   async function readSettings() {
+    folder = parentFolder(project.main); main = project.main; references = []; engine = project.engine;
     if (!allPaths().includes(".agentlatex.json")) return;
     try {
       const f = await getFile(".agentlatex.json");
-      const cfg = projectConfig.parse(JSON.parse(String(f.content)));
-      if (allPaths().includes(cfg.main)) {
-        main = cfg.main;
-        engine = cfg.engine;
-      }
-    } catch {
-      notify(
-        "Could not read paper settings. Select the main document in Settings.",
-      );
-    }
+      const cfg = workspaceConfig(JSON.parse(String(f.content)), project.main);
+      folder = cfg.folder; main = cfg.main; engine = cfg.engine; references = cfg.references;
+    } catch { notify("Could not read project settings. Open the settings icon beside Synced."); }
   }
-  if (!saved?.dirty.length) {
-    await readSettings();
-    tree();
-    if (allPaths().includes(main)) await showFile(main);
+  if (!saved?.dirty.length) { await readSettings(); selected = main; }
+  tree(); updateSaveState();
+  if (!visiblePaths().includes(selected)) {
+    if (selected) notify("The opening document was not found. Choose a file or update Project settings.");
+    selected = "";
   }
+  if (selected) await showFile(selected);
+  else clearSelection();
   const autoRefresh = new AutoRefresh({
     visible: () => !document.hidden && navigator.onLine,
     idle: () => Date.now() - lastActivity > 120_000,
@@ -926,7 +1008,7 @@ export async function mountEditor(
     document.removeEventListener("visibilitychange", visibility);
     window.removeEventListener("online", visibility);
     window.removeEventListener("offline", visibility);
-    clearTimeout(timer);
+    clearTimeout(timer); clearTimeout(markdownTimer);
     await persist();
     disposed = true;
     compiler.dispose();

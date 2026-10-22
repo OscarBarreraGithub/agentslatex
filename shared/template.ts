@@ -34,12 +34,13 @@ commit. Never force-push or overwrite another contributor's changes. Resolve con
 explicitly. If compilation is not available in your environment, say so; the user
 can compile in AgentsLaTeX. Check paired IDs and review the diff before committing.
 
-Main document and engine are in .agentlatex.json. Keep manuscript files under paper/
+Main document and engine are in .agentlatex.json. Keep manuscript files under agentlatex/
 for new projects; preserve existing layouts when importing. Do not commit build
 outputs, credentials, tokens, or local machine paths. Do not invent scientific sources.
 `;
-export function templateFiles(): Record<string, string> {
-  return {
+export function templateFiles(folder = "agentlatex"): Record<string, string> {
+  const prefix = folder ? folder + "/" : "";
+  const result: Record<string, string> = {
     "AGENTS.md": taggingInstructions,
     "CLAUDE.md": "@AGENTS.md\n",
     "latex-specs.md": latexSpecs,
@@ -67,23 +68,23 @@ chat links or credentials. Git history records the commit; no self-referential S
 `,
     ".agentlatex.json":
       JSON.stringify(
-        { version: 1, main: "paper/main.tex", engine: "pdf" },
+        { version: 1, folder, main: prefix + "main.tex", references: [], engine: "pdf" },
         null,
         2,
       ) + "\n",
     "README.md":
-      "# My paper\n\nOpen this repository in [AgentsLaTeX](https://agentlatex.com).\n\nManuscript: `paper/main.tex`. Images: `paper/figures/`. Bibliography: `paper/references.bib`.\n\nAgents: read **AGENTS.md** and **latex-specs.md**. Every agent-written passage must carry the paired Agent tags. Commit source and tags together.\n\nInvite collaborators in this repository’s GitHub settings. They sign in to AgentsLaTeX with their own GitHub account.\n",
+      "# My paper\n\nOpen this repository in [AgentsLaTeX](https://agentlatex.com).\n\nManuscript: `agentlatex/main.tex`. Images: `agentlatex/figures/`. Bibliography: `agentlatex/references.bib`.\n\nAgents: read **AGENTS.md** and **latex-specs.md**. Every agent-written passage must carry the paired Agent tags. Commit source and tags together.\n\nInvite collaborators in this repository’s GitHub settings. They sign in to AgentsLaTeX with their own GitHub account.\n",
     ".gitignore":
       "*.aux\n*.log\n*.out\n*.toc\n*.synctex.gz\n*.fls\n*.fdb_latexmk\n*.bbl\n*.blg\n.DS_Store\n.env*\n",
-    "paper/AGENTS.md":
+    "agentlatex/AGENTS.md":
       "# Manuscript editing\n\nFollow ../AGENTS.md and ../latex-specs.md. Tag **every** new or rewritten agent passage with paired `% agentlatex:begin agent id=...` / `% agentlatex:end id=...` comments. Preserve untouched text and tags.\n",
-    "paper/CLAUDE.md": "@../AGENTS.md\n",
-    "paper/main.tex": String.raw`% Agents: read ../AGENTS.md. Tag every new or rewritten manuscript passage.
+    "agentlatex/CLAUDE.md": "@../AGENTS.md\n",
+    "agentlatex/main.tex": String.raw`% Agents: read ../AGENTS.md. Tag every new or rewritten manuscript passage.
 \documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb,graphicx}
 \usepackage[hidelinks]{hyperref}
-\graphicspath{{paper/figures/}}
+\graphicspath{{figures/}}
 \title{My paper}
 \author{}
 \date{}
@@ -95,13 +96,25 @@ chat links or credentials. Git history records the commit; no self-referential S
 Your paper starts here.
 % agentlatex:end id=starter-introduction
 
-% Add sources to paper/references.bib, then uncomment:
+% Add sources to references.bib beside this document, then uncomment:
 % \bibliographystyle{plain}
-% \bibliography{paper/references}
+% \bibliography{references}
 \end{document}
 `,
-    "paper/references.bib":
+    "agentlatex/references.bib":
       "% Add bibliography entries here. Cite real sources only.\n",
-    "paper/figures/.gitkeep": "",
+    "agentlatex/figures/.gitkeep": "",
   };
+  // Repo instructions remain at root; paper files use the chosen folder.
+  const up = "../".repeat(folder ? folder.split("/").length : 0);
+  result["README.md"] = result["README.md"].replaceAll("agentlatex/", prefix);
+  for (const path of Object.keys(result)) {
+    if (!path.startsWith("agentlatex/")) continue;
+    const content = result[path].replaceAll("../AGENTS.md", up + "AGENTS.md").replaceAll("../latex-specs.md", up + "latex-specs.md");
+    delete result[path];
+    const target = prefix + path.slice("agentlatex/".length);
+    // At repository root, keep the complete root agent instructions.
+    if (!(target in result)) result[target] = content;
+  }
+  return result;
 }

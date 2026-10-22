@@ -10,7 +10,7 @@ model calls. No QUARK, agent manager or app-specific manuscript format.
 ## Current implementation
 
 One project corresponds to one GitHub repository. New projects are private and owned
-by the signed-in person, with paper/main.tex, figures/, references.bib and agent guides.
+by the signed-in person, with agentlatex/main.tex, figures/, references.bib and agent guides.
 Existing repositories retain their layout. Repository access comes from GitHub and
 selected GitHub App installations; every server operation uses a user access token.
 
@@ -27,7 +27,9 @@ automatic PDF builds. Requests back off on errors and respect Retry-After.
 Compile loads pinned TeXlyre BusyTeX 1.4.1 / TeX Live 2026 in a browser worker. Loading,
 compiling and errors are visible; the previous PDF becomes stale after edits/failure.
 Stop cancels work. File/folder import copies files, preserves relative paths and asks
-before replacing browser copies. The source ZIP and PDF can be downloaded.
+before replacing browser copies. The main-folder source ZIP (including linked files and current drafts) and PDF can
+be downloaded. Compile targets the selected `.tex`; Markdown renders locally with raw
+HTML disabled and remote images suppressed. Other file types disable Compile.
 
 Agents use their normal GitHub/file tools. AGENTS.md, CLAUDE.md and manuscript reminders
 require paired `% agentlatex:begin agent id=...` / `% agentlatex:end id=...` comments.
@@ -84,9 +86,18 @@ page/region evidence, separate human checks, stable passage IDs, and source-vers
 binding. A compile result says nothing about scientific validity. Coediting, custom MCP
 and cloud ChatGPT connectors must not delay the basic GitHub workflow.
 
-Next agreed workspace slice: choose a root folder (default agentlatex/), show its files
-above an optional whole-repository explorer, and add references to original files by
-dragging. No copy feature or OS symlinks. Main-only UI; preserve existing projects.
-Repository-relative compile dependencies need verification. Outgoing automatic saving
-remains proposed; automatic incoming refresh is implemented separately.
-Do not reorganize SWA or existing manuscripts as part of these future changes.
+The main folder is independent of the opening document in .agentlatex.json. New
+projects default to agentlatex/ and its main.tex; legacy projects infer their folder
+from the saved main document. Settings sits beside Synced. The optional second tree
+browses the entire repository: opening a file goes to GitHub; linking retains its
+original path, with no copy or OS symlink. New files start in the main-folder root.
+Moves are draft changes, reject name collisions, and save through the existing safe
+GitHub checkpoint. TeX references are not automatically rewritten on moves.
+Only the saved/default branch is exposed; there is no branch switching UI and existing
+non-main branch configurations are preserved rather than redirected silently.
+
+Version-control UI is explicitly a later TODO: explore meaningful checkpoints, readable
+diffs and agent-assisted explanations/restoration on top of GitHub history. No second
+history store, automatic destructive rollback or model call simply to view history.
+Outgoing automatic saving remains proposed; incoming refresh is implemented.
+Do not reorganize SWA or existing manuscripts as part of these changes.

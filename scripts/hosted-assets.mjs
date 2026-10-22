@@ -28,7 +28,7 @@ const paths = execFileSync(
 const source = {};
 for (const path of paths) {
   if (
-    !/^(src\/|shared\/|worker\/|scripts\/|skills\/|tests\/|docs\/|(?:AGENTS\.md|README\.md|SPEC\.md|latex-specs\.md|NOTICE\.md|LICENSE|package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|vite\.config\.ts|tsconfig(?:\.worker)?\.json|wrangler\.jsonc|index\.html|tests\.html|\.gitignore)$)/.test(
+    !/^(public\/wordmark\.svg|src\/|shared\/|worker\/|scripts\/|skills\/|tests\/|docs\/|(?:AGENTS\.md|README\.md|SPEC\.md|latex-specs\.md|NOTICE\.md|LICENSE|package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|vite\.config\.ts|tsconfig(?:\.worker)?\.json|wrangler\.jsonc|index\.html|tests\.html|\.gitignore)$)/.test(
       path,
     )
   )

@@ -69,7 +69,7 @@ path and origin in SUMMARY.md, including references to reused earlier artifacts.
 ## Preserve useful work
 
 Read the repository's AGENTS.md, latex-specs.md, and .agentlatex.json if accessible.
-Use its workspace folder and conventions. For a legacy config without a workspace
+Use its configured `folder` workspace and conventions. For a legacy config without a workspace
 folder, use the directory containing the configured main document. Preserve existing
 files and instructions. Create a new imports/YYYY-MM-DD-short-topic-unique-id/ directory
 within that workspace. Check both the index and actual directories for collisions.

@@ -5,7 +5,7 @@ and user-owned. Existing repositories are connected in place. GitHub controls ac
 No guest project editing on the hosted site. No custom agent MCP in this slice.
 
 Deliver connect → optional existing-project import → projects + New project → editor.
-Visible file tree, ordinary paper/ files, browser compilation, clear progress/errors.
+Visible file tree, ordinary agentlatex/ files, browser compilation, clear progress/errors.
 New project = private repository + working template + root/nested agent instructions.
 Agent passages use paired comments; other text is Manual. Detailed provenance later.
 
@@ -20,13 +20,16 @@ checks and sign-out. Targeted tests and browser journey; no repeat compiler matr
 
 ## Checkpoint handoff
 
-- AL-6, root: agreed next workspace slice, not implemented. Default agentlatex/ folder,
-  two explorers, references to original repo files (no copy feature), main-only UI,
-  and workspace configuration. Next: verify browser relative-path dependencies, then implement
-  the folder workflow with draft/conflict protection. See SPEC.md.
+- AL-6, root: main folder/default document split implemented with legacy fallback,
+  optional repository explorer, references to original files, safe file moves and
+  folder-based onboarding. Compile targets the selected document; Markdown preview
+  and non-compilable-file disabling included. See WORKSPACE.md for current evidence.
+- AL-9, root: TODO by owner request. Design version-history UI later: GitHub checkpoints,
+  useful diffs and agent-assisted change explanations/restoration. No implementation
+  or model-driven history process in this slice.
 - AL-7, root: project Prompts menu, conversation-import skill, searchable agent guides
   shared IMPORTS.md index, browser-connection guidance and selling-points copy bank. Scoped verification/deployment status is recorded in
-  docs/PROMPTS.md; this does not complete AL-6 or the collaborator acceptance check.
+  docs/PROMPTS.md; collaborator acceptance remains separate.
 - AL-8, root: conservative automatic incoming refresh. 30s active / 120s idle,
   hidden/offline pause, serial requests and server-aware backoff. Dirty drafts wait
   for explicit review. Outgoing saves and compilation stay explicit. See docs/SYNC.md.

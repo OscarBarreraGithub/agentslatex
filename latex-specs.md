@@ -22,13 +22,21 @@ preserve original papers and distinguish source-based text from new explanations
 
 ## Project shape
 
-Prefer one root `main.tex`, with relative paths to `chapters/`, `figures/`, and a `.bib`.
+Prefer `main.tex` in the configured main folder, with relative paths to `chapters/`,
+`figures/`, and a `.bib`. `.agentlatex.json` stores `folder` separately from the default
+opening document `main`. Compile builds the selected .tex file. The compiler runs
+from that file's containing directory, preserving repository paths. Only main-folder
+files and explicitly linked `references` are loaded; link outside dependencies using
+See entire repo before compiling. A selected chapter fragment needs its own document
+wrapper to compile independently; the app does not silently switch to the default.
 Keep all required inputs inside the imported project. Include local `.sty`, `.cls`,
 `.bst`, CSV/data files and images when needed. Multi-file input and a local style file
 passed our fixtures. A package missing from the installed bundle can sometimes be
 supplied as ordinary project files; this does not make external programs available.
 
-- Use relative forward-slash paths. No absolute machine paths, parent traversal or URLs.
+- Stored repository paths must use forward slashes with no absolute paths or `..`.
+  TeX inputs may use `../shared/file` to reach an explicitly linked file still inside
+  the repository. Never use absolute machine paths or remote URLs for build inputs.
 - Import a folder when paths are nested. Flat file selection cannot distinguish two
   same-named files from different directories and is rejected rather than overwritten.
 - Filenames with spaces passed an image test; short ASCII filenames remain simplest.
