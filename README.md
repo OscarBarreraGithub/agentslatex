@@ -7,8 +7,9 @@ on the left and compile its PDF on the right. Compilation runs in a browser work
 on your computer; no model or cloud compilation service is involved.
 
 **Current status:** implementation and local checks are in place. The GitHub App is
-registered. Live account authorization, repository creation and public hosting still
-need end-to-end verification. See [current acceptance](docs/GITHUB_ACCEPTANCE.md).
+registered and code deployed to the Workers subdomain. Custom-domain connection and
+real repository workflows still need end-to-end verification. See
+[current acceptance](docs/GITHUB_ACCEPTANCE.md).
 
 ## The workflow
 

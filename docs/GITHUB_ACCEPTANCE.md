@@ -2,12 +2,15 @@
 
 ## Current status
 
-Implemented locally; public deployment and actual account/project journey are pending.
+Deployed to the Workers subdomain; custom domain and actual account/project journey
+are pending. This is deployment evidence, not full product acceptance.
 GitHub App **agentslatex** registered successfully under OscarBarreraGithub. The first
 manifest POST was lost through sign-in; resubmission after sign-in registered it.
 D1 **agentslatex** schema and production secrets are installed. GitHub sign-in and
-selected repository installation completed. A placeholder Worker exists; application
-code is not deployed. Cloudflare Free zone is pending registrar nameserver changes.
+selected repository installation completed. Application code and static compiler assets
+are deployed at https://agentslatex.oscarbarrera.workers.dev (version
+48ad5404-f231-4f37-9dcb-81f768ba9fc6, code checkpoint db725e6).
+Cloudflare Free zone is pending registrar nameserver changes; Namecheap needs sign-in.
 Workers Free was verified in the dashboard. R2 remains inactive and is no longer used:
 the owner requires $0 usage charges. Static compiler packaging passed local verification.
 No private paper upload occurred.
@@ -30,6 +33,8 @@ No private paper upload occurred.
   original SHA-256; missing-part failure and successful retry passed. Client/Worker
   typecheck/build and the eight affected GitHub checks passed. Safari compiled the
   equation/TikZ preview from the new static path: 3.36s, one page, PDF Up to date.
+- Public Worker health, landing page and compiler manifest return HTTP 200. A hosted
+  compiler part matches local bytes and is served with immutable cache headers.
 
 The UI fixture does not contact GitHub. Its save checks are distinct from the mocked
 GitHub API contract tests. Neither establishes a live private repository workflow.
@@ -38,7 +43,7 @@ Historical compiler stress results remain in TESTING.md; they were not repeated.
 ## Remaining acceptance
 
 1. Verify real private repository create/import/save with the installed GitHub App.
-2. Deploy on Workers Free, connect domain and verify HTTPS; verify hosted asset downloads.
+2. Complete registrar sign-in, connect domain and verify HTTPS and hosted compilation.
 3. Verify hosted sign-in, compilation download and actual collaborator access/conflict.
 4. Check import of real file/folder copies, responsive layout, physical Windows/phone.
 5. Exercise expiring-token refresh with actual GitHub credentials.
