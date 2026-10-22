@@ -49,10 +49,11 @@ test("GitHub creation denied before installation gives a recoverable setup respo
   } finally {globalThis.fetch=original;}
 });
 
-for (const scenario of ["success", "retry after starter failure", "concurrent initialization"] as const) {
+for (const scenario of ["success", "retry after starter failure", "concurrent initialization", "first commit visibility delay"] as const) {
   test(`empty repository setup: ${scenario}`, async () => {
     const f = await fixture(); const original = globalThis.fetch;
     let initialized = false, seeds = 0, commits = 0;
+    let delayedReads = scenario === "first commit visibility delay" ? 1 : 0;
     let failStarter = scenario === "retry after starter failure";
     const paths: string[] = [];
     const repo = {id:7,full_name:"fixture/empty-paper",name:"empty-paper",owner:{login:"fixture"},private:true,default_branch:"main",permissions:{push:true},html_url:"https://github.com/fixture/empty-paper"};
@@ -60,7 +61,10 @@ for (const scenario of ["success", "retry after starter failure", "concurrent in
     globalThis.fetch = async (url, init) => {
       const p = new URL(String(url)).pathname;
       if (p === "/repositories/7") return Response.json(repo);
-      if (p.includes("/git/ref/")) return initialized ? Response.json({object:{sha}}) : Response.json({message:"Git Repository is empty."},{status:409});
+      if (p.includes("/git/ref/")) {
+        const visible = initialized && delayedReads-- <= 0;
+        return visible ? Response.json({object:{sha}}) : Response.json({message:"Git Repository is empty."},{status:409});
+      }
       if (p.endsWith("/contents/README.md")) {
         assert.equal(init?.method,"PUT");
         const body = JSON.parse(String(init?.body));

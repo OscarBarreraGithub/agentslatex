@@ -131,11 +131,14 @@ export async function initializeRepository(token: string, repo: Repo, readme: st
   } catch (e) {
     if (!(e instanceof ApiError) || e.status !== 409) throw e;
     // Another setup may have created the first commit while this request ran.
-    const current = await readSetupTree(token, repo);
-    if (!current) throw e;
-    return current;
   }
-  return readTree(token, repo);
+  // GitHub can acknowledge the Contents write before Git refs expose that commit.
+  for (const delay of [0, 500, 1500]) {
+    if (delay) await new Promise(resolve => setTimeout(resolve, delay));
+    const current = await readSetupTree(token, repo);
+    if (current) return current;
+  }
+  throw new ApiError(503, "GitHub is still preparing your repository. Please try again in a moment.");
 }
 export async function commitFiles(
   token: string,
