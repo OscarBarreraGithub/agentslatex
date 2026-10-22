@@ -1,5 +1,6 @@
 import { api, escapeHtml as h, RequestError } from "./api";
 import type { Me, Project, Repo, Entry } from "../shared/contracts";
+import { newProject as newProjectInput, normalizeProjectName } from "../shared/contracts";
 import "./style.css";
 import { wordmark } from "./brand";
 import { folderPicker } from "./folder-picker";
@@ -78,21 +79,28 @@ function newProject() {
   }
   const d = modal(
     "New project",
-    `<form id="create-form"><label class="field">Project name<input id="project-name" required maxlength="80" placeholder="my-paper" autocomplete="off" pattern="[A-Za-z0-9_][A-Za-z0-9_.-]*"></label><p class="hint">A private repository in your GitHub account.</p><button class="primary wide" id="create" type="submit">Create project</button></form>`,
+    `<form id="create-form" novalidate><label class="field">Project name<input id="project-name" required maxlength="80" placeholder="my-paper" autocomplete="off" aria-describedby="form-error"></label><p class="hint">A private repository in your GitHub account.</p><button class="primary wide" id="create" type="submit">Create project</button></form>`,
   );
   const requestId = crypto.randomUUID();
-  $<HTMLInputElement>("project-name").focus();
+  const nameInput = $<HTMLInputElement>("project-name");
+  nameInput.focus();
+  nameInput.oninput = () => { $("form-error").textContent = ""; nameInput.removeAttribute("aria-invalid"); };
+  nameInput.onchange = () => { nameInput.value = normalizeProjectName(nameInput.value); };
   $("create-form").onsubmit = (e) => {
     e.preventDefault();
+    const input = newProjectInput.safeParse({ name: nameInput.value, requestId });
+    if (!input.success) {
+      $("form-error").textContent = input.error.issues[0].message;
+      nameInput.setAttribute("aria-invalid", "true"); nameInput.focus();
+      return;
+    }
+    nameInput.value = input.data.name;
     void (async () => {
       const button = $<HTMLButtonElement>("create");
       button.disabled = true;
       button.textContent = "Creating…";
       try {
-        const p = await api<Project>("/projects", {
-          name: $<HTMLInputElement>("project-name").value.trim(),
-          requestId,
-        });
+        const p = await api<Project>("/projects", input.data);
         d.close();
         await openProject(p.id);
       } catch (e) {

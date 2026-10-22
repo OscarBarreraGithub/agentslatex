@@ -1,13 +1,21 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { commitFiles } from "../worker/github";
-import { safePath, type Repo } from "../shared/contracts";
+import { safePath, newProject, type Repo } from "../shared/contracts";
 import { agentRanges } from "../shared/tagging";
 import { conflictingPaths } from "../src/merge";
 import { templateFiles } from "../shared/template";
 import worker from "../worker/index";
 import type { Bindings } from "../worker/auth";
 const repo = { full_name: "person/paper" } as Repo;
+test("project names normalize spaces consistently before creation and retries", () => {
+  const requestId = "00000000-0000-4000-8000-000000000001";
+  const name = "  My   research paper  ";
+  const parsed = newProject.parse({ name, requestId });
+  assert.equal(parsed.name, "My-research-paper");
+  assert.deepEqual(newProject.parse({ name: parsed.name, requestId }), parsed);
+  assert.equal(newProject.safeParse({ name: "../paper", requestId }).success, false);
+});
 const base = "a".repeat(40),
   other = "b".repeat(40),
   next = "c".repeat(40);

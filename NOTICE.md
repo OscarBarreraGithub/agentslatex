@@ -48,6 +48,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 ## Wordmark
 
 The wordmark is LaTeX-typeset artwork using Latin Modern (Computer Modern-derived)
-lettering and a Nimbus Roman lowercase g, converted to SVG outlines. The font software is not bundled with the UI.
+lettering and a Baskerville lowercase g, converted to SVG outlines. The font software is not bundled with the UI.
 Editable source and generated artwork are in `src/assets/wordmark.tex` and
 `src/assets/wordmark.svg`. Latin Modern: https://www.gust.org.pl/projects/e-foundry/latin-modern

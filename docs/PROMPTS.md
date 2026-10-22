@@ -6,6 +6,14 @@ does not execute a command, send a message, sign in, or grant repository access.
 The prompt includes the actual repository, branch and current main document. A browser
 draft reminder appears when needed. Clipboard failure selects the text for manual copy.
 
+Compilation failures also offer **Copy prompt for agent** below a three-line error
+preview. The copied prompt contains the entire available build log, document path,
+compiler, repository, branch and base revision. An unsaved-draft notice tells the
+agent to obtain the failing source before editing. It asks for a minimal repair that
+preserves scientific content and author tags. View prompt is collapsed by default;
+the full Build log remains available. Nothing is sent to an agent automatically.
+A new attempt resets the prompt; a successful build clears the failure panel.
+
 Setup targets beginners: inspect the local environment first, preserve existing
 accounts/checkouts, show the real login URL and device code, wait for login, then
 verify access. A cloud-only agent must not claim it configured the user's computer.

@@ -13,6 +13,7 @@ export const safePath = z
   );
 export const sha = z.string().regex(/^[a-f0-9]{40}$/);
 export const folderPath = z.union([z.literal(""), safePath]);
+export const normalizeProjectName = (name: string) => name.trim().replace(/\s+/g, "-");
 export const projectConfig = z.object({
   version: z.literal(1),
   folder: folderPath.optional(),
@@ -23,10 +24,11 @@ export const projectConfig = z.object({
 export const newProject = z.object({
   name: z
     .string()
-    .trim()
-    .min(1)
-    .max(80)
-    .regex(/^[\w][\w.-]*$/, "Use letters, numbers, hyphens or underscores."),
+    .transform(normalizeProjectName)
+    .pipe(z.string()
+    .min(1, "Enter a project name, for example my-paper.")
+    .max(80, "Use 80 characters or fewer for the project name.")
+    .regex(/^[\w][\w.-]*$/, "Use letters, numbers, hyphens, underscores or periods. Start with a letter, number or underscore. For example: my-paper.")),
   requestId: z.uuid(),
 });
 export const connectProject = z.object({

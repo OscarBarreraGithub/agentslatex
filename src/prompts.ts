@@ -2,6 +2,21 @@ import type { Project } from "../shared/contracts";
 import { projectPrompts } from "../shared/prompts";
 import { escapeHtml as h } from "./api";
 
+export function bindPromptCopy(button: HTMLButtonElement, text: HTMLTextAreaElement, status: HTMLElement) {
+  button.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(text.value);
+      button.textContent = "Copied";
+      status.textContent = "Paste it into your agent’s chat.";
+    } catch {
+      const details = text.closest("details");
+      if (details) details.open = true;
+      text.focus(); text.select();
+      status.textContent = "Automatic copy is unavailable. The prompt is selected; use Copy from your browser or keyboard.";
+    }
+  };
+}
+
 export function openProjectPrompts(project: Project, hasDraft: boolean) {
   const prompts = projectPrompts(project);
   const dialog = document.createElement("dialog");
@@ -18,18 +33,8 @@ export function openProjectPrompts(project: Project, hasDraft: boolean) {
     const button = dialog.querySelector<HTMLButtonElement>(`[data-copy="${prompt.id}"]`)!;
     const terminal = button.closest(".prompt-terminal")!;
     const text = terminal.querySelector("textarea")!;
-    const status = terminal.querySelector(".prompt-copy-status")!;
-    button.onclick = async () => {
-      try {
-        await navigator.clipboard.writeText(prompt.text);
-        button.textContent = "Copied";
-        status.textContent = "Paste it into your agent’s chat.";
-      } catch {
-        text.focus();
-        text.select();
-        status.textContent = "Automatic copy is unavailable. The prompt is selected; use Copy from your browser or keyboard.";
-      }
-    };
+    const status = terminal.querySelector<HTMLElement>(".prompt-copy-status")!;
+    bindPromptCopy(button, text, status);
   }
   document.body.append(dialog);
   dialog.showModal();

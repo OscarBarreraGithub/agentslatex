@@ -198,3 +198,29 @@ was signed out, so this slice's interactive file-action evidence is local; no ne
 production-account workflow is claimed. The temporary fixture and verification tab
 were closed. The 15 local logo comparisons await the owner's selection; the live
 wordmark remains unchanged.
+
+## Naming, typography and compilation handoff — 2026-10-22
+
+The owner selected Baskerville for the g, with a tighter A–g gap. Local Chrome
+desktop and 360×800 emulation checked the resulting outlined wordmark. Existing
+project onboarding now uses the same two-pixel, 44px dropdowns as settings; the
+actual Connect existing chooser was checked locally.
+
+New-project whitespace becomes hyphens in both client and server validation.
+The synthetic local workflow created “Another paper” as “Another-paper”. Invalid
+format feedback and corrected retry were checked before the whitespace refinement.
+Settings exposes GitHub's repository rename page; its link was checked, without
+renaming a real repository. Numeric repository identity and draft keys are retained.
+File rename/move notices are shorter; automatic TeX-reference rewriting is not added.
+
+A real compiler failure exposed a three-line visible error, a successful Copy prompt
+action, and the full log with file/engine/base-revision and unsaved-draft context.
+Desktop and 360×800 Chrome emulation were inspected. A second missing-document
+failure reset the prompt; corrected source compiled in 0.34s (one page, excluding
+loading) and cleared the panel. No physical-device or clipboard-denied check is claimed.
+The fixture was synthetic and local; no private manuscript or production repo changed.
+
+Nine affected GitHub/template checks and the full-log handoff check passed.
+Client/Worker typechecks and hosted packaging passed. No compiler stress matrix
+or broad suite was repeated. Workers Free / $0 / Current plan was confirmed before
+deployment. Second-account collaboration and physical drag acceptance remain open.

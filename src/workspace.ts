@@ -15,7 +15,8 @@ import { pdfjs } from "./pdf";
 import { api, request, RequestError, escapeHtml as h } from "./api";
 import { projectDraft } from "./drafts";
 import { conflictingPaths } from "./merge";
-import { openProjectPrompts } from "./prompts";
+import { openProjectPrompts, bindPromptCopy } from "./prompts";
+import { buildFailurePrompt } from "./build-prompt";
 import { AutoRefresh } from "./auto-refresh";
 import { agentRanges } from "../shared/tagging";
 import {
@@ -85,10 +86,11 @@ export async function mountEditor(
  <main class="workspace"><aside class="file-pane"><div class="pane-bar"><span id="folder-label">Files</span><div class="actions"><button class="icon" id="new-file" title="New file" aria-label="New file">＋</button><button class="icon" id="upload" title="Upload files or a folder" aria-label="Upload" aria-haspopup="dialog">↑</button></div></div><nav id="file-tree" aria-label="Main folder files"></nav><button id="show-repo" class="quiet" aria-expanded="false">See entire repo</button><section id="repo-explorer" hidden><nav id="repo-tree" aria-label="Entire repository files"></nav></section><div class="file-bottom"><button id="mobile-refresh" class="quiet">Refresh from GitHub</button><a class="button quiet" href="${h(project.url)}/settings/access" target="_blank" rel="noopener">Collaborators ↗</a><a class="button quiet" href="${h(project.url)}" target="_blank" rel="noopener">GitHub ↗</a><button id="export" class="quiet" title="Download main-folder files, linked files and browser edits as a ZIP; excludes Git history">Download source ZIP ↓</button></div></aside>
  <section class="source-pane"><div class="pane-bar"><button id="filename" class="quiet" aria-label="Rename selected file"></button><div class="actions"><button id="file-actions" class="icon" title="File actions" aria-label="File actions" aria-haspopup="dialog">⋯</button><button id="tags" class="quiet" aria-pressed="false" title="Show tagged AI-written passages">Show AI</button></div></div><div id="editor"></div><div id="file-preview" hidden></div><div class="pane-footer"><span id="main-label"></span></div></section>
  <section class="pdf-pane"><div class="pane-bar"><span><span id="preview-title">PDF</span> <span id="freshness" class="muted">Not compiled</span></span><div class="pagination"><button id="prev" class="icon" disabled aria-label="Previous PDF page">‹</button><input id="page" type="number" min="1" value="1" aria-label="PDF page" disabled><span id="count">/ —</span><button id="next" class="icon" disabled aria-label="Next PDF page">›</button><button id="download" disabled aria-label="Download PDF" title="Download current PDF">↓ Download</button></div></div>
- <div id="build-state" class="build-state" role="status" hidden><span id="build-label"></span><progress id="build-progress" hidden></progress><p id="build-error" hidden></p><button id="error-log" hidden>Show build log</button></div><div id="extension-hint" hidden><p>Your file doesn't have an extension. It should end with <code>.tex</code> or <code>.md</code>.</p><button id="rename-missing">Rename file</button></div><article id="markdown-preview" class="markdown-preview" hidden></article><div id="pdf-scroll"><div id="pdf-empty"><span class="paper-glyph">Aa</span><p>Ready when you are.</p><button id="empty-build" class="primary">Compile</button></div><canvas id="pdf" hidden></canvas></div><div class="pane-footer"><span id="timing"></span><button id="log-toggle" class="quiet">Build log</button></div></section></main>
+ <div id="build-state" class="build-state" role="status" hidden><span id="build-label"></span><progress id="build-progress" hidden></progress><p id="build-error" hidden></p><div id="build-fix" class="prompt-terminal" hidden><div class="prompt-terminal-bar"><span>Fix with your agent</span><button id="copy-build-prompt">Copy prompt for agent</button></div><details id="build-prompt-preview"><summary>View prompt</summary><textarea id="build-prompt-text" readonly spellcheck="false" aria-label="Compilation fix prompt"></textarea></details><p id="build-prompt-status" class="prompt-copy-status" role="status"></p></div><button id="error-log" hidden>Show build log</button></div><div id="extension-hint" hidden><p>Your file doesn't have an extension. It should end with <code>.tex</code> or <code>.md</code>.</p><button id="rename-missing">Rename file</button></div><article id="markdown-preview" class="markdown-preview" hidden></article><div id="pdf-scroll"><div id="pdf-empty"><span class="paper-glyph">Aa</span><p>Ready when you are.</p><button id="empty-build" class="primary">Compile</button></div><canvas id="pdf" hidden></canvas></div><div class="pane-footer"><span id="timing"></span><button id="log-toggle" class="quiet">Build log</button></div></section></main>
  <dialog id="editor-dialog"></dialog><input id="file-input" type="file" multiple hidden><input id="folder-input" type="file" multiple webkitdirectory hidden>`;
   let log = "No build yet.",
     cancelled = false;
+  bindPromptCopy($("copy-build-prompt"), $("build-prompt-text"), $("build-prompt-status"));
   const tagPlugin = ViewPlugin.fromClass(
     class {
       decorations: DecorationSet;
@@ -324,7 +326,7 @@ export async function mountEditor(
     if (main === path) { main = target; writeSettings(); }
     if (selected === path) selected = target;
     changed(); await showFile(selected, true); await persist();
-    notify("File updated in your draft. Check any TeX paths that refer to it, then Save to GitHub.");
+    notify((parentFolder(path) === parentFolder(target) ? "Renamed." : "Moved.") + " Save to GitHub to publish.");
   }
   function renameSelected() {
     const path = selected;
@@ -695,6 +697,12 @@ export async function mountEditor(
     if (/\.md$/i.test(selected)) { previewMode(); previewMarkdown(); return; }
     if (!/\.tex$/i.test(selected) || !files.has(selected)) return;
     const target = selected;
+    const buildEngine = engine, baseRevision = snapshot.revision, buildHasDraft = dirty.size > 0;
+    const showFixPrompt = () => {
+      $<HTMLTextAreaElement>("build-prompt-text").value = buildFailurePrompt(project, target, buildEngine, baseRevision, buildHasDraft, log);
+      $("build-fix").hidden = false;
+      $("error-log").hidden = false;
+    };
     busy = true;
     cancelled = false;
     buildAbort = new AbortController();
@@ -705,6 +713,11 @@ export async function mountEditor(
     $("stop").hidden = false;
     $("build-error").hidden = true;
     $("error-log").hidden = true;
+    $("build-fix").hidden = true;
+    $<HTMLDetailsElement>("build-prompt-preview").open = false;
+    $("copy-build-prompt").textContent = "Copy prompt for agent";
+    $("build-prompt-status").textContent = "";
+    log = "No compiler log was produced for this attempt.";
     progress("Loading project…");
     try {
       const all = await loadAll(buildAbort.signal);
@@ -716,7 +729,7 @@ export async function mountEditor(
             typeof f.content === "string" ? f.content : f.content.slice(),
         })),
         target,
-        engine,
+        buildEngine,
         progress,
       );
       log = result.log + "\n" + result.logs.map((l) => l.stderr).join("\n");
@@ -732,7 +745,7 @@ export async function mountEditor(
             .slice(0, 600) ||
           "The compiler could not produce a PDF. Open the build log for details.";
         $("build-error").hidden = false;
-        $("error-log").hidden = false;
+        showFixPrompt();
         freshness();
         return;
       }
@@ -758,6 +771,7 @@ export async function mountEditor(
       if (disposed) return;
       builtRevision = -1;
       progress(cancelled ? "Build cancelled" : (e as Error).message, true);
+      if (!cancelled) { log = (e as Error).message + "\n\n" + log; showFixPrompt(); }
       freshness();
     } finally {
       busy = false;
@@ -959,7 +973,7 @@ export async function mountEditor(
   };
   $("settings").onclick = () => {
     let nextFolder = folder;
-    const d = dialog("Project settings", `<form id="settings-form"><label class="field">Main folder</label><div id="settings-folder" class="folder-picker"></div><label class="field">Default document<select id="main-select"></select></label><label class="field">Compiler<select id="engine-select"><option value="pdf">pdfLaTeX</option><option value="lua">LuaLaTeX</option><option value="xe">XeLaTeX</option></select></label><button class="primary wide">Done</button></form>`);
+    const d = dialog("Project settings", `<form id="settings-form"><label class="field">Main folder</label><div id="settings-folder" class="folder-picker"></div><label class="field">Default document<select id="main-select"></select></label><label class="field">Compiler<select id="engine-select"><option value="pdf">pdfLaTeX</option><option value="lua">LuaLaTeX</option><option value="xe">XeLaTeX</option></select></label><button class="primary wide">Done</button></form><a class="button wide project-rename" href="${h(project.url)}/settings" target="_blank" rel="noopener noreferrer" title="Rename the repository on GitHub, then reopen this project">Rename project on GitHub ↗</a>`);
     function choices(preserve = false) {
       const defaultPath = joinFolder(nextFolder, "main.tex");
       $("main-select").innerHTML = `<option value="">main.tex (default)</option>` + allPaths().filter(p => inFolder(p, nextFolder) && /\.tex$/i.test(p) && p !== defaultPath).map(p => `<option value="${h(p)}">${h(nextFolder ? p.slice(nextFolder.length + 1) : p)}</option>`).join("");

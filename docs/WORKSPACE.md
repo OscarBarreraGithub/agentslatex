@@ -4,7 +4,8 @@ The main folder (`folder`) and default opening document (`main`) are separate fi
 in `.agentlatex.json`, edited from the settings icon beside Synced. New projects use
 `agentlatex/`; absent `main` resolves to `<folder>/main.tex`. Legacy configurations
 infer the folder from their existing main document. No existing files are moved. The folder picker uses a labeled ← Back button.
-The Default document and Compiler dropdowns have stronger two-pixel borders.
+The Default document and Compiler dropdowns have two-pixel borders and a minimum
+44px height, including Default document when connecting an existing repository.
 Missing default documents show a message instead of silently compiling another file.
 
 The top file tree contains the main folder, with linked original repository files
@@ -34,6 +35,8 @@ Compile targets the selected `.tex`, including its filename in the tooltip. A ch
 fragment without a standalone document wrapper fails visibly rather than building
 the default behind the user's back. PDF labels identify when the result belongs to
 another selected file. The neutral ↓ Download button uses purple text and downloads the actual compiled PDF using its name.
+Failed builds show at most three visible error lines and a Copy prompt for agent
+control containing the complete available log and failing source context. See PROMPTS.md.
 
 Markdown displays beside its source and updates after editing; the action is Preview.
 HTML is escaped, unsafe link schemes are blocked, and images are shown as placeholders
@@ -70,3 +73,15 @@ The project header omits the owner username; the projects screen retains it.
 Native drag-and-drop was inconclusive through the computer-control tool; use the
 verified Move file and Link original file controls. A physical drag check remains
 open, alongside existing second-account and real import/upload acceptance.
+
+## Project names
+
+New project converts whitespace to hyphens automatically before creation. Invalid
+characters receive an inline explanation and example; no generic browser pattern
+message. Project settings links to the repository’s GitHub settings for renaming.
+Reopen the project afterward to fetch its current name and URL. Projects and drafts
+are keyed by numeric repository ID, so a repository rename does not create a new
+project or discard drafts. GitHub controls who may rename the repository.
+
+File rename/move notices are now simply “Renamed.” / “Moved.” plus Save to GitHub.
+Renaming still does not rewrite references in other source files automatically.

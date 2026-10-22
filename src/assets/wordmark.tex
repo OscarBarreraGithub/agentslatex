@@ -1,8 +1,10 @@
-% Logo artwork only: typeset with pdflatex, then convert to SVG outlines with pdftocairo.
+% Logo artwork only: typeset with xelatex (Baskerville installed), then convert to SVG outlines with pdftocairo.
 % No fonts or TeX runtime are required to display the generated SVG in the app.
 \documentclass[border=1pt]{standalone}
-\usepackage{lmodern}
+\usepackage{fontspec}
+\setmainfont{lmroman17-regular.otf}
+\newfontfamily\brandg{Baskerville}
 \begin{document}
 \fontsize{36}{36}\selectfont
-A{\fontfamily{ptm}\selectfont g}\kern-.06em\lower.5ex\hbox{E}\kern-.04em\raise.65ex\hbox{\fontsize{35.9375}{35.9375}\selectfont n}\kern-.10emT\hspace{.30em}\LaTeX
+A\kern-.12em{\brandg g}\kern-.06em\lower.5ex\hbox{E}\kern-.04em\raise.65ex\hbox{\fontsize{35.9375}{35.9375}\selectfont n}\kern-.10emT\hspace{.30em}\LaTeX
 \end{document}
