@@ -8,7 +8,7 @@ export function folderPicker(container: HTMLElement, paths: string[], initial: s
   function draw() {
     const children = [...dirs].filter(p => p && p !== current &&
       p.split("/").slice(0, -1).join("/") === current).sort();
-    container.innerHTML = `<div class="folder-location"><button type="button" class="icon" aria-label="Parent folder" ${current ? "" : "disabled"}>↑</button><strong>${h(current || "Repository root")}</strong></div><div class="folder-choices">${children.map(p => `<button type="button" data-dir="${h(p)}">▸ ${h(p.split("/").at(-1)!)}</button>`).join("") || '<p class="muted">No subfolders</p>'}</div>`;
+    container.innerHTML = `<div class="folder-location"><button type="button" aria-label="Back to parent folder" ${current ? "" : "disabled"}>← Back</button><strong>${h(current || "Repository root")}</strong></div><div class="folder-choices">${children.map(p => `<button type="button" data-dir="${h(p)}">▸ ${h(p.split("/").at(-1)!)}</button>`).join("") || '<p class="muted">No subfolders</p>'}</div>`;
     container.querySelector(".folder-location button")!.addEventListener("click", () => {
       current = current.split("/").slice(0, -1).join("/"); draw(); change(current);
     });
