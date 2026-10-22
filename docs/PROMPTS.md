@@ -52,6 +52,10 @@ a stale replacement index. These are agent instructions, not automatic enforceme
 Import produces actual available artifacts plus SUMMARY.md (decisions, results,
 file inventory, reproduction, open work and coverage gaps). A raw transcript is
 optional and must be an authentic, explicitly requested export of the selected chat.
+SUMMARY.md also records requests and outcomes chronologically, using known dates or
+conversation order. Each substantive prompt maps to a saved artifact or an explicit
+status; acknowledgment alone is not completion. Work done elsewhere and material not
+recovered are identified for the user, without inventing access or timestamps.
 Never fabricate JSONL, inaccessible messages, missing binaries or successful uploads.
 Browser chat capability varies: verify write tools and selected-repo access. With no
 write tool, export a bundle and provide a handoff for a local agent. A pasted skill

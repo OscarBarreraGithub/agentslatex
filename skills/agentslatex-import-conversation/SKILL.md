@@ -92,6 +92,20 @@ Write SUMMARY.md as a concise handoff containing:
 - What was actually tested, known failures, and the next useful steps.
 - Coverage: which parts of the conversation/files were accessible and what is missing.
 
+Be thorough: review every accessible user prompt and the work that followed, including
+corrections, decisions, useful failed attempts and unfinished requests, not just the
+latest answer. In SUMMARY.md include a chronological "Requests and outcomes" record:
+what was requested, what was actually done, when, and where the result now lives.
+Use known dates or conversation order when dates are unavailable; never invent times.
+For each substantive item, link the corresponding saved derivation, code, numerical
+check or other artifact, or explicitly account for it as answered in the summary,
+acknowledged only, unfinished, superseded, or unavailable. An acknowledgment is not
+completed work. Before finishing, reconcile this record against the conversation and
+the saved files so nothing useful silently disappears. If work happened elsewhere,
+name the known location and what remains there, distinguish verified files/results
+from reported work, and tell the user what was not imported and what is needed to
+recover it. Preserve privacy; do not claim access to other chats or computers you lack.
+
 A readable summary plus real artifacts is the default. Include a raw transcript only
 when the person requests it and provides or authorizes access to an actual export of
 this conversation. Preserve that export's real format; do not manufacture .jsonl or
