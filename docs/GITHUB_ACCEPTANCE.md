@@ -232,7 +232,7 @@ landing page was visually verified in Chrome. The authenticated failure/retry an
 new-project workflow evidence is from the local fixture, not a new live-account test.
 Owned fixture/preview servers and the verification tab were closed.
 
-## Current working slice — 2026-10-22 (deployment pending)
+## Released editor and account workflow — 2026-10-22
 
 Implementation: compact Connect agent/import prompts with Copy before Read prompt;
 shared skills/GitHub-setup.md, optional import scaffolding, single AGENTS.md convention,
@@ -286,3 +286,19 @@ and touch double-tap behavior have not been established by this emulation.
 
 Workers Free / $0 / Current plan rechecked in the account dashboard immediately
 before this release. No plan, binding or subscription change.
+
+Deployed source commit 18ec8ca6948a8e5181f8baa004c123d61e0d4609, Worker version
+7fdeb0fe-6450-46a3-af45-07e18b13ffb0. Public health is OK and the landing page loads
+editor-CFL2fbje.js from the verified build. Live Chrome sign-out reached the new
+message; Connect to GitHub opened GitHub's account picker with Continue as the owner
+and Use a different account. Continuing returned directly to Your projects. No second
+account was used. The drawn alien was saved in GitHub App settings and visually
+confirmed on that live account picker. GitHub's earlier reauthentication prompt had
+cleared; the initial file chooser stalled, and reopening it after a settings reload
+completed normally. No permissions or credentials were changed for the icon.
+
+The isolated authentication fixture was stopped. The local 4393 preview remains
+available because the owner has it open in their own browser tab; it contains only
+synthetic fixture projects. Version-history UI and full Frankenstein attribution
+remain deferred; physical Windows/phone, real collaborator and large GitHub import
+acceptance remain explicitly unverified rather than inferred from local fixtures.
