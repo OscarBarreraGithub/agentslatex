@@ -39,10 +39,10 @@ See [current acceptance](docs/GITHUB_ACCEPTANCE.md).
 - Invite collaborators using GitHub's repository settings. They use their own GitHub
   login. GitHub controls repository access; the app cannot grant broader access.
 - Codex/Claude agents edit and commit ordinary files in that same repository. Root and
-  nested instructions require paired Agent comments. **Highlight agent** highlights those
+  nested instructions require paired Agent comments. **Show AI** highlights those
   source passages; untagged text is Manual. No custom MCP is needed for this workflow.
-- **Prompts** in the project header supplies copyable instructions to set up GitHub,
-  import a conversation's useful files and summary, or work on this project. Each
+- **Prompts** in the project header offers **Connect agent** (including GitHub setup)
+  and **Import a conversation**, linking current online instructions. Each
   prompt includes the selected repository. Browser chats without GitHub writes get
   a download-and-local-agent handoff. See [prompt behavior](docs/PROMPTS.md).
 

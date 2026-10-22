@@ -20,8 +20,10 @@ reminders linking to https://agentlatex.com/docs/AGENTS.md and latex-specs.md th
 Shared specs/setup/import guides are no longer copied into user repositories. The root
 and folder reminders repeat only the essential tagging rule and when to reread docs.
 Existing instructions are preserved; a marked block is appended once, reusing existing
-filename casing. A root workspace gets one file. New files include a local Instructions
-and Preferences section. No CLAUDE.md duplicates or intermediate agentlatex/AGENTS.md.
+filename casing. A root workspace gets one file. New files start with the editable
+"% Add your LaTeX-specific instructions for agents here." placeholder, followed by
+seven blank lines before the shared reminder. Existing custom text is not rearranged.
+No CLAUDE.md duplicates or intermediate agentlatex/AGENTS.md.
 The first import creates IMPORTS.md and artifacts, not a copied skill. Older connected
 projects are not silently rewritten, stripped or moved; their current Connect agent
 prompt directs the agent to live docs and to append missing pointers when it has access.

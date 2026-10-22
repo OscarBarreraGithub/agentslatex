@@ -42,7 +42,7 @@ Your paper starts here.
 % \bibliography{references}
 \end{document}
 `,
-    [prefix + "references.bib"]: "% Add bibliography entries here. Cite real sources only.\n",
+    [prefix + "references.bib"]: "% Add bibliography entries here.\n",
     [prefix + "figures/.gitkeep"]: "",
   };
 }

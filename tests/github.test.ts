@@ -110,8 +110,8 @@ test("template contains a working main, shared instructions and valid Agent mark
   assert.ok(!files["skills/GitHub-setup.md"]);
   assert.ok(files["AGENTS.md"].includes("https://agentlatex.com/docs/AGENTS.md"));
   assert.ok(files["agentlatex/main/AGENTS.md"].includes("every"));
-  assert.ok(files["agentlatex/main/AGENTS.md"].includes("## Instructions and Preferences"));
-  assert.ok(files["AGENTS.md"].includes("## Instructions and Preferences"));
+  assert.ok(files["agentlatex/main/AGENTS.md"].startsWith("% Add your LaTeX-specific instructions for agents here.\n\n"));
+  assert.ok(files["AGENTS.md"].startsWith("% Add your LaTeX-specific instructions for agents here.\n\n"));
   assert.deepEqual(agentRanges(files["agentlatex/main/main.tex"]).errors, []);
   assert.equal(agentRanges(files["agentlatex/main/main.tex"]).ranges.length, 1);
   assert.equal(JSON.parse(files[".agentlatex.json"]).main, "agentlatex/main/main.tex");

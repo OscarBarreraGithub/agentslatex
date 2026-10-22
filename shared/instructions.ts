@@ -17,12 +17,12 @@ For this project's LaTeX, TeX, PDF, manuscript, figures, bibliography and AI att
 - Keep a note of these doc URLs in your handoff when compacting. Shared instructions live
   online; do not copy them into this repository. If unavailable, say so; do not invent guidance.
 <!-- /agentlatex:instructions -->`;
-const preferences = "\n\n%%%%%\n\n## Instructions and Preferences\n\n% Add your LaTeX-specific instructions for agents here.\n";
+const preferences = "% Add your LaTeX-specific instructions for agents here.\n\n\n\n\n\n\n\n";
 
 /** Appends once, without replacing the repository owner's instructions. */
 export function appendInstructions(existing?: string): string {
   if (existing?.includes(marker)) return existing;
-  return existing === undefined ? reminder + preferences : existing + "\n\n" + reminder + "\n";
+  return existing === undefined ? preferences + reminder + "\n" : existing + "\n\n" + reminder + "\n";
 }
 
 /** Reuse existing filename casing, including agents.md, on macOS and Windows. */

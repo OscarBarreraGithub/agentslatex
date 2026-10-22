@@ -14,7 +14,7 @@ by the signed-in person, with agentlatex/main/main.tex, figures/, references.bib
 Existing repositories retain their layout. Repository access comes from GitHub and
 selected GitHub App installations; every server operation uses a user access token.
 
-Sign-in → optional existing-paper connection → projects / New project → file tree,
+Sign-in → projects / New project or Connect existing → file tree,
 CodeMirror editor and PDF viewer. There is no hosted guest editor. Browser drafts are
 separate by numeric GitHub user/repository ID. Save checkpoints the exact loaded base;
 Refresh preserves nonconflicting edits and asks which version to keep for overlapping
@@ -31,14 +31,15 @@ before replacing browser copies. The main-folder source ZIP (including linked fi
 be downloaded. Compile targets the selected `.tex`; Markdown renders locally with raw
 HTML disabled and remote images suppressed. Other file types disable Compile.
 
-Agents use their normal GitHub/file tools. AGENTS.md, CLAUDE.md and manuscript reminders
+Agents use their normal GitHub/file tools. Short root/nested AGENTS.md reminders link
+the live guides at https://agentlatex.com/docs; no CLAUDE.md or copied specs are generated. They
 require paired `% agentlatex:begin agent id=...` / `% agentlatex:end id=...` comments.
 Tagged passages are Agent; everything else is Manual. This convention depends on agent
 compliance and is not cryptographic proof of authorship. The source highlight toggle
 shows tags; PDF attribution and detailed provenance are later work.
 
-The project header provides a Prompts dialog with project-specific local GitHub setup,
-conversation import, and ongoing agent-work instructions. Conversation import is a
+The project header provides a Prompts dialog with Connect agent first, then Import a
+conversation. GitHub setup is linked from Connect agent. Conversation import is a
 portable skill/prompt, not an automatic chat-history integration. It saves accessible
 artifacts and a summary, identifies gaps, and uses an export handoff when writes are
 unavailable. See docs/PROMPTS.md and docs/SELLING_POINTS.md.
@@ -87,7 +88,7 @@ binding. A compile result says nothing about scientific validity. Coediting, cus
 and cloud ChatGPT connectors must not delay the basic GitHub workflow.
 
 The main folder is independent of the opening document in .agentlatex.json. New
-projects default to agentlatex/ and its main.tex; legacy projects infer their folder
+projects default to agentlatex/main/ and its main.tex; legacy projects infer their folder
 from the saved main document. Settings sits beside Synced. The optional second tree
 browses the entire repository: opening a file goes to GitHub; linking retains its
 original path, with no copy or OS symlink. New files start in the main-folder root.

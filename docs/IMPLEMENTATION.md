@@ -4,8 +4,8 @@ Account = GitHub identity. One project = one repository; new repositories are pr
 and user-owned. Existing repositories are connected in place. GitHub controls access.
 No guest project editing on the hosted site. No custom agent MCP in this slice.
 
-Deliver connect → optional existing-project import → projects + New project → editor.
-Visible file tree, ordinary agentlatex/ files, browser compilation, clear progress/errors.
+Deliver connect → projects + New project / Connect existing → editor.
+Visible file tree, ordinary agentlatex/main/ files, browser compilation, clear progress/errors.
 New project = private repository + working template + root/nested agent instructions.
 Agent passages use paired comments; other text is Manual. Detailed provenance later.
 
@@ -53,3 +53,44 @@ The functional owner workflow passed and the owner retained the current design f
 the pilot. This is not evidence of multi-user load, second-account acceptance or
 complete device coverage. No further infrastructure purchase is needed for the pilot.
 Detailed PDF attribution remains a later slice.
+
+## Outstanding work audit — 2026-10-22
+
+Owner for these app follow-ups: root. This audits AgentsLaTeX, not the older SWA backlog.
+Evidence: current implementation plus GITHUB_ACCEPTANCE.md, WORKSPACE.md and PROMPTS.md.
+
+- AL-9 — deferred: in-app version history, readable diffs and restoration. GitHub
+  checkpoints already exist. Next: a small design for browsing GitHub history.
+- AL-10 — deferred: full Frankenstein PDF passage/source-paper review and human
+  approval records. Show AI currently highlights source; SyncTeX navigation is not
+  provenance. Next: one passage linked to its exact source evidence and review state.
+- AL-5 — owner-deferred: encryption/zero-operator-access redesign. Current trusted
+  backend still has technical access; retain this boundary in product descriptions.
+- AL-2 — verification pending: real invited collaborator saves/refreshes across two
+  GitHub accounts, and a real existing-repo/file/folder import. Next: complete the
+  owner's current pilot with the collaborator, preserving drafts and private files.
+- AL-7 — verification pending: a real conversation imported end to end, followed by
+  a second import without overwriting the first. Prompts, live docs, index convention
+  and thorough chronological requests/outcomes instructions are implemented.
+- AL-4 — verification pending: physical Windows/phone, real native file selection
+  and drag/drop. Responsive emulation and alternative Move/Link controls passed.
+- AL-11 — verification pending: real GitHub token rotation and full old-tab lazy-chunk
+  failure/retry. Corresponding code/mocked checks exist; do not claim live acceptance.
+- AL-12 — requested review pending: independent Opus sign-off has not been completed
+  for AgentsLaTeX. Next: an explicitly scoped review with that model when available.
+- AL-13 — new owner TODO: simple copyable workflows under Prompts, starting with
+  **Check citations**. Verify each reference's existence and bibliographic identity
+  (title/authors/year/DOI or arXiv ID), then inspect the cited paper to check that it
+  actually supports the associated statement. Flag adjacent-but-wrong papers,
+  misleading citation placement, metadata mismatches and unverifiable items. Return
+  a readable claim-to-reference report with evidence locations and proposed fixes;
+  never present inaccessible sources as checked. Use the person's usual agent, with
+  a copyable prompt first; no background model service or one-click certification.
+
+Current scope choices: GitHub/file tools rather than a custom MCP; 30-second active
+incoming refresh rather than live coediting; explicit GitHub saves and PDF builds.
+The app uses the repository's default/saved branch, not a forced branch named main;
+there is no branch picker. Existing branches are not silently migrated. These are
+implementation choices to state clearly, not evidence of unfinished synchronization.
+Selling-point ideas are recorded; there is no automatic extraction of every historical
+SWA conversation. No claim of broad load certification or complete native LaTeX parity.
