@@ -177,8 +177,8 @@ async function openProject(id: number) {
   history.replaceState(null, "", `/?project=${id}`);
   app.innerHTML =
     '<div class="loading-screen"><span class="spinner"></span><span>Opening paper…</span></div>';
-  const { mountEditor } = await import("./workspace");
   try {
+    const { mountEditor } = await import("./workspace");
     dispose = await mountEditor(
       app,
       id,
@@ -187,7 +187,7 @@ async function openProject(id: number) {
       toast,
     );
   } catch (e) {
-    app.innerHTML = `<div class="loading-screen"><p>${h((e as Error).message)}</p><a class="button primary" href="/">Back to projects</a></div>`;
+    app.innerHTML = `<div class="loading-screen"><p>${h((e as Error).message)}</p><a class="button primary" href="/?project=${id}">Reload project</a><a class="button" href="/">Back to projects</a></div>`;
   }
 }
 async function start() {

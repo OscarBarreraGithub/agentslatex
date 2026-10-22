@@ -28,4 +28,6 @@
     "head_sampling_rate": 0.1,
   },
   "workers_dev": true,
+  "preview_urls": false,
+  "routes": [{ "pattern": "agentlatex.com", "custom_domain": true }],
 }

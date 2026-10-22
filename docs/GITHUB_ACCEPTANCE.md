@@ -2,18 +2,19 @@
 
 ## Current status
 
-Deployed to the Workers subdomain; custom domain and actual account/project journey
-are pending. This is deployment evidence, not full product acceptance.
-GitHub App **agentslatex** registered successfully under OscarBarreraGithub. The first
-manifest POST was lost through sign-in; resubmission after sign-in registered it.
-D1 **agentslatex** schema and production secrets are installed. GitHub sign-in and
-selected repository installation completed. Application code and static compiler assets
-are deployed at https://agentslatex.oscarbarrera.workers.dev (version
-48ad5404-f231-4f37-9dcb-81f768ba9fc6, code checkpoint db725e6).
-Cloudflare Free zone is pending registrar nameserver changes; Namecheap needs sign-in.
-Workers Free was verified in the dashboard. R2 remains inactive and is no longer used:
-the owner requires $0 usage charges. Static compiler packaging passed local verification.
-No private paper upload occurred.
+**Live at https://agentlatex.com; ready for the first collaborator pilot.** Owner-account
+Connect → private project → edit → Save to GitHub → Compile → reopen passed on the
+public deployment. A real external GitHub commit caused a stale save to be refused;
+explicit conflict resolution and a subsequent save succeeded. Second-account access
+still needs the first invited user. This is not a general production/load certification.
+
+GitHub App **agentslatex**, D1 schema and production secrets are installed. Namecheap
+nameservers point to Cloudflare. The owner explicitly authorized replacing the root
+parking record; HTTPS and `/api/health` return successfully. Email MX/SPF records were
+preserved. Use the apex address; `www` has not been configured for this application.
+Workers Free / $0 was verified in the dashboard. The domain zone uses Free Website.
+R2 was never activated, purchased or cancelled; it is not part of this deployment.
+Compiler assets use free Static Assets. No private manuscript was uploaded.
 
 ## Passing evidence
 
@@ -36,21 +37,43 @@ No private paper upload occurred.
 - Public Worker health, landing page and compiler manifest return HTTP 200. A hosted
   compiler part matches local bytes and is served with immutable cache headers.
 
-The UI fixture does not contact GitHub. Its save checks are distinct from the mocked
-GitHub API contract tests. Neither establishes a live private repository workflow.
-Historical compiler stress results remain in TESTING.md; they were not repeated.
+## Public workflow evidence
 
-## Remaining acceptance
+- Chrome and Safari completed GitHub sign-in at the public origin without a new grant.
+- Chrome New project created the private `OscarBarreraGithub/agentslatex-demo` repository
+  (ID 1429171953) with the paper template and root/nested agent instructions. GitHub API
+  independently confirmed its private visibility and the actual saved source.
+- Saved source reopened in Safari from GitHub; returning to projects listed the paper.
+- The first hosted compiler download showed percentage progress. The equation/TikZ
+  document rendered one PDF page in 0.85s after loading; this excludes initial download
+  and engine setup. The current resolved source then compiled in 0.79s, marked Up to
+  date. These are single measurements on this Mac, not performance guarantees.
+- A GitHub CLI commit changed that same synthetic paper externally. An older Chrome
+  draft was refused with “GitHub has newer changes”; the remote commit stayed intact.
+  Refresh retained the draft until an explicit per-file choice. Choosing GitHub version
+  loaded the external sentence. A further browser edit saved successfully and preserved
+  that sentence; GitHub API confirmed the final content.
+- A stale open local tab exposed an uncaught lazy-module load failure after deployment.
+  The import is now inside the project error handler with Reload project / Back to
+  projects actions; the changed client/Worker build passed and is deployed.
 
-1. Verify real private repository create/import/save with the installed GitHub App.
-2. Complete registrar sign-in, connect domain and verify HTTPS and hosted compilation.
-3. Verify hosted sign-in, compilation download and actual collaborator access/conflict.
-4. Check import of real file/folder copies, responsive layout, physical Windows/phone.
-5. Exercise expiring-token refresh with actual GitHub credentials.
+The local UI fixture does not contact GitHub. Its earlier checks above are separate
+from this public workflow and from mocked API contract tests. Historical compiler
+stress results remain in TESTING.md; they were not repeated for deployment.
 
-Stop cancelled the final browser build and released the controls; a corrected retry
-rendered successfully in 0.45s. Safari responsive emulation checked 360×800 PDF and
-412×915 file navigation; these are not physical phone tests. A remaining mobile issue:
-selecting a source file while PDF is active should switch to Source, and Refresh needs
-a visible mobile location. The 915×412 layout is not yet checked.
-Detailed PDF Frankenstein attribution remains explicitly deferred.
+## Remaining acceptance / bounded follow-ups
+
+1. First collaborator: authorize the GitHub App on their account, accept repository
+   access, connect/open the paper, save and refresh across two different accounts.
+2. Real existing-repository connect/import, large GitHub file transfers and real
+   file/folder uploads on the authenticated production app.
+3. Expiring-token refresh using actual GitHub credentials; simulated auth checks passed.
+4. Mobile file-selection/Refresh recheck, 915×412 layout, physical Windows/phone.
+   Earlier Safari responsive emulation covered 360×800 PDF and 412×915 navigation;
+   those were not physical phone tests. The two mobile fixes are deployed but unverified.
+5. Full stale-version lazy-chunk failure/retry simulation; recovery code is deployed.
+
+Stop cancelled a local fixture build and released controls; corrected retry rendered
+in 0.45s. That result is local, not a new public cancellation check. Detailed PDF
+Frankenstein attribution remains explicitly deferred. No independent Opus review was
+performed for this deployment checkpoint.

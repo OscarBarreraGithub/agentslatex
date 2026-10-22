@@ -6,10 +6,10 @@ A small GitHub-backed LaTeX workspace. Sign in with GitHub, open a paper, edit s
 on the left and compile its PDF on the right. Compilation runs in a browser worker
 on your computer; no model or cloud compilation service is involved.
 
-**Current status:** implementation and local checks are in place. The GitHub App is
-registered and code deployed to the Workers subdomain. Custom-domain connection and
-real repository workflows still need end-to-end verification. See
-[current acceptance](docs/GITHUB_ACCEPTANCE.md).
+**Live pilot:** https://agentlatex.com. GitHub sign-in, private project creation,
+save/reopen, hosted browser compilation and external-change conflict handling passed
+with the owner account. Ready for a first collaborator trial (up to five users);
+second-account access is the next live check. See [current acceptance](docs/GITHUB_ACCEPTANCE.md).
 
 ## The workflow
 

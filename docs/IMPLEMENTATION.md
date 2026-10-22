@@ -21,10 +21,15 @@ checks and sign-out. Targeted tests and browser journey; no repeat compiler matr
 ## Checkpoint handoff
 
 - AL-1, root: implementation and local fixture verified; see GITHUB_ACCEPTANCE.md.
-- AL-2, root: GitHub sign-in and selected installation completed; verify real private repo creation/sync.
-- AL-3, root: Workers Free verified; R2 activation cancelled by $0 usage policy. Static
-  compiler packaging and browser compile passed. Code deployed to Workers subdomain,
-  public health/assets checked. Custom domain awaits Namecheap sign-in/nameservers.
-- AL-4, root: mobile file-selection/Refresh fixes implemented, browser verification pending.
+- AL-2, root: live owner-account sign-in, private project creation, save/reopen and
+  external GitHub conflict/refreshed-save checks passed. Next: first collaborator
+  signs in with their own GitHub account and opens the shared repository.
+- AL-3, root: Workers Free verified; R2 never activated. Static compiler packaging
+  and hosted compile passed. Canonical https://agentlatex.com is live over HTTPS;
+  Namecheap nameservers and approved root parking-record replacement are complete.
+- AL-4, root: mobile file-selection/Refresh fixes implemented; their browser recheck,
+  915×412 layout and physical phone/Windows checks remain open.
 
-No live readiness claim until AL-2/3 and required workflow checks pass.
+Owner workflow is ready for the five-person pilot. This is not evidence of multi-user
+load, second-account acceptance or complete device coverage. No further infrastructure
+purchase is needed for the pilot. Detailed PDF attribution remains a later slice.
