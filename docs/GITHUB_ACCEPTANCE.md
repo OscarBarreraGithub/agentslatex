@@ -388,3 +388,10 @@ space in newly generated AGENTS.md files, removal of the starter bibliography's
 "Cite real sources only" text, and the recorded Check citations workflow TODO.
 The 10 affected template/GitHub contract checks passed for those template changes.
 Existing user instruction files remain preserved.
+
+Deployed source 0e07272 as Worker 7de46f42-229b-4889-b6f7-0e9747bbd594.
+Public HTTP confirmed the live editor-wtKKRK7C.js matches the local build byte for
+byte, contains no installation-status gate, and /api/health returns ok. Python's
+default urllib request received 403; curl fetched and verified the public endpoints.
+The isolated 4394 fixture and verification tab were closed. The owner's 4393 preview
+and existing production tab were preserved; refresh an already-open tab for this fix.
