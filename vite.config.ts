@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 export default defineConfig({
+  publicDir: process.env.DEPLOY === "1" ? false : "public",
   plugins: [
     {
       name: "local-test-evidence",

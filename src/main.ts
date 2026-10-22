@@ -1,388 +1,226 @@
-import { EditorView, basicSetup } from "codemirror";
-import { StreamLanguage } from "@codemirror/language";
-import { stex } from "@codemirror/legacy-modes/mode/stex";
-import { oneDark } from "@codemirror/theme-one-dark";
-import { zipSync, strToU8 } from "fflate";
-import type { FileInput } from "texlyre-busytex";
-import { Compiler, type Engine } from "./compiler";
-import { pdfjs } from "./pdf";
-import { draft } from "./storage";
-import { inferMain, isTextFile, validateFiles } from "./project.mjs";
+import { api, escapeHtml as h, RequestError } from "./api";
+import type { Me, Project, Repo, Entry } from "../shared/contracts";
 import "./style.css";
 const app = document.querySelector<HTMLDivElement>("#app")!;
-app.innerHTML = `<header><div class="brand"><span class="mark">a<span>λ</span></span><span>agentslatex<small>YOUR PAPER. YOUR COMPUTER.</small></span></div><nav><button id="open-files">Open files</button><button id="open-folder">Open folder</button><button id="export">Export project</button><button id="build" class="primary">Compile <kbd>⌘ ↵</kbd></button><button id="cancel" hidden>Stop</button></nav></header>
-<main class="workspace"><section class="source-pane"><div class="pane-bar"><label class="file-label">SOURCE <select id="files" aria-label="Editing file"></select></label><span id="save-state">Browser copy</span></div><div id="editor"></div><div class="pane-footer"><label>Main <select id="main" aria-label="Main document"></select></label><label><select id="engine" aria-label="LaTeX engine"><option value="pdf">pdfLaTeX</option><option value="lua">LuaLaTeX</option><option value="xe">XeLaTeX</option></select></label><label class="auto"><input type="checkbox" id="auto"> Auto</label></div></section>
-<section class="pdf-pane"><div class="pane-bar"><span>PREVIEW <span id="freshness" class="muted">Not compiled</span></span><div class="pagination"><button id="prev" aria-label="Previous PDF page" disabled>‹</button><input id="page" aria-label="PDF page" type="number" min="1" value="1" disabled><span id="count">/ —</span><button id="next" aria-label="Next PDF page" disabled>›</button><button id="download" disabled>PDF ↓</button></div></div><div id="pdf-scroll"><div id="empty"><span class="paper-icon">Aa</span><h1>A little space to think.</h1><p>Edit your source, then Compile.<br>Your PDF is built here, in your browser.</p><p class="muted">Open files for a single paper, or Open folder<br>to include its images and bibliography.</p></div><canvas id="pdf" hidden aria-label="Compiled PDF page"></canvas></div><div class="pane-footer"><span id="status" role="status">Ready</span><button id="log-toggle">Build log</button></div></section></main>
-<dialog id="logs"><div class="dialog-heading"><h2>Build log</h2><button id="close-log">Close</button></div><pre id="log">No build yet.</pre></dialog><input id="file-input" type="file" multiple hidden><input id="folder-input" type="file" multiple webkitdirectory hidden><div id="toast" role="alert" hidden></div>`;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
-const fileSelect = $<HTMLSelectElement>("files"),
-  mainSelect = $<HTMLSelectElement>("main"),
-  engineSelect = $<HTMLSelectElement>("engine");
-let files: FileInput[] = [],
-  main = "",
-  selected = "",
-  revision = 0,
-  builtRevision = -1,
-  loadingEditor = false,
-  busy = false,
-  saveTimer: ReturnType<typeof setTimeout>,
-  autoTimer: ReturnType<typeof setTimeout>;
-let pdfTask: ReturnType<typeof pdfjs.getDocument> | undefined;
-let pdf: pdfjs.PDFDocumentProxy | undefined,
-  renderTask: pdfjs.RenderTask | undefined,
-  pdfBytes: Uint8Array | undefined,
-  page = 1,
-  renderVersion = 0;
-const compiler = new Compiler();
-const editor = new EditorView({
-  doc: "",
-  extensions: [
-    basicSetup,
-    StreamLanguage.define(stex),
-    oneDark,
-    EditorView.lineWrapping,
-    EditorView.contentAttributes.of({ "aria-label": "LaTeX source editor" }),
-    EditorView.updateListener.of((update) => {
-      if (!update.docChanged || loadingEditor) return;
-      const file = files.find((f) => f.path === selected);
-      if (!file) return;
-      file.content = update.state.doc.toString();
-      revision++;
-      freshness();
-      scheduleSave();
-      clearTimeout(autoTimer);
-      if ($<HTMLInputElement>("auto").checked)
-        autoTimer = setTimeout(() => {
-          if (!busy) void compile();
-        }, 1400);
-    }),
-  ],
-  parent: $("editor"),
-});
-function notify(message: string) {
-  $("toast").textContent = message;
-  $("toast").hidden = false;
-  setTimeout(() => ($("toast").hidden = true), 7000);
-}
-function freshness() {
-  $("freshness").textContent = !pdf
-    ? "Not compiled"
-    : builtRevision === revision
-      ? "Up to date"
-      : "Earlier edit";
-  $("freshness").className = builtRevision === revision ? "current" : "muted";
-}
-function scheduleSave() {
-  clearTimeout(saveTimer);
-  $("save-state").textContent = "Saving draft…";
-  saveTimer = setTimeout(() => void save(), 700);
-}
-async function save() {
-  try {
-    await draft({
-      files,
-      main,
-      selected,
-      engine: engineSelect.value as Engine,
-    });
-    $("save-state").textContent = "Draft saved in browser";
-  } catch {
-    $("save-state").textContent = "Draft not saved — use Export";
+let me: Me;
+let dispose: undefined | (() => Promise<void>);
+const mark = '<span class="mark" aria-hidden="true">a<span>λ</span></span>';
+export function toast(message: string) {
+  let n = document.getElementById("toast");
+  if (!n) {
+    n = document.createElement("div");
+    n.id = "toast";
+    n.setAttribute("role", "alert");
+    document.body.append(n);
   }
+  n.textContent = message;
+  n.hidden = false;
+  setTimeout(() => {
+    n.hidden = true;
+  }, 9000);
 }
-function showFile(path: string) {
-  selected = path;
-  fileSelect.value = path;
-  const file = files.find((f) => f.path === path);
-  loadingEditor = true;
-  editor.dispatch({
-    changes: {
-      from: 0,
-      to: editor.state.doc.length,
-      insert: typeof file?.content === "string" ? file.content : "",
-    },
-  });
-  loadingEditor = false;
+function failure(e: unknown) {
+  toast(e instanceof Error ? e.message : String(e));
 }
-function populate() {
-  fileSelect.replaceChildren();
-  mainSelect.replaceChildren();
-  for (const file of files) {
-    if (typeof file.content === "string")
-      fileSelect.add(new Option(file.path, file.path));
-    if (file.path.endsWith(".tex"))
-      mainSelect.add(new Option(file.path, file.path));
-  }
-  mainSelect.value = main;
-  showFile(
-    files.some((f) => f.path === selected && typeof f.content === "string")
-      ? selected
-      : main,
-  );
+function shell() {
+  app.innerHTML = `<header class="home-header"><a class="brand" href="/">${mark}<span>agentslatex</span></a><div class="account"><span>${h(me.user.login)}</span><button id="logout" class="quiet">Sign out</button></div></header><main id="home" class="home"></main><dialog id="modal"></dialog>`;
+  $("logout").onclick = () =>
+    void (async () => {
+      await dispose?.();
+      dispose = undefined;
+      await api("/auth/logout", {});
+      location.href = "/";
+    })().catch(failure);
 }
-async function setProject(incoming: FileInput[]) {
-  if (busy) compiler.cancel();
-  files = validateFiles(incoming);
-  main = inferMain(files);
-  selected = main;
-  revision++;
-  builtRevision = -1;
-  populate();
-  freshness();
-  await clearPdf();
-  $("status").textContent =
-    `${files.length} file${files.length === 1 ? "" : "s"} · originals unchanged`;
-  await save();
+function modal(title: string, content: string) {
+  const d = $<HTMLDialogElement>("modal");
+  d.innerHTML = `<div class="dialog-title"><h2>${h(title)}</h2><button id="dismiss" class="icon" aria-label="Close">×</button></div>${content}<p id="form-error" class="error" role="alert"></p>`;
+  $("dismiss").onclick = () => d.close();
+  d.showModal();
+  return d;
 }
-async function readImport(input: HTMLInputElement) {
-  try {
-    const chosen = [...(input.files ?? [])];
-    if (!chosen.length) return;
-    const folder = chosen[0].webkitRelativePath?.split("/")[0];
-    const incoming = await Promise.all(
-      chosen
-        .filter(
-          (f) =>
-            !f.webkitRelativePath.split("/").some((p) => p.startsWith(".")) &&
-            !/\.(aux|log|synctex|gz|fls|fdb_latexmk)$/i.test(f.name),
+async function projects() {
+  await dispose?.();
+  dispose = undefined;
+  history.replaceState(null, "", "/");
+  shell();
+  $("home").innerHTML =
+    `<div class="page-heading"><h1>Your projects</h1><div class="actions"><button id="connect-existing">Connect existing</button><button id="new" class="primary">＋ New project</button></div></div><div id="project-list" class="project-list"><p class="muted">Loading projects…</p></div>`;
+  $("new").onclick = () => newProject();
+  $("connect-existing").onclick = () => void existing().catch(failure);
+  const items = await api<Project[]>("/projects");
+  $("project-list").innerHTML = items.length
+    ? items
+        .map(
+          (p) =>
+            `<button class="project-card" data-project="${p.id}"><span class="document-icon">≡</span><span><strong>${h(p.name)}</strong><small>${h(p.owner)} / ${h(p.branch)}</small></span><span class="arrow">↗</span></button>`,
         )
-        .map(async (file) => ({
-          path: folder
-            ? file.webkitRelativePath.slice(folder.length + 1)
-            : file.name,
-          content: isTextFile(file.name)
-            ? await file.text()
-            : new Uint8Array(await file.arrayBuffer()),
-        })),
+        .join("")
+    : `<div class="empty-projects"><span class="empty-symbol">＋</span><h2>A place for your next paper.</h2><button class="primary" id="first-project">Create a project</button></div>`;
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-project]")
+    .forEach(
+      (b) =>
+        (b.onclick = () =>
+          void openProject(Number(b.dataset.project)).catch(failure)),
     );
-    await setProject(incoming);
-  } catch (e) {
-    notify(String(e));
-  } finally {
-    input.value = "";
+  if ($("first-project")) $("first-project").onclick = () => newProject();
+}
+function newProject() {
+  if (me.installations === 0) {
+    installation();
+    return;
   }
-}
-function download(bytes: Uint8Array, name: string, type: string) {
-  const url = URL.createObjectURL(
-    new Blob([bytes.slice().buffer as ArrayBuffer], { type }),
+  const d = modal(
+    "New project",
+    `<form id="create-form"><label class="field">Project name<input id="project-name" required maxlength="80" placeholder="my-paper" autocomplete="off" pattern="[A-Za-z0-9_][A-Za-z0-9_.-]*"></label><p class="hint">A private repository in your GitHub account.</p><button class="primary wide" id="create" type="submit">Create project</button></form>`,
   );
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  const requestId = crypto.randomUUID();
+  $<HTMLInputElement>("project-name").focus();
+  $("create-form").onsubmit = (e) => {
+    e.preventDefault();
+    void (async () => {
+      const button = $<HTMLButtonElement>("create");
+      button.disabled = true;
+      button.textContent = "Creating…";
+      try {
+        const p = await api<Project>("/projects", {
+          name: $<HTMLInputElement>("project-name").value.trim(),
+          requestId,
+        });
+        d.close();
+        await openProject(p.id);
+      } catch (e) {
+        $("form-error").textContent = (e as Error).message;
+        button.disabled = false;
+        button.textContent = "Try again";
+      }
+    })();
+  };
 }
-async function clearPdf() {
-  renderVersion++;
-  renderTask?.cancel();
-  if (pdfTask) await pdfTask.destroy();
-  pdfTask = undefined;
-  pdf = undefined;
-  pdfBytes = undefined;
-  $("pdf").hidden = true;
-  $("empty").hidden = false;
-  $<HTMLButtonElement>("download").disabled = true;
-  $<HTMLInputElement>("page").disabled = true;
-  updatePaging();
-  freshness();
+function installation() {
+  modal(
+    "Connect your repositories",
+    `<p class="hint">Choose which repositories AgentsLaTeX can open. New projects are private.</p><a class="button primary wide" href="${h(me.installUrl)}">Continue on GitHub ↗</a>`,
+  );
 }
-function updatePaging() {
-  $<HTMLInputElement>("page").value = String(page);
-  $("count").textContent = "/ " + (pdf?.numPages ?? "—");
-  $<HTMLButtonElement>("prev").disabled = !pdf || page <= 1;
-  $<HTMLButtonElement>("next").disabled = !pdf || page >= pdf.numPages;
+async function existing() {
+  const d = modal(
+    "Connect an existing paper",
+    `<div id="repos" class="repo-list">Loading repositories…</div><a class="button quiet wide" href="${h(me.installUrl)}">Choose repositories on GitHub ↗</a>`,
+  );
+  const repos = await api<Repo[]>("/repositories");
+  $("repos").innerHTML = repos.length
+    ? repos
+        .map(
+          (r) =>
+            `<button class="repo-row" data-repo="${r.id}"><span>${h(r.full_name)}</span><span>＋</span></button>`,
+        )
+        .join("")
+    : '<p class="hint">Choose repositories on GitHub to make them available here.</p>';
+  document.querySelectorAll<HTMLButtonElement>("[data-repo]").forEach(
+    (b) =>
+      (b.onclick = () =>
+        void (async () => {
+          b.disabled = true;
+          try {
+            const id = Number(b.dataset.repo);
+            const tree = await api<{ files: Entry[] }>(
+              "/repositories/" + id + "/files",
+            );
+            const tex = tree.files.filter((f) => f.path.endsWith(".tex"));
+            if (!tex.length)
+              throw Error(
+                "This repository has no .tex file yet. Add your paper in GitHub, then connect it.",
+              );
+            const preferred =
+              tex.find((f) => f.path === "paper/main.tex") ??
+              tex.find((f) => f.path === "main.tex") ??
+              tex[0];
+            const dialog = modal(
+              "Choose the main document",
+              `<form id="connect-form"><label class="field">Main .tex file<select id="connect-main">${tex.map((f) => `<option ${f.path === preferred.path ? "selected" : ""}>${h(f.path)}</option>`).join("")}</select></label><p class="hint">Keeps your files in place and adds agent instructions.</p><button class="primary wide" id="connect-submit">Connect project</button></form>`,
+            );
+            $("connect-form").onsubmit = (e) => {
+              e.preventDefault();
+              void (async () => {
+                const btn = $<HTMLButtonElement>("connect-submit");
+                btn.disabled = true;
+                btn.textContent = "Connecting…";
+                try {
+                  const p = await api<Project>("/connect", {
+                    repositoryId: id,
+                    main: $<HTMLSelectElement>("connect-main").value,
+                  });
+                  dialog.close();
+                  await openProject(p.id);
+                } catch (e) {
+                  $("form-error").textContent = (e as Error).message;
+                  btn.disabled = false;
+                  btn.textContent = "Try again";
+                }
+              })();
+            };
+          } catch (e) {
+            $("form-error").textContent = (e as Error).message;
+            b.disabled = false;
+          }
+        })()),
+  );
+  return d;
 }
-async function render() {
-  if (!pdf) return;
-  const version = ++renderVersion;
-  renderTask?.cancel();
+async function openProject(id: number) {
+  await dispose?.();
+  dispose = undefined;
+  history.replaceState(null, "", `/?project=${id}`);
+  app.innerHTML =
+    '<div class="loading-screen"><span class="spinner"></span><span>Opening paper…</span></div>';
+  const { mountEditor } = await import("./workspace");
   try {
-    const sheet = await pdf.getPage(page);
-    if (version !== renderVersion) return;
-    const scale = Math.min(
-      2.2,
-      Math.max(
-        0.2,
-        ($("pdf-scroll").clientWidth - 48) /
-          sheet.getViewport({ scale: 1 }).width,
-      ),
+    dispose = await mountEditor(
+      app,
+      id,
+      me.user.id,
+      () => void projects().catch(failure),
+      toast,
     );
-    const viewport = sheet.getViewport({ scale });
-    const canvas = $<HTMLCanvasElement>("pdf");
-    const ratio = Math.min(devicePixelRatio, 2);
-    canvas.width = Math.round(viewport.width * ratio);
-    canvas.height = Math.round(viewport.height * ratio);
-    canvas.style.width = viewport.width + "px";
-    canvas.style.height = viewport.height + "px";
-    canvas.hidden = false;
-    $("empty").hidden = true;
-    renderTask = sheet.render({
-      canvas,
-      viewport,
-      transform: ratio !== 1 ? [ratio, 0, 0, ratio, 0, 0] : undefined,
-    });
-    await renderTask.promise;
-    updatePaging();
-  } catch (error) {
-    if ((error as Error).name !== "RenderingCancelledException")
-      notify("PDF preview: " + (error as Error).message);
-  }
-}
-async function compile() {
-  if (busy || !main) return;
-  busy = true;
-  for (const id of ["open-files", "open-folder"])
-    $<HTMLButtonElement>(id).disabled = true;
-  $<HTMLButtonElement>("build").disabled = true;
-  $("cancel").hidden = false;
-  const version = revision;
-  const snapshot = files.map((f) => ({
-    ...f,
-    content: typeof f.content === "string" ? f.content : f.content.slice(),
-  }));
-  try {
-    const result = await compiler.compile(
-      snapshot,
-      main,
-      engineSelect.value as Engine,
-      (message) => ($("status").textContent = message),
-    );
-    $("log").textContent =
-      result.log + "\n" + result.logs.map((x) => x.stderr).join("\n");
-    if (!result.success || !result.pdf) {
-      $("status").textContent = "Build failed · see log";
-      builtRevision = pdf ? -2 : -1;
-      freshness();
-      return;
-    }
-    const previousPage = page;
-    await clearPdf();
-    pdfBytes = result.pdf;
-    pdfTask = pdfjs.getDocument({ data: result.pdf.slice() });
-    pdf = await pdfTask.promise;
-    page = Math.min(previousPage, pdf.numPages);
-    builtRevision = version;
-    freshness();
-    $<HTMLButtonElement>("download").disabled = false;
-    $<HTMLInputElement>("page").disabled = false;
-    $<HTMLInputElement>("page").max = String(pdf.numPages);
-    await render();
-    $("status").textContent =
-      `${result.compileSeconds.toFixed(2)}s compile${result.loadSeconds ? ` · ${result.loadSeconds.toFixed(2)}s load` : ""} · ${pdf.numPages} pages · ${(result.pdf.length / 1048576).toFixed(2)} MiB`;
   } catch (e) {
-    $("status").textContent = (e as Error).message;
-  } finally {
-    busy = false;
-    for (const id of ["open-files", "open-folder"])
-      $<HTMLButtonElement>(id).disabled = false;
-    $<HTMLButtonElement>("build").disabled = false;
-    $("cancel").hidden = true;
-    if ($<HTMLInputElement>("auto").checked && revision !== version) {
-      clearTimeout(autoTimer);
-      autoTimer = setTimeout(() => void compile(), 500);
-    }
+    app.innerHTML = `<div class="loading-screen"><p>${h((e as Error).message)}</p><a class="button primary" href="/">Back to projects</a></div>`;
   }
 }
-$("build").onclick = () => void compile();
-$("cancel").onclick = () => {
-  clearTimeout(autoTimer);
-  $<HTMLInputElement>("auto").checked = false;
-  compiler.cancel();
-};
-$("open-files").onclick = () => $<HTMLInputElement>("file-input").click();
-$("open-folder").onclick = () => $<HTMLInputElement>("folder-input").click();
-$<HTMLInputElement>("file-input").onchange = () =>
-  void readImport($("file-input"));
-$<HTMLInputElement>("folder-input").onchange = () =>
-  void readImport($("folder-input"));
-fileSelect.onchange = () => {
-  showFile(fileSelect.value);
-  scheduleSave();
-};
-mainSelect.onchange = () => {
-  main = mainSelect.value;
-  revision++;
-  freshness();
-  scheduleSave();
-};
-engineSelect.onchange = () => {
-  revision++;
-  freshness();
-  scheduleSave();
-};
-$("export").onclick = () => {
-  const entries: Record<string, Uint8Array> = {};
-  for (const file of files)
-    entries[file.path] =
-      typeof file.content === "string" ? strToU8(file.content) : file.content;
-  download(
-    zipSync(entries, { level: 0 }),
-    "agentslatex-project.zip",
-    "application/zip",
-  );
-};
-$("download").onclick = () => {
-  if (pdfBytes)
-    download(
-      pdfBytes,
-      main
-        .replace(/\.tex$/i, ".pdf")
-        .split("/")
-        .at(-1)!,
-      "application/pdf",
-    );
-};
-$("prev").onclick = () => {
-  page--;
-  void render();
-};
-$("next").onclick = () => {
-  page++;
-  void render();
-};
-$<HTMLInputElement>("page").onchange = () => {
-  page = Math.min(
-    pdf?.numPages ?? 1,
-    Math.max(1, Number($<HTMLInputElement>("page").value) || 1),
-  );
-  void render();
-};
-$("log-toggle").onclick = () => $<HTMLDialogElement>("logs").showModal();
-$("close-log").onclick = () => $<HTMLDialogElement>("logs").close();
-addEventListener("keydown", (event) => {
-  if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-    event.preventDefault();
-    void compile();
-  }
-  if ((event.metaKey || event.ctrlKey) && event.key === "s") {
-    event.preventDefault();
-    void save();
-  }
-});
-let resizeTimer: ReturnType<typeof setTimeout>;
-new ResizeObserver(() => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => void render(), 150);
-}).observe($("pdf-scroll"));
-addEventListener("pagehide", () => compiler.dispose());
 async function start() {
+  app.innerHTML = `<div class="landing"><a class="brand" href="/">${mark}<span>agentslatex</span></a><div class="landing-main"><div class="hero-mark">a<span>λ</span></div><h1>Your next paper.</h1><p>LaTeX, together.</p><a class="button primary connect-button" href="/api/auth/login"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 .7a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.2.8-.6v-2.1c-3.3.7-4-1.4-4-1.4-.5-1.3-1.3-1.6-1.3-1.6-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.4-1.3-5.4-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11.2 11.2 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.8 5.5-5.4 5.8.4.4.8 1.1.8 2.2v3c0 .4.2.7.8.6A11.5 11.5 0 0 0 12 .7Z"/></svg>Connect to GitHub</a></div><footer>Built around your files. Compiled in your browser. <a href="/source.zip">Source</a></footer></div>`;
+  if (new URLSearchParams(location.search).get("signin") === "retry")
+    toast(
+      "Sign-in did not finish. Please connect to GitHub again. Your drafts are safe.",
+    );
   try {
-    const saved = await draft();
-    if (saved) {
-      files = validateFiles(saved.files);
-      main = saved.main;
-      selected = saved.selected;
-      engineSelect.value = saved.engine;
-      populate();
-      $("save-state").textContent = "Restored browser draft";
-      return;
+    me = await api<Me>("/me");
+    const params = new URLSearchParams(location.search);
+    const id = Number(params.get("project"));
+    if (id > 0) await openProject(id);
+    else {
+      await projects();
+      if (
+        params.has("welcome") &&
+        !localStorage.getItem("agentslatex-onboarded:" + me.user.id)
+      ) {
+        localStorage.setItem("agentslatex-onboarded:" + me.user.id, "1");
+        modal(
+          "Have a paper already?",
+          `<div class="onboard-actions"><button id="bring" class="primary">Connect existing</button><button id="fresh">Start fresh</button></div>`,
+        );
+        $("bring").onclick = () => {
+          $<HTMLDialogElement>("modal").close();
+          void existing().catch(failure);
+        };
+        $("fresh").onclick = () => $<HTMLDialogElement>("modal").close();
+      }
     }
-  } catch {
-    notify("Could not restore the browser draft.");
+  } catch (e) {
+    if (!(e instanceof RequestError && e.status === 401)) failure(e);
   }
-  const res = await fetch("/fixtures/demo/main.tex");
-  if (!res.ok) throw Error("Run pnpm setup first.");
-  await setProject([{ path: "main.tex", content: await res.text() }]);
 }
-void start().catch((e) => notify((e as Error).message));
+void start();

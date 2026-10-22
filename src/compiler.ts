@@ -42,17 +42,28 @@ export class Compiler {
     this.active = true;
     const start = performance.now();
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let startCompileDeadline: () => void;
     const stopped = new Promise<never>((_, reject) => {
       this.cancelActive = () => {
         this.runner?.terminate();
         this.runner = undefined;
         reject(new Error("Build cancelled"));
       };
-      timer = setTimeout(() => {
-        this.runner?.terminate();
-        this.runner = undefined;
-        reject(new Error(`Build stopped after ${timeoutMs / 1000} seconds`));
-      }, timeoutMs);
+      const deadline = (ms: number, message: string) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          this.runner?.terminate();
+          this.runner = undefined;
+          reject(new Error(message));
+        }, ms);
+      };
+      // First download can be slow; it must not consume the TeX execution deadline.
+      deadline(
+        600_000,
+        "Compiler download timed out. Check your connection and try again.",
+      );
+      startCompileDeadline = () =>
+        deadline(timeoutMs, `Build stopped after ${timeoutMs / 1000} seconds`);
     });
     const work = async () => {
       let loadSeconds = 0;
@@ -60,10 +71,13 @@ export class Compiler {
         progress("Loading compiler…");
         const loading = performance.now();
         const asset = (name: string) =>
-          new URL("/compiler/" + name, location.origin).href;
+          new URL(
+            (import.meta.env.VITE_COMPILER_BASE || "/compiler/") + name,
+            location.origin,
+          ).href;
         this.runner = new BusyTexRunner({
           engineMode: "combined",
-          busytexBasePath: asset(""),
+          busytexBasePath: asset("").replace(/\/$/, ""),
           initRetries: 0,
           preloadDataPackages: [asset("texlive-" + this.bundle + ".js")],
           catalogDataPackages: [],
@@ -74,6 +88,7 @@ export class Compiler {
         loadSeconds = (performance.now() - loading) / 1000;
       }
       progress("Compiling…");
+      startCompileDeadline();
       const compiling = performance.now();
       const allSource = files
         .filter((f) => typeof f.content === "string" && f.path.endsWith(".tex"))

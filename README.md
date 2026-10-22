@@ -1,66 +1,72 @@
-# agentslatex
+# AgentsLaTeX
 
-**Agents: read [AGENTS.md](AGENTS.md), then [latex-specs.md](latex-specs.md), before editing a paper.**
+**Agents: read [AGENTS.md](AGENTS.md), then [latex-specs.md](latex-specs.md).**
 
-An intentionally small LaTeX workspace: editable source on the left, the real PDF on
-the right. Compilation happens in a browser worker on your computer. No AI call,
-cloud compilation service, or native TeX installation is required.
+A small GitHub-backed LaTeX workspace. Sign in with GitHub, open a paper, edit source
+on the left and compile its PDF on the right. Compilation runs in a browser worker
+on your computer; no model or cloud compilation service is involved.
 
-## Run
+**Current status:** implementation and local checks are in place. The GitHub App is
+registered. Live account authorization, repository creation and public hosting still
+need end-to-end verification. See [current acceptance](docs/GITHUB_ACCEPTANCE.md).
 
-Install Node.js 24 or newer and pnpm, then:
+## The workflow
+
+- Connect to GitHub, then choose repositories the app may access.
+- **New project** creates a private repository with a working paper and agent guides.
+  **Connect existing** preserves an existing repository's layout and adds instructions.
+- Pick files from the visible tree. Upload files/folders into the paper; originals on
+  disk are untouched. Settings selects the main document and engine.
+- Browser drafts save automatically. **Save to GitHub** makes a versioned checkpoint;
+  **Refresh** gets collaborators' changes. Overlapping file changes need an explicit
+  choice; saves never force-push. Export downloads a source ZIP.
+- **Compile** shows loading/building progress and errors. The previous PDF is labeled
+  when stale. Stop cancels a build; corrected source can compile again.
+- Invite collaborators using GitHub's repository settings. They use their own GitHub
+  login. GitHub controls repository access; the app cannot grant broader access.
+- Codex/Claude agents edit and commit ordinary files in that same repository. Root and
+  nested instructions require paired Agent comments. **Agent tags** highlights those
+  source passages; untagged text is Manual. No custom MCP is needed for this workflow.
+
+## Development
+
+Node.js 24+, pnpm 12.14.0. If pnpm is absent, use `npx --yes pnpm@12.14.0`.
 
 ```sh
 pnpm install
 pnpm setup
-pnpm dev
+pnpm build:hosted
+pnpm exec wrangler d1 execute agentslatex --local --file worker/schema.sql
+node scripts/upload-compiler.mjs
+pnpm dev:hosted
 ```
 
-Open **http://127.0.0.1:4390**. Compile the included math/TikZ example with the button
-or **Cmd/Ctrl+Enter**. The first build loads the TeX engine and packages; subsequent
-builds reuse the worker. Setup downloads pinned compiler assets once (about 498 MiB
-archive); only the selected bundle is fetched by the browser. Assets remain outside Git.
-If pnpm is not on PATH, use `npx --yes pnpm@12.14.0` in place of `pnpm`.
+The authenticated app is at **http://127.0.0.1:4391**. Configure the GitHub App and
+ignored `.dev.vars` first; see [deployment](docs/DEPLOYMENT.md). Compiler uploads default
+to local simulated R2. They do not enable or publish cloud storage.
 
-For a static local build, run `pnpm build`, then `pnpm start`. On this Mac, the included
-`Start agentslatex.command` starts that built version; leave its terminal open while
-using the app. The localhost demo is not a public website.
+For a synthetic UI check without credentials, after building run
+`pnpm exec tsx tests/ui-fixture.ts` and open **http://127.0.0.1:4393**. This loopback-only
+fixture is excluded from the deployed worker. It is not a real account or repository.
 
-Use **Open files** for a standalone `.tex` and its sibling dependencies. Use **Open
-folder** for a project with subdirectories: relative image and input paths are retained.
-Select the main document if it is not inferred correctly. Imported originals are never
-overwritten. The editable copy is saved in this browser's IndexedDB; **Export project**
-downloads a ZIP of the current source files. Browser storage can be cleared or evicted,
-so export important work. **PDF ↓** downloads the most recent successful PDF.
+Compiler fixtures remain available through `pnpm dev` at
+**http://127.0.0.1:4390/tests.html**. That Vite server is the compiler laboratory; the
+account/project application needs the Worker API above. Original prototype browser
+drafts are retained in their separate IndexedDB database.
 
-The viewer renders one page at a time to keep long documents usable. Failed builds
-retain the previous PDF with an explicit stale label. Build log exposes the TeX error.
-Stop terminates the worker; another build can start afterward. Auto compilation is
-optional and debounced; explicit Compile is the default.
+## Evidence and scope
 
-## Compiler checks
+- [Current GitHub workspace acceptance](docs/GITHUB_ACCEPTANCE.md)
+- [Product scope](SPEC.md) and [deployment](docs/DEPLOYMENT.md)
+- [Compiler results](docs/TESTING.md): 32/32 outcomes matched in Chrome and Safari on
+  this Mac, including TikZ, 200 pages and 55 MiB of images. Not native LaTeX parity.
+- [Agent LaTeX requirements](latex-specs.md)
 
-Open **http://127.0.0.1:4390/tests.html** and choose Run checks. The same compiler
-adapter used by the editor builds 32 fixtures: TikZ, plots, circuits, bibliography,
-multiple files, fonts, deliberate failures, timeout/recovery, 200 pages, and up to
-55 MiB of distinct PNGs. See [testing and results](docs/TESTING.md).
+Current sync is explicit, with whole-file conflict choices. Files are limited to
+20 MiB each for GitHub transfers. Fine-grained source citations, passage highlighting
+on the PDF, live coediting, custom MCP and phone/Windows acceptance remain separate
+work. This app is independent of SWA; it neither launches nor manages agents.
 
-The development server saves evidence under ignored `data/results/`. Download evidence
-also works when serving the static build. Some fixtures intentionally fail compilation;
-a passing check means the observed outcome matches the fixture's expectation.
-
-## What is here
-
-- [Product scope](SPEC.md) — delivered slice and later collaboration/review work.
-- [LaTeX agent contract](latex-specs.md) — authoring rules and observed limitations.
-- [Compiler review](docs/COMPILER_REVIEW.md) — small integration improvements and limits.
-- `src/` — strict TypeScript editor, compiler adapter, PDF viewer and browser runner.
-- `tests/fixtures/` — readable `.tex` sources for individual cases.
-- `scripts/` — reproducible compiler installation and deterministic stress images.
-- `data/` — ignored private manuscripts, generated output and local evidence.
-
-This is a local MVP, independent of SWA. It has no accounts, group chat, GitHub sync,
-agent launcher, or attribution UI yet. GitHub versions this application's source;
-importing a paper does not publish it. Real Windows and phone acceptance remain separate
-from browser tests on this Mac. The same app is buildable as static assets; hosting is
-not configured in this slice.
+Application source is AGPL-3.0-or-later. Hosted builds include `/source.zip`, LICENSE
+and [third-party notices](NOTICE.md). Private manuscripts and credentials stay out of
+that archive and this repository.

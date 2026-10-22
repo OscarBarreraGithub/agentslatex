@@ -8,3 +8,11 @@ TeX Live contains packages and fonts under their respective licenses. Retain ups
 license information when distributing compiler bundles; this file does not relicense
 those packages. Dependency source, version and license details remain in the pnpm lockfile
 and installed package metadata. CodeMirror is MIT; PDF.js is Apache-2.0; fflate is MIT.
+
+The hosted application offers its corresponding application source at `/source.zip`.
+This includes the build scripts and pinned dependency lockfile. Unchanged compiler
+source and build instructions are available from the upstream projects:
+
+- https://github.com/TeXlyre/texlyre-busytex/tree/v1.4.1
+- https://github.com/TeXlyre/texlyre-busytex/releases/tag/assets-v1.4.1
+- https://github.com/TeXlyre/texlyre-busytex

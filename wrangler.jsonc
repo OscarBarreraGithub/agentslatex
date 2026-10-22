@@ -1,0 +1,37 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "agentslatex",
+  "account_id": "60ab5e4b784f9a15e59eb851df3e8c0b",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/compiler/*"],
+  },
+  "vars": {
+    "APP_ORIGIN": "https://agentlatex.com",
+    "GITHUB_CLIENT_ID": "Iv23liUiuQDIE2r3kUfK",
+    "GITHUB_APP_SLUG": "agentslatex",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "agentslatex",
+      "database_id": "4dbd8174-98fe-400c-8a11-928a62e63133",
+    },
+  ],
+  "r2_buckets": [
+    {
+      "binding": "COMPILER",
+      "bucket_name": "agentslatex-compiler",
+    },
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1,
+  },
+  "workers_dev": true,
+}

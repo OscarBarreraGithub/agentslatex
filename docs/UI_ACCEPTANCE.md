@@ -1,4 +1,7 @@
-# UI acceptance — 2026-10-21
+# Original prototype UI acceptance — 2026-10-21
+
+Historical evidence for the original anonymous prototype. The GitHub workspace has
+separate current evidence in [GITHUB_ACCEPTANCE.md](GITHUB_ACCEPTANCE.md).
 
 ## Observed in the built app, Chrome 155 on this Mac
 

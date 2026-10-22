@@ -5,3 +5,6 @@ public/compiler/
 public/fixtures/
 .DS_Store
 *.log
+
+.dev.vars*
+.wrangler/

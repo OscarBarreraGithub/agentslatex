@@ -2,52 +2,52 @@
 
 ## Purpose
 
-A simple place to edit and read scientific LaTeX, with agents working through familiar
-files and tools. The UI should feel quiet and predictable: source left, PDF right,
-minimal controls, dark application chrome, original white PDF pages. No QUARK or
-managed-agent framework. No model calls merely to read, edit, compile, or navigate.
+A quiet workspace for scientific LaTeX: source left, real PDF right, visible files,
+dark chrome and ordinary white PDF pages. GitHub is the account, sharing and version
+control system. The browser does the compilation. Reading/editing/compiling makes no
+model calls. No QUARK, agent manager or app-specific manuscript format.
 
-## This working slice
+## Current implementation
 
-- Browser compilation using pinned TeXlyre BusyTeX 1.4.1 and TeX Live 2026 assets.
-- Localhost serves static UI/compiler files; the browser does the compilation CPU work.
-- CodeMirror source editing, file and folder import, main-file and engine selection.
-- Compile, Stop, readable errors, optional debounced auto-build, timings and PDF download.
-- Original source files stay untouched; editable browser draft persists, with ZIP export.
-- PDF.js renders one selected page at a time, preserving vector diagrams and text.
-- Old PDF remains readable after an edit/error but never claims to match newer source.
-- A fixture-driven, reproducible browser compatibility/performance laboratory.
-- Mac/Windows portable source and setup; actual platform acceptance must be reported.
+One project corresponds to one GitHub repository. New projects are private and owned
+by the signed-in person, with paper/main.tex, figures/, references.bib and agent guides.
+Existing repositories retain their layout. Repository access comes from GitHub and
+selected GitHub App installations; every server operation uses a user access token.
 
-## Authoring contract
+Sign-in → optional existing-paper connection → projects / New project → file tree,
+CodeMirror editor and PDF viewer. There is no hosted guest editor. Browser drafts are
+separate by numeric GitHub user/repository ID. Save checkpoints the exact loaded base;
+Refresh preserves nonconflicting edits and asks which version to keep for overlapping
+files. Neither operation force-pushes. No automatic polling in this first slice.
 
-`latex-specs.md` is authoritative for agents. Prefer supported features rather than
-inventing a separate native build pipeline. Document missing packages/tools clearly.
-A compiler success proves a PDF was produced, not that its scientific claims are true.
+Compile loads pinned TeXlyre BusyTeX 1.4.1 / TeX Live 2026 in a browser worker. Loading,
+compiling and errors are visible; the previous PDF becomes stale after edits/failure.
+Stop cancels work. File/folder import copies files, preserves relative paths and asks
+before replacing browser copies. The source ZIP and PDF can be downloaded.
 
-## Later, preserve these requirements
+Agents use their normal GitHub/file tools. AGENTS.md, CLAUDE.md and manuscript reminders
+require paired `% agentlatex:begin agent id=...` / `% agentlatex:end id=...` comments.
+Tagged passages are Agent; everything else is Manual. This convention depends on agent
+compliance and is not cryptographic proof of authorship. The source highlight toggle
+shows tags; PDF attribution and detailed provenance are later work.
 
-- GitHub remains the version-control and sharing system. Ordinary project files stay
-  useful outside this UI. Slow/checkpoint synchronization is acceptable initially;
-  real-time simultaneous editing is not required for the MVP.
-- Frankenstein review: toggle subtle passage highlights on the actual PDF; select a
-  passage to see source-paper page/region, attribution and separate human checks.
-- Keep stable passage identifiers and content/version bindings. Changed passages stale
-  their checks. Do not infer authorship or scientific truth from a compile receipt.
-- SyncTeX gives source/PDF locations; a provenance sidecar supplies evidence and authorship.
-  Untracked edits remain unknown until attributed. Agents keep native editing tools.
-- Each PDF must be associated with the complete source snapshot and compiler settings
-  used to build it, including included files/images. A main.tex hash alone is insufficient.
-- Agent connections may be optional skills/MCP. They must not require a proprietary
-  manager, replace native tools, or imply every filesystem write is tracked automatically.
-- Phone/shared reading, GitHub authentication and sharing, live disk-folder connections,
-  and hosted agentlatex.com access are subsequent slices, not delivered features.
+## Infrastructure
 
-## Keep it small
+Cloudflare Worker serves UI/API; D1 stores expiring sessions, OAuth state and project
+registration metadata. GitHub tokens are encrypted server-side; they never reach browser
+JavaScript. R2 holds versioned compiler assets, not paper sources or generated PDFs.
+Papers live in GitHub plus browser drafts. No cloud compiler or cloud agent execution.
 
-No cloud TeX service, hidden model summarization, or app-specific document format in this
-slice. Do not upload private manuscripts as test fixtures. No paid hosting required.
+## Acceptance and later work
+
+Implementation is not deployment acceptance. Track current verification and remaining
+external setup in docs/GITHUB_ACCEPTANCE.md. Physical Windows/phone use, hosted cold
+loads, real collaborator onboarding and token expiry need explicit evidence.
+
+Preserve later Frankenstein requirements: subtle PDF passage highlights, source-paper
+page/region evidence, separate human checks, stable passage IDs, and source-version
+binding. A compile result says nothing about scientific validity. Coediting, custom MCP
+and cloud ChatGPT connectors must not delay the basic GitHub workflow.
 
 Open design todo: the owner will supply the final document/workspace folder structure.
-The current application source layout is provisional; do not reorganize existing SWA
-files or manuscripts to impose it.
+The current source layout is provisional. Do not reorganize SWA or existing manuscripts.
