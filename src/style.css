@@ -21,9 +21,6 @@
 }
 [hidden] { display: none !important; }
 .wordmark { display: inline-block; font-family: Georgia, "Times New Roman", serif; font-size: 27px; font-weight: 500; letter-spacing: -.07em; white-space: nowrap; }
-.wordmark .brand-g, .wordmark .brand-n { color: #c6c1fc; }
-.wordmark .brand-g { display: inline-block; transform: translateY(.07em); }
-.wordmark .brand-n { font-size: .88em; margin-left: .025em; }
 .wordmark .latex { margin-left: .14em; letter-spacing: -.08em; }
 .wordmark .latex-a { display: inline-block; font-size: .68em; transform: translate(-.05em, -.42em); margin-right: -.12em; }
 .wordmark .latex-e { display: inline-block; text-transform: uppercase; transform: translateY(.22em); margin-left: -.06em; margin-right: -.08em; }

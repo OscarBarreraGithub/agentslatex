@@ -37,6 +37,7 @@ It is not a clone and contains no Git commit history.
 
 Version-history UI remains AL-9 TODO. The wordmark uses g = Git and n = Notarized,
 meaning a recorded history/attribution convention, not cryptographic certification.
+All letters share the same serif font and text color; g and n have no special styling.
 
 ## Scoped verification
 
