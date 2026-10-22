@@ -134,3 +134,21 @@ during this update. No compiler matrix was rerun. The fresh visual/native-picker
 check could not be completed: computer control returned cgWindowNotFound for Safari
 and Chrome, and no browser provider was available. These small changes are deployed;
 the fresh visual/upload-picker verification remains open rather than recorded as passed.
+
+## Landing typography and approved copy — 2026-10-22
+
+Code `63b6406`, Worker version `c3650101-e5c4-47f2-893e-98835322768e`.
+The headline is “Write with agents. Revise with confidence.” and supporting copy is
+“Compile, version control, and collaborate. All in your browser.” The old footer
+sentence is removed. Both parts of AgEnT LaTeX use actual LaTeX/Latin Modern artwork,
+shipped as accessible inline SVG outlines with no external font dependency.
+
+Client/Worker typechecks and hosted build passed. Browser access recovered: the
+public signed-out landing page was visually verified in Chrome at desktop size;
+local final-build checks covered 360×800 and 915×412 emulation (the short landscape
+viewport scrolls vertically). A 412×915 check preceded the final headline wrapping
+adjustment. No physical-device or account-collaboration claims are added. Public
+health returned OK and deployed JS/CSS bytes matched the local build. Workers
+Free / $0 / Current plan was rechecked in the account dashboard before deployment.
+No compiler suite was repeated. Temporary preview server and verification tabs/windows
+were closed; user sessions and drafts were not changed.
