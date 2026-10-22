@@ -317,3 +317,29 @@ the matching passage on page 3. PDF-to-source remains double-click. Client/Worke
 typechecks and hosted build passed; no compiler or cache policy changes and no
 compiler stress-suite rerun. PDF retention remains latest-per-project, capped at
 five builds / 64 MiB, separate from drafts.
+
+Refresh/navigation deployed at source 6d65253; Worker version
+7f6ba465-c3d0-4574-8680-ac17a5bcd6d7. The isolated delayed-auth fixture was stopped.
+
+## Live documentation and lightweight project instructions — 2026-10-22
+
+New/newly connected repositories get short root and main-folder AGENTS.md pointers
+instead of copied specs/setup/import guides. Existing content and filename casing are
+preserved; marked reminders append once. Older projects' Connect agent prompts now
+link live docs and ask the agent to add missing pointers without removing local rules.
+No automatic rewrite of existing users' repositories occurred.
+
+The two affected contract files passed (16 checks): template layout/tagging, custom
+folder/root configuration, existing root and nested instruction preservation, retry
+idempotence, and failed-read propagation. Client/Worker typechecks and hosted packaging
+passed. Local Wrangler HTTP checks verified /docs, all four HTML guides, and byte-exact
+plain Markdown with text/plain and no-cache headers without authentication. No compiler
+stress tests were repeated. Workers Free / $0 / Current plan was rechecked in Chrome.
+
+The legacy synthetic preview crashed when a /docs directory was opened; its static
+server now resolves directory indexes and extensionless guide URLs. The preview was
+restarted at 127.0.0.1:4393. This was a fixture error; local Wrangler served the routes
+correctly. Visual checking could not complete because native browser control lost
+window/input access (noWindowsAvailable); do not infer a visual/mobile pass from HTTP
+checks. No private manuscript was read and no new real GitHub repository was created
+for this check. Live documentation fetch verification follows deployment.

@@ -917,7 +917,7 @@ export async function mountEditor(
   $("export").onclick = () =>
     void (async () => {
       const exported = await loadAll();
-      for (const p of [".agentlatex.json", "AGENTS.md", "CLAUDE.md", "latex-specs.md", "IMPORTS.md", "skills/agentslatex-import-conversation/SKILL.md", "skills/GitHub-setup.md"]) if (allPaths().includes(p) && !exported.some(f => f.path === p)) exported.push(await getFile(p));
+      for (const p of [".agentlatex.json", ...allPaths().filter(path => /^agents\.md$/i.test(path)), "CLAUDE.md", "latex-specs.md", "IMPORTS.md", "skills/agentslatex-import-conversation/SKILL.md", "skills/GitHub-setup.md"]) if (allPaths().includes(p) && !exported.some(f => f.path === p)) exported.push(await getFile(p));
       download(
         zipSync(
           Object.fromEntries(

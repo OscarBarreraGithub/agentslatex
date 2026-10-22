@@ -79,6 +79,7 @@ drafts are retained in their separate IndexedDB database.
 - [Compiler results](docs/TESTING.md): 32/32 outcomes matched in Chrome and Safari on
   this Mac, including TikZ, 200 pages and 55 MiB of images. Not native LaTeX parity.
 - [Agent LaTeX requirements](latex-specs.md)
+- [Live instructions for agents and collaborators](https://agentlatex.com/docs)
 - [Selling points / future splash-screen copy](docs/SELLING_POINTS.md)
 - [Conversation import skill](skills/agentslatex-import-conversation/SKILL.md)
 

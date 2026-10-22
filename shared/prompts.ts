@@ -1,6 +1,5 @@
 import type { Project } from "./contracts";
-import importSkill from "./import-skill.generated";
-import { modelTaggingInstructions } from "./authoring";
+import { docsUrl } from "./instructions";
 
 export interface ProjectPrompt {
   id: string;
@@ -23,8 +22,9 @@ Compiler: ${project.engine}
 First distinguish a document/project issue (LaTeX source, paths, GitHub access,
 unsaved edits, local setup) from a bug in agentlatex.com. Inspect only relevant,
 authorized files and logs. Preserve my draft, scientific content and account settings.
-For a project issue, explain and fix the smallest cause, following AGENTS.md and
-latex-specs.md. Do not file a website bug for an ordinary source error.
+For a project issue, explain and fix the smallest cause, following local AGENTS.md,
+${docsUrl}/AGENTS.md and ${docsUrl}/latex-specs.md.
+Do not file a website bug for an ordinary source error.
 
 For a reproducible site bug, search existing issues at
 https://github.com/OscarBarreraGithub/agentslatex/issues to avoid duplicates.
@@ -52,11 +52,12 @@ export function projectPrompts(project: Project): ProjectPrompt[] {
       title: "Connect agent",
       destination: "Paste into the agent you normally work with.",
       text: context + `
-First read skills/GitHub-setup.md in this repository. It guides local and browser
-agents through GitHub access. If this older project does not have it yet, read
-https://github.com/OscarBarreraGithub/agentslatex/blob/main/skills/GitHub-setup.md
-and add the same guide under skills/GitHub-setup.md when you can write to the repo.
-If you cannot access the private repository yet, use that public guide first.
+First read ${docsUrl}/GitHub-setup.md. It guides local and browser
+agents through GitHub access, even before you can read the private repository.
+Read ${docsUrl}/AGENTS.md and ${docsUrl}/latex-specs.md for current instructions.
+Do not copy shared docs into the repository. If the site is unavailable, use the
+same guides at https://github.com/OscarBarreraGithub/agentslatex (docs/AGENT_GUIDE.md,
+latex-specs.md and skills/GitHub-setup.md). If neither is accessible, say so.
 Guide me through any required sign-in step by step; show the actual login URL and
 one-time code before waiting. Preserve existing accounts and check actual read/write
 capabilities. A read-only connection does not let you push edits.
@@ -64,7 +65,10 @@ capabilities. A read-only connection does not let you push edits.
 Use this existing repository for our work. Check your actual GitHub read/write access;
 if it is unavailable, tell me the next concrete setup step. Use an existing checkout
 or clone the supplied repository, preserving local changes. Read root AGENTS.md,
-latex-specs.md, .agentlatex.json and relevant nested instructions before editing.
+.agentlatex.json and relevant nested instructions before editing. If this older project
+lacks the live-docs reminder, append a short pointer once to the root and configured
+main folder's AGENTS.md; preserve existing instructions and filename casing.
+Read the live guides again when starting/resuming work, including after compaction.
 
 Follow the configured folder layout and Agent passage tags. Keep linked files at their
 original repository paths. Pull current changes before editing; after each coherent
@@ -75,21 +79,28 @@ GitHub before you can read them. The website checks for updates automatically an
 preserves browser drafts; Save to GitHub publishes my edits and Refresh resolves
 pending updates. Do not claim to see unsaved browser text or browser build results.
 
-If a local compiler is available, follow latex-specs.md and check the changed document.
+If a local compiler is available, follow the live LaTeX specs and check the changed document.
 Otherwise say it needs browser compilation. Finish with changed files, the commit link,
 validation actually performed, and any remaining issue. Wait for my task if none was
-given; opening the project does not authorize inventing manuscript changes.\n\n` + modelTaggingInstructions,
+given; opening the project does not authorize inventing manuscript changes.
+Tag every new or rewritten agent passage and record model, version and reasoning as
+the live guide specifies; preserve untouched text and earlier attribution.`,
     },
     {
       id: "import",
       title: "Import a conversation",
       destination: "Paste into the conversation you want to bring over.",
       text: context + `\nGo through our conversation and preserve its useful work in this project.
-First read skills/agentslatex-import-conversation/SKILL.md and root IMPORTS.md in
-this repository. Keep an entry in IMPORTS.md of what was imported and where it went.
-Do not overwrite previous imports. On the first import these files do not exist yet;
-create them from the instructions below.\n\n` +
-        importSkill.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "").trim() + "\n\n" + modelTaggingInstructions,
+First read ${docsUrl}/import-conversation.md and ${docsUrl}/AGENTS.md.
+Fallback: https://github.com/OscarBarreraGithub/agentslatex/blob/main/skills/agentslatex-import-conversation/SKILL.md
+Read the latest root IMPORTS.md before importing; create that index only if missing.
+Append what was imported and where it went. Preserve all earlier entries and files.
+Store new artifacts in a unique folder, with a SUMMARY.md; reuse the import ID on retry.
+Do not copy shared instructions into this repository. Preserve local AGENTS.md preferences.
+The live guide explains GitHub connection and a downloadable-bundle handoff when this
+browser agent cannot write to GitHub. Check actual tools; do not claim an upload without
+verifying the remote files. Preserve source/model attribution and state any missing history.
+If neither instruction URL is accessible, ask me to provide the guide before importing.`,
     },
   ];
 }

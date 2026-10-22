@@ -3,6 +3,7 @@ dist/
 data/
 public/compiler/
 public/fixtures/
+public/docs/
 .DS_Store
 *.log
 

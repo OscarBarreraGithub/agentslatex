@@ -9,7 +9,8 @@ import {
   type Entry,
 } from "../shared/contracts";
 import { parentFolder, inFolder, joinFolder, defaultMainFolder } from "../shared/workspace";
-import { templateFiles, taggingInstructions } from "../shared/template";
+import { templateFiles } from "../shared/template";
+import { connectInstructions } from "../shared/instructions";
 import { ApiError, github, listRepos, readTree, commitFiles } from "./github";
 import {
   session,
@@ -295,20 +296,12 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
       .bind(repo.id)
       .first();
     if (existing) return json((await projectFor(env, token, repo.id)).project);
-    const files: Record<string, string> = {};
+    const files = await connectInstructions(tree.files.map(f => f.path), folder,
+      path => blobText(token, repo, tree.files.find(f => f.path === path)!));
     const templates = templateFiles(folder);
-    for (const name of new Set(["AGENTS.md", "latex-specs.md", "skills/GitHub-setup.md", joinFolder(folder, "AGENTS.md")])) {
-      const found = tree.files.find((f) => f.path === name);
-      if (!found) files[name] = templates[name];
-      else if (name === "AGENTS.md") {
-        const text = await blobText(token, repo, found);
-        if (!text.includes("agentlatex:begin"))
-          files[name] = text + "\n\n" + taggingInstructions;
-      }
-    }
     if (!tree.files.some(f => f.path === main)) {
       for (const [path, content] of Object.entries(templates))
-        if (inFolder(path, folder) && !tree.files.some(f => f.path === path) && !(path in files)) files[path] = content;
+        if (!path.endsWith("AGENTS.md") && inFolder(path, folder) && !tree.files.some(f => f.path === path) && !(path in files)) files[path] = content;
     }
     const priorConfig = tree.files.find(f => f.path === ".agentlatex.json");
     const preserved = priorConfig ? JSON.parse(await blobText(token, repo, priorConfig)) : {};

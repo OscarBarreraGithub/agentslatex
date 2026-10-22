@@ -1,4 +1,4 @@
-import { writeFile, copyFile, readFile } from "node:fs/promises";
+import { writeFile, copyFile, readFile, cp } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { zipSync } from "fflate";
 await writeFile(
@@ -10,6 +10,12 @@ await writeFile(
   X-Frame-Options: DENY
   Referrer-Policy: no-referrer
   Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self' https://github.com
+/docs
+  Cache-Control: no-cache
+/docs/*
+  Cache-Control: no-cache
+/docs/*.md
+  Content-Type: text/plain; charset=utf-8
 /compiler/*
   Cache-Control: public,max-age=31536000,immutable
   Cross-Origin-Resource-Policy: same-origin
@@ -17,6 +23,7 @@ await writeFile(
 );
 await copyFile("LICENSE", "dist/LICENSE");
 await copyFile("NOTICE.md", "dist/NOTICE.md");
+await cp("public/docs", "dist/docs", { recursive: true });
 // Offer this deployed version's source, without runtime data or credentials.
 const paths = execFileSync(
   "git",

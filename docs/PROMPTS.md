@@ -6,13 +6,14 @@ there is no repeated repository heading. The copied prompt retains the exact rep
 branch, main file and project URL. Copying does not run commands or grant access.
 A draft reminder appears when needed. Clipboard failure expands/selects the prompt.
 
-Connect agent points to `skills/GitHub-setup.md` in the paper repository, with a public
-fallback for older projects or agents without private-repo access. That guide covers
+Connect agent points to `https://agentlatex.com/docs/GitHub-setup.md`, with a public
+source-repository fallback. That guide covers
 local git/gh setup, existing checkouts, browser connectors, actual login URLs and codes,
-and read-only limitations. It is seeded for new/newly connected projects; existing
-custom files are preserved. There is no separate Set up GitHub task in the UI.
-Other reusable agent instructions live under skills/; conversation-import bookkeeping
-is still added only on the first import, rather than cluttering an empty paper.
+and read-only limitations. It is read online rather than copied into paper repositories.
+Local instructions are preserved. There is no separate Set up GitHub task in the UI.
+Connect agent also links the live agent/LaTeX guides for old and new projects and asks
+for missing short root/main-folder pointers to be appended once, preserving local rules.
+Conversation-import bookkeeping is still added only on the first import.
 
 Project settings → Report issue provides one copyable diagnosis prompt. It directs
 agents to fix local/document issues, or search for duplicates and submit a minimal
@@ -33,16 +34,17 @@ accounts/checkouts, show the real login URL and device code, wait for login, the
 verify access. A cloud-only agent must not claim it configured the user's computer.
 
 The portable [conversation import skill](../skills/agentslatex-import-conversation/SKILL.md)
-is the single source for the copyable import instructions. `scripts/prepare-template.mjs`
-generates the shared string. The first import creates the skill in the paper repository;
-the prompt already contains its full instructions. Empty projects do not need it.
+is the single source for import instructions. `scripts/build-docs.mjs` publishes it at
+`/docs/import-conversation.md` and as a readable HTML page. The copied prompt links
+there and to its GitHub source fallback, retaining project context and the key no-overwrite
+rule. No copied skill is created in the paper repository.
 
 Multiple chats share the root `IMPORTS.md` index. Each import has a unique ID and
 workspace folder, with an entry describing source, destination, coverage and related
 imports; SUMMARY.md maps individual artifacts to their origins. Follow-up imports
 link earlier entries and add only new material. Retries retain their ID. Concurrent
 imports must merge index additions against the latest branch, preserving both.
-The first import creates the index and skill if missing, in both new and existing
+The first import creates the index if missing, in both new and existing
 projects. Later imports reuse them. A no-write
 bundle contains a proposed IMPORT-ENTRY.md for the receiving agent to append, never
 a stale replacement index. These are agent instructions, not automatic enforcement.
@@ -55,7 +57,7 @@ Browser chat capability varies: verify write tools and selected-repo access. Wit
 write tool, export a bundle and provide a handoff for a local agent. A pasted skill
 does not install tools or grant access. Remote read-back is required to claim upload.
 
-All three prompts include browser GitHub connection guidance when access is missing,
+All three prompts provide or link browser GitHub connection guidance when access is missing,
 separate from AgentsLaTeX login and local `gh` authentication. They guide rather than
 grant access and account for school/work approval. Product references checked 2026-10-22:
 - [ChatGPT GitHub connection](https://help.openai.com/en/articles/11145903-connecting-github-to-chatgpt-deep-resear):
@@ -78,11 +80,21 @@ were checked at agentlatex.com. Deployment evidence is in GITHUB_ACCEPTANCE.md.
 
 ## Model labels
 
-Connect agent and import prompts include the model-tag convention even for older projects.
-New project root/nested agent instructions and latex-specs.md carry it too. Each
+Connect agent and import prompts link the current model-tag convention even for older projects.
+Short root/nested reminders retain the key rule; live agent instructions and LaTeX specs contain the details. Each
 paired passage block includes an ordinary `% agentlatex:author` JSON comment with
 model, version and reasoning; unavailable fields are unknown. Prior author records
 are preserved. Imports distinguish original from reconstructed writing. This is
 self-reported metadata; Show AI still uses the existing begin/end markers. Existing
 repository files are not silently rewritten, and no new identity verification or
-model-details UI is implied. The shared prompt source is `shared/authoring.ts`.
+model-details UI is implied. The full agent guide is `docs/AGENT_GUIDE.md`.
+
+## Public docs
+
+`/docs` is a static, login-free index with HTML and plain Markdown versions of agent
+instructions, LaTeX specs, GitHub setup and imports. Generated docs are build outputs;
+the files above are the editable sources. Docs use revalidation (`Cache-Control: no-cache`),
+not immutable compiler caching. This does not refresh a running agent's context: reminders
+ask it to reread at the start/resumption of work, including after compaction. Docs describe
+current app behavior, preserve local preferences, and do not authorize unrelated actions.
+No new Worker route, database, dependency, paid service or runtime model call is added.

@@ -5,6 +5,7 @@ import { safePath, newProject, type Repo } from "../shared/contracts";
 import { agentRanges } from "../shared/tagging";
 import { conflictingPaths } from "../src/merge";
 import { templateFiles } from "../shared/template";
+import { connectInstructions } from "../shared/instructions";
 import worker from "../worker/index";
 import type { Bindings } from "../worker/auth";
 const repo = { full_name: "person/paper" } as Repo;
@@ -105,13 +106,34 @@ test("template contains a working main, shared instructions and valid Agent mark
   assert.ok(!Object.keys(files).some(path => path.endsWith("CLAUDE.md")));
   assert.ok(!files["IMPORTS.md"]);
   assert.ok(!files["skills/agentslatex-import-conversation/SKILL.md"]);
-  assert.ok(files["AGENTS.md"].includes("Every manuscript passage"));
+  assert.ok(!files["latex-specs.md"]);
+  assert.ok(!files["skills/GitHub-setup.md"]);
+  assert.ok(files["AGENTS.md"].includes("https://agentlatex.com/docs/AGENTS.md"));
   assert.ok(files["agentlatex/main/AGENTS.md"].includes("every"));
   assert.ok(files["agentlatex/main/AGENTS.md"].includes("## Instructions and Preferences"));
   assert.ok(files["AGENTS.md"].includes("## Instructions and Preferences"));
   assert.deepEqual(agentRanges(files["agentlatex/main/main.tex"]).errors, []);
   assert.equal(agentRanges(files["agentlatex/main/main.tex"]).ranges.length, 1);
   assert.equal(JSON.parse(files[".agentlatex.json"]).main, "agentlatex/main/main.tex");
+});
+test("connecting preserves existing root/nested instructions and appends live pointers only once", async () => {
+  const files: Record<string, string> = {
+    "agents.md": "# Owner rules\nUse the existing research workflow.\n",
+    "research/paper/AGENTS.md": "# Paper preferences\nPreserve notation.\n",
+    "research/paper/main.tex": "Existing manuscript",
+  };
+  const original = { ...files };
+  const changes = await connectInstructions(Object.keys(files), "research/paper", async path => files[path]);
+  assert.deepEqual(Object.keys(changes), ["agents.md", "research/paper/AGENTS.md"]);
+  for (const [path, content] of Object.entries(changes)) {
+    assert.ok(content.startsWith(original[path]));
+    assert.ok(content.includes("https://agentlatex.com/docs/latex-specs.md"));
+  }
+  Object.assign(files, changes);
+  assert.deepEqual(await connectInstructions(Object.keys(files), "research/paper", async path => files[path]), {});
+  assert.equal(files["research/paper/main.tex"], original["research/paper/main.tex"]);
+  assert.deepEqual(Object.keys(await connectInstructions([], "", async () => { throw Error("Unexpected read"); })), ["AGENTS.md"]);
+  await assert.rejects(connectInstructions(["AGENTS.md"], "paper", async () => { throw Error("read failed"); }), /read failed/);
 });
 test("tag errors are explicit and unmarked text has no Agent range", () => {
   assert.deepEqual(agentRanges("Manual prose").ranges, []);

@@ -25,8 +25,8 @@ test("new and connected-folder starters use portable relative compile paths", ()
   assert.equal(JSON.parse(files[".agentlatex.json"]).folder, "agentlatex/main");
   assert.ok(files["agentlatex/main/main.tex"].includes("\\graphicspath{{figures/}}"));
   const nested = templateFiles("research/paper");
-  assert.ok(nested["research/paper/AGENTS.md"].includes("../../AGENTS.md"));
-  assert.ok(templateFiles("")["AGENTS.md"].includes("Every manuscript passage"));
+  assert.ok(nested["research/paper/AGENTS.md"].includes("https://agentlatex.com/docs/AGENTS.md"));
+  assert.ok(templateFiles("")["AGENTS.md"].includes("Tag every new or rewritten agent passage"));
 });
 test("Markdown renders normal structure without raw HTML, executable links or image requests", () => {
   const html = renderMarkdown('# Notes\n\n**Result**\n\n<script>alert(1)</script>\n\n[x](javascript:alert(1))\n\n![secret](https://example.com/pixel)\n\n[Source](https://example.com/paper)');

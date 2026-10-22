@@ -42,11 +42,12 @@ Show the actual device code when applicable, and wait for the person to finish.
 
 ## Read and maintain the shared import index
 
-The instruction file is skills/agentslatex-import-conversation/SKILL.md. The shared
-index is IMPORTS.md at the repository root, across all conversations and workspaces.
-Read both from the latest branch before every import. They are intentionally absent
-until the first import. If missing, create this skill from the supplied instructions and create
-IMPORTS.md with the rules and entry fields below. Preserve existing instructions.
+The current instruction file is https://agentlatex.com/docs/import-conversation.md.
+The shared index is IMPORTS.md at the repository root, across all conversations and
+workspaces. Read the live guide and latest branch's index before every import.
+The index is intentionally absent until the first import; create it with the rules
+and entry fields below if missing. Do not copy this skill into the repository.
+Preserve existing instructions and any older import records.
 
 Always keep track of what was imported and what went where in IMPORTS.md. Append a
 separate entry per import; never replace the index or another import's files. Record:
@@ -68,7 +69,8 @@ path and origin in SUMMARY.md, including references to reused earlier artifacts.
 
 ## Preserve useful work
 
-Read the repository's AGENTS.md, latex-specs.md, and .agentlatex.json if accessible.
+Read the repository's AGENTS.md and .agentlatex.json if accessible, plus
+https://agentlatex.com/docs/AGENTS.md and https://agentlatex.com/docs/latex-specs.md.
 Use its configured `folder` workspace and conventions. For a legacy config without a workspace
 folder, use the directory containing the configured main document. Preserve existing
 files and instructions. Create a new imports/YYYY-MM-DD-short-topic-unique-id/ directory
@@ -118,7 +120,7 @@ index entry, add only these files, push safely, and verify the remote result.
 Put the proposed index entry in IMPORT-ENTRY.md in the bundle, not a replacement
 IMPORTS.md: the receiving agent must append it to the latest shared index. If the
 repository could not be read, mark destination/duplicate checks as pending and leave
-them to that agent. Include a copy of these instructions if the project lacks them.
+them to that agent. Include the live instruction URL in the handoff, not a copied skill.
 Explain how to download and give the bundle to that agent, one step at a time.
 If file creation is also unavailable, provide named file contents in manageable
 sections and say what remains to be saved. Never report that GitHub was updated.

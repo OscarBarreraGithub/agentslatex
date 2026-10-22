@@ -22,7 +22,9 @@ Check my access to the supplied repository. If access is missing, explain how to
 the collaborator invitation or ask its owner; do not create a replacement repository.
 Use an existing checkout when available. Otherwise ask where I want the project folder
 and clone there without replacing existing files. Use the supplied branch and preserve
-local changes. Read AGENTS.md and latex-specs.md. Finish with the local folder location,
+local changes. Read local AGENTS.md plus https://agentlatex.com/docs/AGENTS.md and
+https://agentlatex.com/docs/latex-specs.md. Shared docs stay online; do not copy them into
+the repository. Finish with the local folder location,
 the GitHub link, and the next simple step. Do not modify the paper during setup.
 
 ## Browser agents

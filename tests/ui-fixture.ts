@@ -126,7 +126,7 @@ http
       }
       const compiler = p.startsWith("/compiler/1.4.1/");
       const base = resolve(compiler ? "public/compiler" : "dist");
-      const file = resolve(
+      let file = resolve(
         base,
         compiler
           ? p.slice("/compiler/1.4.1/".length)
@@ -139,9 +139,15 @@ http
         res.end();
         return;
       }
-      const info = await stat(file);
+      if (p.startsWith("/docs") && !extname(file) && p !== "/docs" && p !== "/docs/") file += ".html";
+      let info = await stat(file);
+      if (info.isDirectory()) {
+        file = resolve(file, "index.html");
+        info = await stat(file);
+      }
       const types: Record<string, string> = {
         ".html": "text/html",
+        ".md": "text/plain; charset=utf-8",
         ".js": "text/javascript",
         ".mjs": "text/javascript",
         ".css": "text/css",

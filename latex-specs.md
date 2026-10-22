@@ -41,9 +41,11 @@ supplied as ordinary project files; this does not make external programs availab
   same-named files from different directories and is rejected rather than overwritten.
 - Filenames with spaces passed an image test; short ASCII filenames remain simplest.
 - Do not include `.git`, credentials, dependency directories or unrelated private files.
-- Browser edits are copies and persist only in this browser's draft storage. Export the
-  project to retain changes on disk. A native agent's later edits are not watched yet;
-  re-import intentionally. Do not claim that GitHub or collaborators received an edit.
+- Browser edits are saved as local drafts. Save to GitHub publishes a checkpoint;
+  collaborators and agents see committed files, not unsaved browser drafts. The site
+  checks incoming GitHub revisions automatically while open and preserves local edits
+  when conflicts occur. Local-only imported files still require an explicit upload/save
+  or export; a browser draft does not rewrite the original file on the user's disk.
 - Runtime projects/build output belong in ignored `data/`, never application test fixtures.
 
 ## Text, mathematics, layout
@@ -170,7 +172,7 @@ when their source content changes. This repository does not implement those over
 Use the relevant fixture or imported project in the actual browser. Report engine,
 browser, pass/fail, compile time separately from engine loading, page count, and warnings.
 Inspect rendered equations and figures. Test the affected failure/retry when changing
-compiler behavior. The public current matrix is in [docs/TESTING.md](docs/TESTING.md).
+compiler behavior. The public current matrix is in [docs/TESTING.md](https://github.com/OscarBarreraGithub/agentslatex/blob/main/docs/TESTING.md).
 Do not substitute advertised upstream support for an observed pass.
 
 References: [BusyTeX](https://github.com/TeXlyre/texlyre-busytex),

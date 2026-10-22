@@ -15,13 +15,16 @@ copy files or create filesystem symlinks. Compile loads main-folder and linked p
 TeX resolves relative inputs from the selected document's containing folder.
 Hide entire repo has a top divider only while the repository tree is expanded.
 
-New and newly connected papers receive root AGENTS.md and latex-specs.md plus a short
-AGENTS.md in the manuscript folder (unless that is already the root). Existing guides
-are preserved; missing manuscript instructions are added even when main.tex already
-exists. AGENTS.md is the only generated instruction filename; no CLAUDE.md duplicates.
-The manuscript guide includes an editable Instructions and Preferences section.
-Import bookkeeping and the import skill are created by the first conversation import,
-not by an empty project. Existing projects are not automatically moved or stripped.
+New and newly connected papers receive short root and manuscript-folder AGENTS.md
+reminders linking to https://agentlatex.com/docs/AGENTS.md and latex-specs.md there.
+Shared specs/setup/import guides are no longer copied into user repositories. The root
+and folder reminders repeat only the essential tagging rule and when to reread docs.
+Existing instructions are preserved; a marked block is appended once, reusing existing
+filename casing. A root workspace gets one file. New files include a local Instructions
+and Preferences section. No CLAUDE.md duplicates or intermediate agentlatex/AGENTS.md.
+The first import creates IMPORTS.md and artifacts, not a copied skill. Older connected
+projects are not silently rewritten, stripped or moved; their current Connect agent
+prompt directs the agent to live docs and to append missing pointers when it has access.
 
 New file asks for a name and creates it at the main-folder root. File moves inside
 that folder are browser drafts until Save to GitHub, reject occupied destinations,

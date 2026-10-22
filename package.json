@@ -6,9 +6,9 @@
   "license": "AGPL-3.0-or-later",
   "packageManager": "pnpm@12.14.0",
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --port 4390 --strictPort",
+    "dev": "node scripts/build-docs.mjs && vite --host 127.0.0.1 --port 4390 --strictPort",
     "start": "vite preview --host 127.0.0.1 --port 4390 --strictPort",
-    "build": "node scripts/prepare-template.mjs && tsc --noEmit && tsc -p tsconfig.worker.json && vite build",
+    "build": "node scripts/build-docs.mjs && tsc --noEmit && tsc -p tsconfig.worker.json && vite build",
     "typecheck": "tsc --noEmit",
     "setup": "node scripts/setup-assets.mjs && node scripts/prepare-fixtures.mjs",
     "test": "tsx --test tests/*.test.ts && node --test tests/project.test.mjs",

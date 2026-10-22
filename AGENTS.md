@@ -14,8 +14,9 @@ fixtures and measured acceptance. Actual results outrank guesses about support.
 Never claim a case passed merely because a dependency advertises it.
 
 Product messaging and future home/splash-screen copy live in [docs/SELLING_POINTS.md](docs/SELLING_POINTS.md).
-Project prompt behavior is in [docs/PROMPTS.md](docs/PROMPTS.md). Maintain the import
-skill as the source of truth; regenerate its shared string with scripts/prepare-template.mjs.
+Project prompt behavior is in [docs/PROMPTS.md](docs/PROMPTS.md). Shared user guidance
+lives in docs/AGENT_GUIDE.md, latex-specs.md and skills/. scripts/build-docs.mjs publishes
+these at /docs as HTML and plain Markdown; paper repositories get only short pointers.
 
 Keep source as normal `.tex`, `.bib`, and image files. Keep original papers intact.
 Imported files are browser copies: saving a draft does not update their disk files.
