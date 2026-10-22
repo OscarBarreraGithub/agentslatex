@@ -448,3 +448,37 @@ selected-access and initialization components, but uses an existing installation
 Connect existing rather than the full fresh-account fallback. The owner was asked to
 retry that original failing account; its first-installation check remains pending.
 The isolated 4394 fixture was stopped; the owner's 4393 preview remains untouched.
+
+## Empty repository setup — 2026-10-22
+
+The user found that both Finish setup and Connect existing still required an initial
+README commit. Source 5e6e4ee removed that manual requirement: the folder picker reads
+an empty repository without writing, and authorized setup initializes it using the
+Contents API before adding the normal starter files. Existing README files are never
+overwritten. Folder/document validation runs before initialization.
+
+The first real empty-repository check found a GitHub propagation delay that mocks had
+not represented: Contents acknowledged the README, but Git refs briefly still returned
+“Git Repository is empty.” Source 824ec4d adds a bounded wait, followed by the existing
+transient-request retry if needed. The previously interrupted setup also completed
+through Try again without a duplicate initialization commit.
+
+Six focused creation tests passed, including permission denial, browsing without a
+write, validation before a write, delayed initial-commit visibility, interrupted setup
+retry, concurrent initialization, and existing README preservation. Client/Worker
+typechecks and the hosted build passed. No compiler stress suite was repeated.
+Workers Free / $0 / Current plan was confirmed before deployment. Final live Worker:
+c4c5c2df-73f7-437f-a15e-1aa65b56186b (source 824ec4d).
+
+Real Chrome desktop acceptance used two private synthetic repositories:
+agentlatex-empty-check-20261022 (interrupted-setup recovery) and
+agentlatex-empty-retry-check-20261022 (fresh zero-commit setup). The latter was confirmed
+empty through GitHub immediately before connecting. One Connect project click opened
+the synced editor without a README step or manual retry. GitHub read-back showed the
+two expected commits and all starter files; browser compilation rendered one page in
+0.83 seconds. The repositories are retained for inspection, and only these synthetic
+repositories were added to the app installation; prior selections were preserved.
+Temporary Cloudflare/GitHub tabs were closed; the working demo remains open. This is
+an actual empty-repository workflow check on an existing installation, not a new
+GitHub-account OAuth test. The user separately reported that their invited abtest
+project appeared automatically after accepting its GitHub collaborator invitation.
