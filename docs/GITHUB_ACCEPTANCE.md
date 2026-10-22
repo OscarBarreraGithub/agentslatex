@@ -224,3 +224,10 @@ Nine affected GitHub/template checks and the full-log handoff check passed.
 Client/Worker typechecks and hosted packaging passed. No compiler stress matrix
 or broad suite was repeated. Workers Free / $0 / Current plan was confirmed before
 deployment. Second-account collaboration and physical drag acceptance remain open.
+
+Deployed code `a5a37de` as Worker version
+`7b73181d-bbdd-4e77-9544-26e419dd25dc`. Public health returned OK; the root HTML
+and editor/workspace/CSS bytes match the checked build. The signed-out production
+landing page was visually verified in Chrome. The authenticated failure/retry and
+new-project workflow evidence is from the local fixture, not a new live-account test.
+Owned fixture/preview servers and the verification tab were closed.
