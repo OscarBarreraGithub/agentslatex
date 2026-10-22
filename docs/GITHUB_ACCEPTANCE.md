@@ -119,3 +119,18 @@ Fifteen focused checks and the hosted Client/Worker build passed. Local Chrome
 verification and bounded remaining drag/device/import checks are in WORKSPACE.md.
 No compiler stress suite was repeated, no paid service or database migration added,
 and no private manuscript was inspected. Version-history UI remains AL-9 TODO.
+
+## Small UI corrections — 2026-10-22
+
+Code checkpoint `555679c`, Worker version
+`537188a7-d0a7-4040-b77f-f88ebfa7eef4`: uniform wordmark typography/color,
+removed redundant repository-explorer heading, labeled ← Back folder navigation,
+purple ↓ PDF download, and one Upload arrow offering Files… or Folder…. Browser
+compilation is now the lead entry in SELLING_POINTS.md for future landing-page copy.
+
+Client/Worker typechecks and hosted packaging passed. Live editor/workspace/CSS bytes
+match the build, and health returns OK. Workers Free / $0 / Current plan was checked
+during this update. No compiler matrix was rerun. The fresh visual/native-picker
+check could not be completed: computer control returned cgWindowNotFound for Safari
+and Chrome, and no browser provider was available. These small changes are deployed;
+the fresh visual/upload-picker verification remains open rather than recorded as passed.
