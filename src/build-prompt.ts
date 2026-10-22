@@ -1,5 +1,6 @@
 import type { Project } from "../shared/contracts";
 import type { Engine } from "./compiler";
+import { docsUrl } from "../shared/instructions";
 
 export function buildFailurePrompt(project: Project, file: string, engine: Engine, base: string, hasDraft: boolean, log: string) {
   return `Fix this AgentsLaTeX compilation failure.
@@ -11,7 +12,10 @@ Compiler: ${{ pdf: "pdfLaTeX", lua: "LuaLaTeX", xe: "XeLaTeX" }[engine]} (BusyTe
 GitHub base revision: ${base}
 ${hasDraft ? "This build included an unsaved browser draft. Ask me to Save to GitHub or provide the current source before editing; the repository may not contain the failing version." : "This build used saved files. Check the current revision before editing; the source may have changed since this failure."}
 
-Read AGENTS.md and latex-specs.md, inspect this document and its referenced files, and
+Read root .agentlatex.json, relevant local AGENTS.md files, and the live requirements
+at ${docsUrl}/latex-specs.md (not an assumed local copy). If the site is unavailable,
+use https://raw.githubusercontent.com/OscarBarreraGithub/agentslatex/refs/heads/main/latex-specs.md.
+Inspect this document and its referenced files, and
 make the smallest fix. Preserve scientific content, equations, citations and existing
 author tags. Follow the project's tagging/model instructions for rewritten passages.
 Do not remove content merely to silence errors. Explain the fix briefly and validate

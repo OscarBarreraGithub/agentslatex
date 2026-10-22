@@ -248,6 +248,12 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
           has_projects: false,
         });
       } catch (e) {
+        if (e instanceof ApiError && e.status === 403)
+          throw new ApiError(
+            403,
+            "GitHub has not granted repository creation for this account. Create the project on GitHub, then connect that repository.",
+            "repository_creation_setup",
+          );
         if (e instanceof ApiError && e.status === 409)
           throw new ApiError(
             409,
@@ -283,7 +289,14 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
   if (path === "/api/connect" && req.method === "POST") {
     const input = connectProject.parse(await body(req));
     const repo = await repoFor(token, input.repositoryId, true);
-    const tree = await readTree(token, repo);
+    let tree;
+    try {
+      tree = await readTree(token, repo);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 409 && /empty/i.test(e.message))
+        throw new ApiError(409, "Add a README to this empty repository on GitHub, then finish setup again.");
+      throw e;
+    }
     const folder = input.folder ?? (input.main ? parentFolder(input.main) : defaultMainFolder);
     const main = input.main ?? joinFolder(folder, "main.tex");
     if (!inFolder(main, folder) || !/\.tex$/i.test(main))

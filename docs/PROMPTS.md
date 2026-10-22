@@ -8,11 +8,11 @@ A draft reminder appears when needed. Clipboard failure expands/selects the prom
 
 Connect agent points to `https://agentlatex.com/docs/GitHub-setup.md`, with a public
 source-repository fallback. That guide covers
-local git/gh setup, existing checkouts, browser connectors, actual login URLs and codes,
-and read-only limitations. It is read online rather than copied into paper repositories.
+capability detection, existing connectors/checkouts, necessary git/gh setup, actual
+login URLs and codes, and handoff when write tools are unavailable. It is read online rather than copied into paper repositories.
 Local instructions are preserved. There is no separate Set up GitHub task in the UI.
 Connect agent also links the live agent/LaTeX guides for old and new projects and asks
-for missing short root/main-folder pointers to be appended once, preserving local rules.
+the canonical marked root/main-folder reminder through the live guide, preserving local rules.
 Conversation-import bookkeeping is still added only on the first import.
 
 Project settings → Report issue provides one copyable diagnosis prompt. It directs
@@ -29,7 +29,7 @@ preserves scientific content and author tags. View prompt is collapsed by defaul
 the full Build log remains available. Nothing is sent to an agent automatically.
 A new attempt resets the prompt; a successful build clears the failure panel.
 
-Setup targets beginners: inspect the local environment first, preserve existing
+Setup targets beginners: inspect available capabilities first, preserve existing
 accounts/checkouts, show the real login URL and device code, wait for login, then
 verify access. A cloud-only agent must not claim it configured the user's computer.
 
@@ -61,11 +61,11 @@ Browser chat capability varies: verify write tools and selected-repo access. Wit
 write tool, export a bundle and provide a handoff for a local agent. A pasted skill
 does not install tools or grant access. Remote read-back is required to claim upload.
 
-All three prompts provide or link browser GitHub connection guidance when access is missing,
+The prompts provide or link browser GitHub connection guidance when access is missing,
 separate from AgentsLaTeX login and local `gh` authentication. They guide rather than
 grant access and account for school/work approval. Product references checked 2026-10-22:
 - [ChatGPT GitHub connection](https://help.openai.com/en/articles/11145903-connecting-github-to-chatgpt-deep-resear):
-  Apps/Plugins connection and selected-repo authorization; the standard app is read-only.
+  Connection guidance; use observed capabilities rather than a categorical write-access claim.
 - [Claude GitHub integration](https://support.claude.com/en/articles/10167454-use-the-github-integration):
   + → Add from GitHub, repository context and manual refresh. This is not evidence
   of a write tool. The prompt checks actual capability before claiming upload.
@@ -102,3 +102,10 @@ not immutable compiler caching. This does not refresh a running agent's context:
 ask it to reread at the start/resumption of work, including after compaction. Docs describe
 current app behavior, preserve local preferences, and do not authorize unrelated actions.
 No new Worker route, database, dependency, paid service or runtime model call is added.
+
+The repair prompt reads root .agentlatex.json, local AGENTS.md and live LaTeX specs,
+with a raw-GitHub fallback. Connect agent carries project identity, scope and entry
+links; procedures live in the guides. Setup starts from observed connector/filesystem
+capabilities, not product-name assumptions. The canonical marked reminder is generated
+from shared/project-reminder.json for both the app and /docs/project-reminder.md.
+Manuscript validation is separate from website compiler development checks.

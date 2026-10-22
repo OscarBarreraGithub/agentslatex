@@ -8,7 +8,7 @@ import { templateFiles } from "../shared/template";
 const firstProject = process.argv.includes("--first-project");
 const port = firstProject ? 4394 : 4393;
 const origin = `http://127.0.0.1:${port}`;
-let creationRequest: string | undefined;
+let authorized = false;
 let rev = 1;
 let created = false;
 const contents = new Map<string, Buffer>();
@@ -65,7 +65,7 @@ http
           : {};
         if (p === "/api/me")
           return send({
-            user: { id: 999992, login: "Local UI fixture" },
+            user: { id: 999992, login: "local-ui-fixture" },
             ...(firstProject ? {} : { installations: 1 }),
             installUrl: "#",
           });
@@ -77,20 +77,20 @@ http
           return send(created ? [project] : []);
         if (p === "/api/projects" && req.method === "POST") {
           if (firstProject) {
-            if (!creationRequest) {
-              creationRequest = body.requestId;
-              console.log("First project: simulated creation failure");
-              return send({ error: "Temporary GitHub error. Try again." }, 503);
-            }
-            if (body.requestId !== creationRequest)
-              return send({ error: "Retry must preserve the creation request ID." }, 409);
-            console.log("First project: retry preserved request ID and created project");
+            project.name = body.name;
+            console.log("First project: GitHub creation denied before installation");
+            return send({error:"Resource not accessible by integration",code:"repository_creation_setup"},403);
           }
           created = true;
           project.name = body.name;
           return send(project, 201);
         }
-        if (p === "/api/repositories") return send([]);
+        if (p === "/api/repositories") return send(authorized ? [{...project, full_name:project.owner+"/"+project.name, private:true, owner:{login:project.owner}, permissions:{push:true}}] : []);
+        if (p === "/api/fixture/authorize" && req.method === "POST") { authorized=true; return send({ok:true}); }
+        if (p === "/api/connect" && req.method === "POST") {
+          if (!authorized) return send({error:"Not authorized"},403);
+          created=true; console.log("First project: connected after explicit repository authorization"); return send(project);
+        }
         if (p === "/api/projects/999992/head") return send({ revision: revision() });
         if (p.endsWith("/file")) {
           const b = blobs.get(u.searchParams.get("sha")!);
@@ -170,6 +170,7 @@ http
         ".css": "text/css",
         ".wasm": "application/wasm",
         ".svg": "image/svg+xml",
+        ".png": "image/png",
       };
       res.writeHead(200, {
         "Content-Type": types[extname(file)] ?? "application/octet-stream",

@@ -85,8 +85,59 @@ async function projects() {
   cachedProjects = items;
   projectListCache(me.user.id, items);
   draw(items);
+  const pending = pendingProject();
+  if (pending && !$<HTMLDialogElement>("modal").open) finishFirstProject(pending);
+}
+type PendingProject = { name: string; requestId: string };
+function pendingProject(value?: PendingProject | null): PendingProject | undefined {
+  const key = `agentlatex:new-project:${me.user.id}`;
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else if (value) localStorage.setItem(key, JSON.stringify(value));
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      const parsed = newProjectInput.safeParse(JSON.parse(saved));
+      if (parsed.success) return parsed.data;
+      localStorage.removeItem(key);
+    }
+  } catch { /* The open dialog still works when browser storage is unavailable. */ }
+}
+function finishFirstProject(pending: PendingProject) {
+  const createUrl = new URL("https://github.com/new");
+  createUrl.search = new URLSearchParams({ name: pending.name, visibility: "private" }).toString();
+  const d = modal("Finish creating your project", `<p class="hint">GitHub needs a repository before you can give AgentsLaTeX access. Create <strong>${h(pending.name)}</strong> first, then select only that repository.</p>
+    <ol class="setup-steps">
+      <li><a class="button" href="${h(createUrl.href)}" target="_blank" rel="noopener">Create on GitHub ↗</a><p class="hint">Owner: ${h(me.user.login)}. Keep it private and turn on Add README.</p></li>
+      <li><a class="button" href="${h(me.installUrl)}" target="_blank" rel="noopener">Connect this repository ↗</a><p class="hint">Choose Only select repositories, then ${h(pending.name)}.</p></li>
+    </ol><p class="hint">Return here when done. We’ll add the starter files and open your project.</p>
+    <button id="finish-project" class="primary wide">Finish setup</button><button id="cancel-project" class="quiet wide">Cancel setup</button>`);
+  $("cancel-project").onclick = () => { pendingProject(null); d.close(); };
+  $("finish-project").onclick = () => void (async () => {
+    const button = $<HTMLButtonElement>("finish-project");
+    if (button.disabled) return;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner" aria-hidden="true"></span><span role="status">Connecting…</span>';
+    $("form-error").textContent = "";
+    try {
+      const repos = await api<Repo[]>("/repositories");
+      const repo = repos.find(r => r.owner.login.toLowerCase() === me.user.login.toLowerCase() && r.name.toLowerCase() === pending.name.toLowerCase());
+      if (!repo) throw new Error(`Can’t access ${pending.name} yet. Complete both GitHub steps, then try Finish setup again.`);
+      if (!repo.private) throw new Error("This repository is public. Make it private in GitHub settings before finishing this private project.");
+      if (!repo.permissions?.push) throw new Error("GitHub has not granted write access to this repository yet.");
+      const project = await api<Project>("/connect", { repositoryId: repo.id, folder: defaultMainFolder });
+      pendingProject(null);
+      d.close();
+      await openProject(project.id);
+    } catch (e) {
+      $("form-error").textContent = (e as Error).message;
+      button.disabled = false;
+      button.textContent = "Finish setup";
+    }
+  })();
 }
 function newProject() {
+  const pending = pendingProject();
+  if (pending) { finishFirstProject(pending); return; }
   const d = modal(
     "New project",
     `<form id="create-form" novalidate><label class="field">Project name<input id="project-name" required maxlength="80" placeholder="my-paper" autocomplete="off" aria-describedby="form-error"></label><p class="hint">A private repository in your GitHub account.</p><button class="primary wide" id="create" type="submit">Create project</button></form>`,
@@ -114,12 +165,16 @@ function newProject() {
       nameInput.readOnly = true;
       $("form-error").textContent = "";
       try {
-        // Account-level Repository creation grants access to the new repository.
-        // Selecting an existing repository is only needed for Connect existing.
         const p = await api<Project>("/projects", input.data);
         d.close();
         await openProject(p.id);
       } catch (e) {
+        if (e instanceof RequestError && e.code === "repository_creation_setup") {
+          pendingProject(input.data);
+          d.close();
+          finishFirstProject(input.data);
+          return;
+        }
         $("form-error").textContent = (e as Error).message;
         button.disabled = false;
         button.removeAttribute("aria-busy");

@@ -1,22 +1,9 @@
+import reminderLines from "./project-reminder.json";
 import { joinFolder } from "./workspace";
 
 export const docsUrl = "https://agentlatex.com/docs";
 const marker = "<!-- agentlatex:instructions -->";
-const reminder = `${marker}
-## AgentsLaTeX
-
-For this project's LaTeX, TeX, PDF, manuscript, figures, bibliography and AI attribution:
-- At the start of work and after resuming/compaction, read ${docsUrl}/AGENTS.md
-  and ${docsUrl}/latex-specs.md. Follow their links for GitHub setup or conversation imports.
-- If your web tool cannot read the site, use the same live guide at
-  https://raw.githubusercontent.com/OscarBarreraGithub/agentslatex/refs/heads/main/docs/AGENT_GUIDE.md
-- Read root .agentlatex.json and relevant local AGENTS.md files; preserve local preferences.
-- Tag every new or rewritten agent passage with paired \`% agentlatex:begin agent id=...\` /
-  \`% agentlatex:end id=...\` comments and \`% agentlatex:author\` model/version/reasoning metadata.
-  Preserve untouched text and existing tags. Check tags and the diff before committing.
-- Keep a note of these doc URLs in your handoff when compacting. Shared instructions live
-  online; do not copy them into this repository. If unavailable, say so; do not invent guidance.
-<!-- /agentlatex:instructions -->`;
+const reminder = reminderLines.join("\n");
 const preferences = "% Add your LaTeX-specific instructions for agents here.\n\n\n\n\n\n\n\n";
 
 /** Appends once, without replacing the repository owner's instructions. */

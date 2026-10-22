@@ -8,6 +8,7 @@ const guides = [
   ["latex-specs", "LaTeX requirements", "latex-specs.md"],
   ["GitHub-setup", "Connect your agent", "skills/GitHub-setup.md"],
   ["import-conversation", "Import a conversation", "skills/agentslatex-import-conversation/SKILL.md"],
+  ["project-reminder", "Canonical project reminder", "shared/project-reminder.json"],
 ];
 const md = new MarkdownIt({ html: false, linkify: true });
 const stylesheet = `:root{color-scheme:dark;font:17px/1.65 system-ui,sans-serif;color:#e5e4ee;background:#14141a}
@@ -21,13 +22,14 @@ table{display:block;overflow:auto;border-collapse:collapse;font-size:.9em}td,th{
 .raw{font-size:.9rem;color:#aaa6b6}footer{margin-top:48px;border-top:1px solid #383640;padding-top:20px;font-size:.85rem}
 @media(max-width:480px){nav{gap:16px}h1{font-size:1.7rem}body{padding-top:20px}}`;
 function page(title, content) {
-  return `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} — AgentsLaTeX</title><link rel="stylesheet" href="/docs/style.css"></head><body><nav aria-label="Navigation"><a href="/">AgentsLaTeX</a><a href="/docs/">Docs</a><a href="https://github.com/OscarBarreraGithub/agentslatex">Source</a></nav><main>${content}</main><footer>Shared instructions stay here. Your paper and preferences stay in your repository.</footer></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} — agent latex</title><link rel="icon" type="image/png" sizes="192x192" href="/alien-icon.png"><link rel="stylesheet" href="/docs/style.css"></head><body><nav aria-label="Navigation"><a href="/">AgentsLaTeX</a><a href="/docs/">Docs</a><a href="https://github.com/OscarBarreraGithub/agentslatex">Source</a></nav><main>${content}</main><footer>Shared instructions stay here. Your paper and preferences stay in your repository.</footer></body></html>`;
 }
 await mkdir("public/docs", { recursive: true });
 await writeFile("public/docs/style.css", stylesheet);
 for (const [slug, title, source] of guides) {
-  const text = (await readFile(source, "utf8")).replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "").trim() + "\n";
+  const raw = await readFile(source, "utf8");
+  const text = (source.endsWith(".json") ? JSON.parse(raw).join("\n") : raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "")).trim() + "\n";
   await writeFile(`public/docs/${slug}.md`, text);
-  await writeFile(`public/docs/${slug}.html`, page(title, `<p class="raw"><a href="/docs/${slug}.md">Plain Markdown for agents</a></p>` + md.render(text)));
+  await writeFile(`public/docs/${slug}.html`, page(title, `<p class="raw"><a href="/docs/${slug}.md">Plain Markdown for agents</a></p>` + md.render(slug === "project-reminder" ? "```markdown\n" + text + "```" : text)));
 }
 await writeFile("public/docs/index.html", page("Documentation", `<h1>Work with your agent</h1><p>Read the current instructions here. No sign-in required.</p><ul>${guides.map(([slug, title]) => `<li><a href="/docs/${slug}">${title}</a> · <a class="raw" href="/docs/${slug}.md">Markdown</a></li>`).join("")}</ul><p>Start with Agent instructions and LaTeX requirements. The other guides cover setup and imports when needed.</p>`));

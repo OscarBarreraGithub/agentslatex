@@ -52,39 +52,17 @@ export function projectPrompts(project: Project): ProjectPrompt[] {
       title: "Connect agent",
       destination: "Paste into the agent you normally work with.",
       text: context + `
-First read ${docsUrl}/GitHub-setup.md. It guides local and browser
-agents through GitHub access, even before you can read the private repository.
-Read ${docsUrl}/AGENTS.md and ${docsUrl}/latex-specs.md for current instructions.
-Do not copy shared docs into the repository. If the site is unavailable, use the
+Use this existing project for the work I request. Preserve local instructions and
+unrelated changes; wait for my task if I have not given one.
+
+Start with https://agentlatex.com/docs/AGENTS.md. For access or setup, follow
+https://agentlatex.com/docs/GitHub-setup.md using the tools actually available to you.
+Before editing LaTeX, read https://agentlatex.com/docs/latex-specs.md.
+If the site is unavailable, the same live guide and its linked sources are at:
 https://raw.githubusercontent.com/OscarBarreraGithub/agentslatex/refs/heads/main/docs/AGENT_GUIDE.md
-which links the same guides on GitHub. If neither is accessible, say so.
-Guide me through any required sign-in step by step; show the actual login URL and
-one-time code before waiting. Preserve existing accounts and check actual read/write
-capabilities. A read-only connection does not let you push edits.
 
-Use this existing repository for our work. Check your actual GitHub read/write access;
-if it is unavailable, tell me the next concrete setup step. Use an existing checkout
-or clone the supplied repository, preserving local changes. Read root AGENTS.md,
-.agentlatex.json and relevant nested instructions before editing. If this older project
-lacks the live-docs reminder, append a short pointer once to the root and configured
-main folder's AGENTS.md; preserve existing instructions and filename casing.
-Read the live guides again when starting/resuming work, including after compaction.
-
-Follow the configured folder layout and Agent passage tags. Keep linked files at their
-original repository paths. Pull current changes before editing; after each coherent
-update, review the diff, commit only our work with its tags, and push to the supplied
-branch. Never force-push. Resolve conflicts explicitly and preserve other work.
-Verify the remote commit before saying it is synced. I must save browser drafts to
-GitHub before you can read them. The website checks for updates automatically and
-preserves browser drafts; Save to GitHub publishes my edits and Refresh resolves
-pending updates. Do not claim to see unsaved browser text or browser build results.
-
-If a local compiler is available, follow the live LaTeX specs and check the changed document.
-Otherwise say it needs browser compilation. Finish with changed files, the commit link,
-validation actually performed, and any remaining issue. Wait for my task if none was
-given; opening the project does not authorize inventing manuscript changes.
-Tag every new or rewritten agent passage and record model, version and reasoning as
-the live guide specifies; preserve untouched text and earlier attribution.`,
+Check repository access before editing. My browser draft is not available to you
+until saved to GitHub. Opening this project does not authorize manuscript changes.`,
     },
     {
       id: "import",

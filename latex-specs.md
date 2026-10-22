@@ -167,9 +167,19 @@ SyncTeX provides positions, not provenance or perfect semantic paragraph boundar
 Future review overlays must bind the complete input snapshot and PDF, and become stale
 when their source content changes. This repository does not implement those overlays yet.
 
-## Validation to report
+## Validate manuscript edits
 
-Use the relevant fixture or imported project in the actual browser. Report engine,
+For ordinary paper edits, review the diff and passage tags, and compile the changed
+document once with the configured engine if a compatible compiler is available.
+Local compilation is acceptable; distinguish it from a browser run. Inspect affected
+equations, figures and references in the resulting PDF when possible. Report what you
+checked and any unresolved error. If no compiler or PDF viewer is available, state
+that limit and ask the user to Compile in AgentsLaTeX. Do not run benchmark matrices,
+measure loading times or test failure/retry for an ordinary manuscript edit.
+
+## Validate changes to the website compiler
+
+When changing compiler/runtime behavior, use the affected fixture in the actual browser. Report engine,
 browser, pass/fail, compile time separately from engine loading, page count, and warnings.
 Inspect rendered equations and figures. Test the affected failure/retry when changing
 compiler behavior. The public current matrix is in [docs/TESTING.md](https://github.com/OscarBarreraGithub/agentslatex/blob/main/docs/TESTING.md).

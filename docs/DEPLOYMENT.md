@@ -5,23 +5,25 @@
 Register a public GitHub App (installable by any account), with:
 
 - Repository Contents: read/write; Metadata: read.
-- Account Repository creation: read/write. No repository Administration permission.
+- Repository creation: read/write. No repository Administration permission.
 - Callback: https://agentlatex.com/api/auth/callback.
 - Local development callback: http://127.0.0.1:4391/api/auth/callback.
 - Setup URL: https://agentlatex.com/?connected=1.
 - Expiring user tokens enabled; OAuth during installation disabled; webhooks disabled.
 
 The app uses the confidential OAuth web flow with single-use state. Users authorize
-identity and account-level repository creation. New project creates a private repository
-directly, including for users with no installations or existing repositories; GitHub
-automatically gives the app access to repositories it creates. Do not gate creation on
-installation count or send new users to an empty repository-selection screen.
+identity through OAuth. Repository creation is a repository permission granted by
+installation; sign-in alone does not grant it. New project attempts direct private
+creation when available. A GitHub 403 at creation offers a remembered first-project
+setup: create the named private repository on GitHub with a README, install on only
+that repository, then Finish setup to initialize it through the existing connect path.
+Never require an unrelated repository or all-repository access to bootstrap.
 Connect existing uses installation on selected repositories. User access tokens are restricted by
 both user and app access. Installation tokens are not used. A GitHub CLI login cannot
 register this app or substitute for a website user's authorization.
 
 See [GitHub's permission guidance](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/choosing-permissions-for-a-github-app)
-for the account-level Repository creation permission and automatic access.
+for Repository creation; distinguish app registration from an actual installation grant.
 
 If a manifest submission goes through GitHub sign-in first, GitHub can lose the POST
 body and report “We didn't find an App Manifest.” Return to the original setup form

@@ -8,6 +8,9 @@ test("failure handoff retains the complete log and identifies the failing draft"
   const project = { url: "https://github.com/test/paper", branch: "main" } as Project;
   const prompt = buildFailurePrompt(project, "paper/chapter.tex", "xe", "a".repeat(40), true, log);
   assert.ok(prompt.includes(log));
+  assert.ok(prompt.includes(".agentlatex.json"));
+  assert.ok(prompt.includes("https://agentlatex.com/docs/latex-specs.md"));
+  assert.ok(!prompt.includes("Read AGENTS.md and latex-specs.md"));
   assert.ok(prompt.includes("Document compiled: paper/chapter.tex"));
   assert.ok(prompt.includes("XeLaTeX"));
   assert.ok(prompt.includes("unsaved browser draft"));

@@ -1075,3 +1075,5 @@ dialog::backdrop {
 
 .synctex-glow { position: absolute; pointer-events: none; z-index: 10; background: #9c7eff24; box-shadow: 0 0 15px 5px #9470ff55; border-radius: 4px; }
 .cm-lineNumbers .cm-gutterElement { cursor: pointer; }
+.setup-steps { padding-left: 22px; }
+.setup-steps li { margin: 18px 0; padding-left: 4px; }

@@ -395,3 +395,37 @@ byte, contains no installation-status gate, and /api/health returns ok. Python's
 default urllib request received 403; curl fetched and verified the public endpoints.
 The isolated 4394 fixture and verification tab were closed. The owner's 4393 preview
 and existing production tab were preserved; refresh an already-open tab for this fix.
+
+## Correction: repository creation requires an installation grant — 2026-10-22
+
+The owner's fresh-account attempt after 0e07272 failed with GitHub's “Resource not
+accessible by integration.” The newest creation record had no repository ID: failure
+occurred before creation. The earlier synthetic frontend pass did not establish that
+GitHub would allow creation without installation. That readiness claim was premature.
+Repository creation is a repository permission, not an account permission granted by
+OAuth sign-in alone; the earlier description above is superseded by this correction.
+
+A creation-stage 403 now opens a guided fallback: create the named private repository
+on GitHub with README enabled, grant access to only that repository, then Finish setup.
+The name/intent is stored per signed-in user in browser storage; refresh resumes it.
+Finish checks accessible repositories, ownership, privacy and write access and uses
+normal authorized /connect initialization. Incomplete access remains retryable, no
+unrelated repository is required, and Cancel setup clears the local intent. If the
+repository is empty, the app explains how to add README before retrying. Existing
+installation users can still create private repositories directly through the API.
+GitHub's new-repo form was inspected: name/privacy prefill works, README must be enabled
+explicitly (auto_init in a URL did not enable it). No app permission was broadened.
+
+The affected 14 tests passed: creation denial becomes an actionable setup response,
+unauthorized connect writes nothing, authorized connect initializes once and preserves
+README, canonical reminder reuse, failure-prompt revision/draft/log context, and the
+existing GitHub contracts. Client/Worker typechecks and hosted build passed. Chrome's
+synthetic first-project workflow passed denial → guide, incomplete-access message,
+refresh preserving name, explicit fixture authorization → editor. It does not prove a
+real fresh GitHub account's final installation/creation. Live verification is separate.
+
+All five instruction-review findings were corrected: live build-repair specs/config,
+capability-first setup, one canonical marked reminder source, proportional manuscript
+validation, and a concise Connect agent prompt. The title is “agent latex”; the favicon
+reuses the existing drawn-alien web icon. Workers Free / $0 / Current plan was checked
+again. No compiler/runtime behavior changed and no stress matrix was repeated.

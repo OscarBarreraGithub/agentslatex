@@ -5,7 +5,8 @@ import { safePath, newProject, type Repo } from "../shared/contracts";
 import { agentRanges } from "../shared/tagging";
 import { conflictingPaths } from "../src/merge";
 import { templateFiles } from "../shared/template";
-import { connectInstructions } from "../shared/instructions";
+import { readFileSync } from "node:fs";
+import { connectInstructions, appendInstructions } from "../shared/instructions";
 import worker from "../worker/index";
 import type { Bindings } from "../worker/auth";
 const repo = { full_name: "person/paper" } as Repo;
@@ -179,4 +180,12 @@ test("expired sign-in returns to a usable Connect screen", async () => {
     r.headers.get("Location"),
     "https://agentlatex.com/?signin=retry",
   );
+});
+
+ test("published canonical reminder is reused without duplicate application reminders", () => {
+  const lines = JSON.parse(readFileSync(new URL("../shared/project-reminder.json", import.meta.url), "utf8")) as string[];
+  const canonical = lines.join("\n");
+  const local = "# Existing preferences\n" + canonical;
+  assert.equal(appendInstructions(local), local);
+  assert.ok(appendInstructions().includes(canonical));
 });
