@@ -4,6 +4,21 @@ This is the website's copy bank, drawn from the owner's product requests. It is 
 a complete archive of those conversations. Add future ideas here and retain their
 delivery status; do not advertise planned behavior as shipped.
 
+## Lead selling point: real LaTeX compiled directly in your browser
+
+**Primary copy:** “Real LaTeX, compiled directly in your browser. No LaTeX installation required.”
+
+This is the owner's highest-priority selling point for the future home/splash screen.
+Open the website, edit your source and build the PDF on your own computer. The browser
+downloads and runs the compiler; users do not need to install a desktop LaTeX distribution
+or configure a compilation server. Compilation makes no model calls and does not send
+the paper to a cloud compilation service.
+
+Status: implemented and tested in Chrome and Safari on this Mac, including TikZ,
+200-page documents and image-heavy fixtures. Keep the first compiler download,
+device-dependent performance and supported-workflow limits clear. This is real browser
+compilation, not a claim of complete native LaTeX parity or verified Windows support.
+
 ## Turn a long AI conversation into a lasting project
 
 **Candidate copy:** “Your best work shouldn't get lost in a chat. Bring your scripts,
