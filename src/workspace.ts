@@ -1,5 +1,5 @@
 import { EditorView, basicSetup } from "codemirror";
-import { Decoration, ViewPlugin, type DecorationSet } from "@codemirror/view";
+import { Decoration, ViewPlugin, lineNumbers, type DecorationSet } from "@codemirror/view";
 import { StreamLanguage } from "@codemirror/language";
 import { stex } from "@codemirror/legacy-modes/mode/stex";
 import { Compartment } from "@codemirror/state";
@@ -12,10 +12,13 @@ import { zipSync, strToU8 } from "fflate";
 import type { FileInput } from "texlyre-busytex";
 import { Compiler, type Engine } from "./compiler";
 import { pdfjs } from "./pdf";
+import { pdfCache, buildSignature, type CachedBuild } from "./cache";
+import { parseSynctex, type SourceMapData } from "./synctex";
+import { PaperViewer } from "./pdf-viewer";
 import { api, request, RequestError, escapeHtml as h } from "./api";
-import { projectDraft } from "./drafts";
+import { projectDraft, cachedDraftFiles } from "./drafts";
 import { conflictingPaths } from "./merge";
-import { openProjectPrompts, bindPromptCopy } from "./prompts";
+import { openProjectPrompts, openIssuePrompt, bindPromptCopy } from "./prompts";
 import { buildFailurePrompt } from "./build-prompt";
 import { AutoRefresh } from "./auto-refresh";
 import { agentRanges } from "../shared/tagging";
@@ -38,14 +41,20 @@ export async function mountEditor(
   back: () => void,
   notify: (s: string) => void,
 ): Promise<() => Promise<void>> {
-  let snapshot = await api<Snapshot>("/projects/" + id),
+  const key = userId + ":" + id;
+  const [remote, saved, cachedBuild] = await Promise.all([
+    api<Snapshot>("/projects/" + id),
+    projectDraft(key).catch(() => undefined),
+    pdfCache(key).catch(() => undefined),
+  ]);
+  let snapshot = remote,
     project = snapshot.project,
     main = project.main,
     engine: Engine = project.engine;
   let folder = parentFolder(main), references: string[] = [], builtPath = "", markdownTimer: ReturnType<typeof setTimeout> | undefined;
   const language = new Compartment();
   let selected = main,
-    files = new Map<string, FileInput>(),
+    files = new Map<string, FileInput>(cachedDraftFiles(saved, snapshot.files).map(f => [f.path, f])),
     dirty = new Set<string>(),
     revision = 0,
     builtRevision = -1,
@@ -61,8 +70,6 @@ export async function mountEditor(
   let lastActivity = Date.now();
   const pollingAbort = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const key = userId + ":" + id;
-  const saved = await projectDraft(key).catch(() => undefined);
   if (saved?.dirty.length) {
     snapshot = { ...snapshot, revision: saved.revision, files: saved.entries };
     files = new Map(saved.files.map((f) => [f.path, f]));
@@ -75,19 +82,20 @@ export async function mountEditor(
   }
   const compiler = new Compiler();
   let buildAbort: AbortController | undefined;
+  let lastBuild: CachedBuild | undefined;
+  let sourceMap: SourceMapData | undefined;
   let pdf: pdfjs.PDFDocumentProxy | undefined,
     pdfTask: ReturnType<typeof pdfjs.getDocument> | undefined,
-    renderTask: pdfjs.RenderTask | undefined,
     pdfBytes: Uint8Array | undefined,
-    page = 1,
-    renderVersion = 0;
+    page = 1;
   app.innerHTML = `<header class="workspace-header"><button id="back" class="icon" aria-label="Back to projects">←</button><div class="project-title"><strong>${h(project.name)}</strong></div><div class="workspace-status"><span id="save-state" class="save-state">Synced</span><button id="settings" class="icon" aria-label="Project settings" title="Main folder and default document">⚙</button></div><div class="actions"><button id="refresh" title="Get changes from GitHub">Refresh</button><button id="sync">Save to GitHub</button><button id="build" class="primary">Compile <kbd>⌘ ↵</kbd></button><button id="stop" hidden>Stop</button></div></header>
  <div class="mobile-tabs"><button id="mobile-files">Files</button><button id="mobile-source" aria-pressed="true">Source</button><button id="mobile-pdf" aria-pressed="false">PDF</button></div>
  <main class="workspace"><aside class="file-pane"><div class="pane-bar"><span id="folder-label">Files</span><div class="actions"><button class="icon" id="new-file" title="New file" aria-label="New file">＋</button><button class="icon" id="upload" title="Upload files or a folder" aria-label="Upload" aria-haspopup="dialog">↑</button></div></div><nav id="file-tree" aria-label="Main folder files"></nav><button id="show-repo" class="quiet" aria-expanded="false">See entire repo</button><section id="repo-explorer" hidden><nav id="repo-tree" aria-label="Entire repository files"></nav></section><div class="file-bottom"><button id="mobile-refresh" class="quiet">Refresh from GitHub</button><a class="button quiet" href="${h(project.url)}/settings/access" target="_blank" rel="noopener">Collaborators ↗</a><a class="button quiet" href="${h(project.url)}" target="_blank" rel="noopener">GitHub ↗</a><button id="export" class="quiet" title="Download main-folder files, linked files and browser edits as a ZIP; excludes Git history">Download source ZIP ↓</button></div></aside>
  <section class="source-pane"><div class="pane-bar"><button id="filename" class="quiet" aria-label="Rename selected file"></button><div class="actions"><button id="file-actions" class="icon" title="File actions" aria-label="File actions" aria-haspopup="dialog">⋯</button><button id="tags" class="quiet" aria-pressed="false" title="Show tagged AI-written passages">Show AI</button></div></div><div id="editor"></div><div id="file-preview" hidden></div><div class="pane-footer"><span id="main-label"></span></div></section>
  <section class="pdf-pane"><div class="pane-bar"><span><span id="preview-title">PDF</span> <span id="freshness" class="muted">Not compiled</span></span><div class="pagination"><button id="prev" class="icon" disabled aria-label="Previous PDF page">‹</button><input id="page" type="number" min="1" value="1" aria-label="PDF page" disabled><span id="count">/ —</span><button id="next" class="icon" disabled aria-label="Next PDF page">›</button><button id="download" disabled aria-label="Download PDF" title="Download current PDF">↓ Download</button></div></div>
- <div id="build-state" class="build-state" role="status" hidden><span id="build-label"></span><progress id="build-progress" hidden></progress><p id="build-error" hidden></p><div id="build-fix" class="prompt-terminal" hidden><div class="prompt-terminal-bar"><span>Fix with your agent</span><button id="copy-build-prompt">Copy prompt for agent</button></div><details id="build-prompt-preview"><summary>View prompt</summary><textarea id="build-prompt-text" readonly spellcheck="false" aria-label="Compilation fix prompt"></textarea></details><p id="build-prompt-status" class="prompt-copy-status" role="status"></p></div><button id="error-log" hidden>Show build log</button></div><div id="extension-hint" hidden><p>Your file doesn't have an extension. It should end with <code>.tex</code> or <code>.md</code>.</p><button id="rename-missing">Rename file</button></div><article id="markdown-preview" class="markdown-preview" hidden></article><div id="pdf-scroll"><div id="pdf-empty"><span class="paper-glyph">Aa</span><p>Ready when you are.</p><button id="empty-build" class="primary">Compile</button></div><canvas id="pdf" hidden></canvas></div><div class="pane-footer"><span id="timing"></span><button id="log-toggle" class="quiet">Build log</button></div></section></main>
+ <div id="build-state" class="build-state" role="status" hidden><span id="build-label"></span><progress id="build-progress" hidden></progress><p id="build-error" hidden></p><div id="build-fix" class="prompt-terminal" hidden><div class="prompt-terminal-bar"><span>Fix with your agent</span><button id="copy-build-prompt">Copy prompt for agent</button></div><details id="build-prompt-preview"><summary>View prompt</summary><textarea id="build-prompt-text" readonly spellcheck="false" aria-label="Compilation fix prompt"></textarea></details><p id="build-prompt-status" class="prompt-copy-status" role="status"></p></div><button id="error-log" hidden>Show build log</button></div><div id="extension-hint" hidden><p>Your file doesn't have an extension. It should end with <code>.tex</code> or <code>.md</code>.</p><button id="rename-missing">Rename file</button></div><article id="markdown-preview" class="markdown-preview" hidden></article><div id="pdf-region"><div id="pdf-empty"><span class="paper-glyph">Aa</span><p>Ready when you are.</p><button id="empty-build" class="primary">Compile</button></div><div id="pdf-scroll" tabindex="0" role="region" aria-label="PDF pages" hidden><div id="pdf-pages" class="pdfViewer"></div></div></div><div class="pane-footer"><span id="timing"></span><button id="log-toggle" class="quiet">Build log</button></div></section></main>
  <dialog id="editor-dialog"></dialog><input id="file-input" type="file" multiple hidden><input id="folder-input" type="file" multiple webkitdirectory hidden>`;
+  const paperViewer = new PaperViewer($("pdf-scroll"), $("pdf-pages"), value => { page = value; paging(); }, fail, (page, x, y) => void reverseSync(page, x, y).catch(fail));
   let log = "No build yet.",
     cancelled = false;
   bindPromptCopy($("copy-build-prompt"), $("build-prompt-text"), $("build-prompt-status"));
@@ -126,6 +134,11 @@ export async function mountEditor(
     doc: "",
     extensions: [
       basicSetup,
+      lineNumbers({ domEventHandlers: { dblclick: (view, line) => {
+        if (!/\.tex$/i.test(selected)) return false;
+        void forwardSync(view.state.doc.lineAt(line.from).number).catch(fail);
+        return true;
+      } } }),
       language.of(StreamLanguage.define(stex)),
       oneDark,
       EditorView.lineWrapping,
@@ -146,6 +159,31 @@ export async function mountEditor(
     ],
     parent: $("editor"),
   });
+  function currentSourceMap() {
+    if (!lastBuild?.synctex || !pdf) { notify("Compile this document first to link the PDF and source."); return; }
+    if (builtRevision !== revision) { notify("The source has changed. Compile again before jumping between source and PDF."); return; }
+    sourceMap ??= parseSynctex(lastBuild.synctex, builtPath, visiblePaths());
+    return sourceMap;
+  }
+  async function forwardSync(line: number) {
+    const map = currentSourceMap(); if (!map) return;
+    const match = map.forward(selected, line);
+    if (!match) { notify("No PDF position for this line in the current build."); return; }
+    if (matchMedia("(max-width: 760px)").matches) $("mobile-pdf").click();
+    await paperViewer.reveal(match);
+  }
+  async function reverseSync(page: number, x: number, y: number) {
+    const map = currentSourceMap(); if (!map) return;
+    const match = map.reverse(page, x, y);
+    if (!match || !visiblePaths().includes(match.file)) { notify("No source position at this point in the current build."); return; }
+    const version = revision;
+    await showFile(match.file);
+    if (disposed || revision !== version) return;
+    if (matchMedia("(max-width: 760px)").matches) $("mobile-source").click();
+    const line = editor.state.doc.line(Math.min(editor.state.doc.lines, Math.max(1, match.line)));
+    editor.dispatch({ selection: { anchor: line.from, head: line.to }, effects: EditorView.scrollIntoView(line.from, { y: "center" }) });
+    editor.focus();
+  }
   function fail(e: unknown) {
     notify((e as Error).message);
   }
@@ -212,7 +250,7 @@ export async function mountEditor(
     $("markdown-preview").hidden = !md;
     $("extension-hint").hidden = !missing;
     $("rename-missing").hidden = !inFolder(selected, folder);
-    $("pdf-scroll").hidden = alternate;
+    $("pdf-region").hidden = alternate;
     $("preview-title").textContent = md ? "Markdown" : missing ? "Preview" : "PDF";
     $("freshness").hidden = alternate;
     document.querySelector<HTMLElement>(".pagination")!.hidden = alternate;
@@ -657,41 +695,6 @@ export async function mountEditor(
     $<HTMLButtonElement>("prev").disabled = !pdf || page <= 1;
     $<HTMLButtonElement>("next").disabled = !pdf || page >= pdf.numPages;
   }
-  async function render() {
-    if (!pdf || disposed || /\.md$/i.test(selected) || missingExtension(selected)) return;
-    const v = ++renderVersion;
-    renderTask?.cancel();
-    try {
-      const sheet = await pdf.getPage(page);
-      if (v !== renderVersion || disposed) return;
-      const scale = Math.max(
-        0.2,
-        Math.min(
-          2.2,
-          ($("pdf-scroll").clientWidth - 40) /
-            sheet.getViewport({ scale: 1 }).width,
-        ),
-      );
-      const viewport = sheet.getViewport({ scale }),
-        canvas = $<HTMLCanvasElement>("pdf"),
-        ratio = Math.min(devicePixelRatio, 2);
-      canvas.width = viewport.width * ratio;
-      canvas.height = viewport.height * ratio;
-      canvas.style.width = viewport.width + "px";
-      canvas.style.height = viewport.height + "px";
-      canvas.hidden = false;
-      $("pdf-empty").hidden = true;
-      renderTask = sheet.render({
-        canvas,
-        viewport,
-        transform: ratio === 1 ? undefined : [ratio, 0, 0, ratio, 0, 0],
-      });
-      await renderTask.promise;
-      paging();
-    } catch (e) {
-      if ((e as Error).name !== "RenderingCancelledException") fail(e);
-    }
-  }
   async function compile() {
     if (busy || syncing || refreshing) return;
     if (/\.md$/i.test(selected)) { previewMode(); previewMarkdown(); return; }
@@ -722,12 +725,10 @@ export async function mountEditor(
     try {
       const all = await loadAll(buildAbort.signal);
       if (cancelled || disposed) throw Error("Build cancelled");
+      const buildFiles = all.map(f => ({ ...f, content: typeof f.content === "string" ? f.content : f.content.slice() }));
+      const signature = await buildSignature(buildFiles.map(f => f.path), snapshot.files, new Map(buildFiles.map(f => [f.path, f])), new Set(dirty), target, buildEngine);
       const result = await compiler.compile(
-        all.map((f) => ({
-          ...f,
-          content:
-            typeof f.content === "string" ? f.content : f.content.slice(),
-        })),
+        buildFiles,
         target,
         buildEngine,
         progress,
@@ -749,9 +750,12 @@ export async function mountEditor(
         freshness();
         return;
       }
+      sourceMap = undefined;
+      lastBuild = { pdf: result.pdf, synctex: result.synctex, signature, path: target,
+        engine: buildEngine, seconds: result.compileSeconds, page, savedAt: Date.now() };
+      void pdfCache(key, lastBuild).catch(() => { /* Builds are disposable; source persistence reports separately. */ });
       progress("Rendering PDF…");
-      renderVersion++;
-      renderTask?.cancel();
+      paperViewer.clear();
       await pdfTask?.destroy();
       pdfBytes = result.pdf;
       pdfTask = pdfjs.getDocument({ data: result.pdf.slice() });
@@ -759,7 +763,10 @@ export async function mountEditor(
       page = Math.min(page, pdf.numPages);
       builtRevision = version;
       builtPath = target;
-      await render();
+      $("pdf-empty").hidden = true;
+      $("pdf-scroll").hidden = false;
+      await paperViewer.load(pdf, page);
+      paging();
       freshness();
       $<HTMLButtonElement>("download").disabled = false;
       $<HTMLInputElement>("page").disabled = false;
@@ -862,11 +869,11 @@ export async function mountEditor(
   };
   $("prev").onclick = () => {
     page--;
-    void render();
+    paperViewer.goTo(page);
   };
   $("next").onclick = () => {
     page++;
-    void render();
+    paperViewer.goTo(page);
   };
   $<HTMLInputElement>("page").onchange = () => {
     page = Math.max(
@@ -876,7 +883,7 @@ export async function mountEditor(
         Number($<HTMLInputElement>("page").value) || 1,
       ),
     );
-    void render();
+    paperViewer.goTo(page);
   };
   $("download").onclick = () => {
     if (pdfBytes)
@@ -910,7 +917,7 @@ export async function mountEditor(
   $("export").onclick = () =>
     void (async () => {
       const exported = await loadAll();
-      for (const p of [".agentlatex.json", "AGENTS.md", "CLAUDE.md", "latex-specs.md", "IMPORTS.md", "skills/agentslatex-import-conversation/SKILL.md"]) if (allPaths().includes(p) && !exported.some(f => f.path === p)) exported.push(await getFile(p));
+      for (const p of [".agentlatex.json", "AGENTS.md", "CLAUDE.md", "latex-specs.md", "IMPORTS.md", "skills/agentslatex-import-conversation/SKILL.md", "skills/GitHub-setup.md"]) if (allPaths().includes(p) && !exported.some(f => f.path === p)) exported.push(await getFile(p));
       download(
         zipSync(
           Object.fromEntries(
@@ -979,6 +986,11 @@ export async function mountEditor(
       $("main-select").innerHTML = `<option value="">main.tex (default)</option>` + allPaths().filter(p => inFolder(p, nextFolder) && /\.tex$/i.test(p) && p !== defaultPath).map(p => `<option value="${h(p)}">${h(nextFolder ? p.slice(nextFolder.length + 1) : p)}</option>`).join("");
       if (preserve && main !== defaultPath) $<HTMLSelectElement>("main-select").value = main;
     }
+    const report = document.createElement("button");
+    report.className = "button wide project-rename";
+    report.textContent = "Report issue";
+    report.onclick = () => { d.close(); openIssuePrompt(project, dirty.size > 0); };
+    d.append(report);
     folderPicker($("settings-folder"), allPaths(), folder, p => { nextFolder = p; choices(); });
     choices(true);
     $<HTMLSelectElement>("engine-select").value = engine;
@@ -1006,7 +1018,7 @@ export async function mountEditor(
     app.classList.remove("show-files");
     $("mobile-pdf").setAttribute("aria-pressed", "true");
     $("mobile-source").setAttribute("aria-pressed", "false");
-    void render();
+    paperViewer.fit();
   };
   function shortcut(e: KeyboardEvent) {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
@@ -1026,8 +1038,6 @@ export async function mountEditor(
   }
   document.addEventListener("keydown", shortcut);
   window.addEventListener("beforeunload", beforeUnload);
-  const resize = new ResizeObserver(() => void render());
-  resize.observe($("pdf-scroll"));
   // Read portable settings before choosing the opening document.
   async function readSettings() {
     folder = parentFolder(project.main); main = project.main; references = []; engine = project.engine;
@@ -1046,6 +1056,28 @@ export async function mountEditor(
   }
   if (selected) await showFile(selected);
   else clearSelection();
+  if (cachedBuild) {
+    try {
+      pdfBytes = cachedBuild.pdf;
+      pdfTask = pdfjs.getDocument({ data: pdfBytes.slice() });
+      pdf = await pdfTask.promise;
+      builtPath = cachedBuild.path;
+      const signature = await buildSignature(visiblePaths(), snapshot.files, files, dirty, builtPath, engine);
+      builtRevision = signature === cachedBuild.signature ? revision : -1;
+      lastBuild = cachedBuild;
+      $("pdf-empty").hidden = true; $("pdf-scroll").hidden = false;
+      page = Math.min(cachedBuild.page, pdf.numPages);
+      await paperViewer.load(pdf, page);
+      paging(); freshness();
+      $<HTMLButtonElement>("download").disabled = false;
+      $<HTMLInputElement>("page").disabled = false;
+      $<HTMLInputElement>("page").max = String(pdf.numPages);
+      $("timing").textContent = `${cachedBuild.seconds.toFixed(2)}s · ${pdf.numPages} pages · Saved PDF`;
+    } catch {
+      paperViewer.clear(); await pdfTask?.destroy(); pdfTask = undefined; pdf = undefined; pdfBytes = undefined;
+      $("pdf-empty").hidden = false; $("pdf-scroll").hidden = true; freshness();
+    }
+  }
   const autoRefresh = new AutoRefresh({
     visible: () => !document.hidden && navigator.onLine,
     idle: () => Date.now() - lastActivity > 120_000,
@@ -1086,14 +1118,13 @@ export async function mountEditor(
     window.removeEventListener("offline", visibility);
     clearTimeout(timer); clearTimeout(markdownTimer);
     await persist();
+    if (lastBuild && lastBuild.page !== page) void pdfCache(key, { ...lastBuild, page }).catch(() => {});
     disposed = true;
     compiler.dispose();
-    resize.disconnect();
+    paperViewer.dispose();
     document.removeEventListener("keydown", shortcut);
     window.removeEventListener("beforeunload", beforeUnload);
     editor.destroy();
-    renderVersion++;
-    renderTask?.cancel();
     await pdfTask?.destroy();
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     app.classList.remove("show-files", "show-pdf");

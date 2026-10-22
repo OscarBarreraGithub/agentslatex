@@ -1,10 +1,24 @@
 # Project prompts
 
-The project header's **Prompts** button offers three copyable, project-specific tasks:
-local GitHub setup, conversation import, and continuing work with an agent. Copying
-does not execute a command, send a message, sign in, or grant repository access.
-The prompt includes the actual repository, branch and current main document. A browser
-draft reminder appears when needed. Clipboard failure selects the text for manual copy.
+The project header's **Prompts** button opens **Connect agent** first, followed by
+Import a conversation. Copy prompt is visible above the collapsed Read prompt preview;
+there is no repeated repository heading. The copied prompt retains the exact repository,
+branch, main file and project URL. Copying does not run commands or grant access.
+A draft reminder appears when needed. Clipboard failure expands/selects the prompt.
+
+Connect agent points to `skills/GitHub-setup.md` in the paper repository, with a public
+fallback for older projects or agents without private-repo access. That guide covers
+local git/gh setup, existing checkouts, browser connectors, actual login URLs and codes,
+and read-only limitations. It is seeded for new/newly connected projects; existing
+custom files are preserved. There is no separate Set up GitHub task in the UI.
+Other reusable agent instructions live under skills/; conversation-import bookkeeping
+is still added only on the first import, rather than cluttering an empty paper.
+
+Project settings → Report issue provides one copyable diagnosis prompt. It directs
+agents to fix local/document issues, or search for duplicates and submit a minimal
+synthetic site bug to this repository. Private paper/account information must be
+excluded. Agents without issue-writing tools prepare the report and direct the user
+to GitHub; they must not claim an issue was submitted. No issue is sent by the website.
 
 Compilation failures also offer **Copy prompt for agent** below a three-line error
 preview. The copied prompt contains the entire available build log, document path,
@@ -19,18 +33,17 @@ accounts/checkouts, show the real login URL and device code, wait for login, the
 verify access. A cloud-only agent must not claim it configured the user's computer.
 
 The portable [conversation import skill](../skills/agentslatex-import-conversation/SKILL.md)
-is the single source for the copyable import instructions and the skill seeded into
-new/newly connected paper repositories. `scripts/prepare-template.mjs` generates the
-shared string. Existing connected repositories are not rewritten by this UI update;
-their project prompts still contain the full import instructions.
+is the single source for the copyable import instructions. `scripts/prepare-template.mjs`
+generates the shared string. The first import creates the skill in the paper repository;
+the prompt already contains its full instructions. Empty projects do not need it.
 
 Multiple chats share the root `IMPORTS.md` index. Each import has a unique ID and
 workspace folder, with an entry describing source, destination, coverage and related
 imports; SUMMARY.md maps individual artifacts to their origins. Follow-up imports
 link earlier entries and add only new material. Retries retain their ID. Concurrent
 imports must merge index additions against the latest branch, preserving both.
-New/newly connected repositories receive the index and skill. In older projects,
-the copied instructions tell the importing agent to create missing files. A no-write
+The first import creates the index and skill if missing, in both new and existing
+projects. Later imports reuse them. A no-write
 bundle contains a proposed IMPORT-ENTRY.md for the receiving agent to append, never
 a stale replacement index. These are agent instructions, not automatic enforcement.
 
@@ -65,7 +78,7 @@ were checked at agentlatex.com. Deployment evidence is in GITHUB_ACCEPTANCE.md.
 
 ## Model labels
 
-Work and import prompts include the model-tag convention even for older projects.
+Connect agent and import prompts include the model-tag convention even for older projects.
 New project root/nested agent instructions and latex-specs.md carry it too. Each
 paired passage block includes an ordinary `% agentlatex:author` JSON comment with
 model, version and reasoning; unavailable fields are unknown. Prior author records

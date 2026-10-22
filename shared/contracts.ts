@@ -54,6 +54,7 @@ export interface Project {
   engine: "pdf" | "lua" | "xe";
   url: string;
   writable: boolean;
+  updatedAt?: string;
 }
 export interface Repo {
   id: number;
@@ -63,6 +64,7 @@ export interface Repo {
   default_branch: string;
   html_url: string;
   private: boolean;
+  pushed_at?: string;
   permissions?: { push?: boolean; pull?: boolean; admin?: boolean };
 }
 export interface Entry {
@@ -80,5 +82,5 @@ export interface Snapshot {
 export interface Me {
   user: { id: number; login: string };
   installUrl: string;
-  installations: number;
+  installations?: number;
 }

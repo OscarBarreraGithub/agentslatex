@@ -10,7 +10,7 @@ model calls. No QUARK, agent manager or app-specific manuscript format.
 ## Current implementation
 
 One project corresponds to one GitHub repository. New projects are private and owned
-by the signed-in person, with agentlatex/main.tex, figures/, references.bib and agent guides.
+by the signed-in person, with agentlatex/main/main.tex, figures/, references.bib and agent guides.
 Existing repositories retain their layout. Repository access comes from GitHub and
 selected GitHub App installations; every server operation uses a user access token.
 
@@ -101,3 +101,13 @@ diffs and agent-assisted explanations/restoration on top of GitHub history. No s
 history store, automatic destructive rollback or model call simply to view history.
 Outgoing automatic saving remains proposed; incoming refresh is implemented.
 Do not reorganize SWA or existing manuscripts as part of these changes.
+
+## Session continuity
+
+Sessions last 180 days and renew on visits (at most weekly), including upgrades of
+still-valid older 30-day sessions. GitHub access tokens refresh automatically while
+the refresh token remains valid. Temporary upstream/network refresh failures preserve
+the session for retry; explicit invalid/expired credentials require reconnecting.
+Sign-out deletes the server session and clears the home-list cache. Cookie protections
+remain HttpOnly, Secure on HTTPS, SameSite=Lax. Browser cookie removal, GitHub revocation
+or roughly six months without renewal can require sign-in. This is not permanent access.

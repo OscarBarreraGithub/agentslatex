@@ -22,8 +22,8 @@ test("workspace links retain original paths and file moves reject collisions", (
 });
 test("new and connected-folder starters use portable relative compile paths", () => {
   const files = templateFiles();
-  assert.equal(JSON.parse(files[".agentlatex.json"]).folder, "agentlatex");
-  assert.ok(files["agentlatex/main.tex"].includes("\\graphicspath{{figures/}}"));
+  assert.equal(JSON.parse(files[".agentlatex.json"]).folder, "agentlatex/main");
+  assert.ok(files["agentlatex/main/main.tex"].includes("\\graphicspath{{figures/}}"));
   const nested = templateFiles("research/paper");
   assert.ok(nested["research/paper/AGENTS.md"].includes("../../AGENTS.md"));
   assert.ok(templateFiles("")["AGENTS.md"].includes("Every manuscript passage"));

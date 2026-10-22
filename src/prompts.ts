@@ -1,5 +1,5 @@
 import type { Project } from "../shared/contracts";
-import { projectPrompts } from "../shared/prompts";
+import { projectPrompts, reportIssuePrompt, type ProjectPrompt } from "../shared/prompts";
 import { escapeHtml as h } from "./api";
 
 export function bindPromptCopy(button: HTMLButtonElement, text: HTMLTextAreaElement, status: HTMLElement) {
@@ -18,24 +18,43 @@ export function bindPromptCopy(button: HTMLButtonElement, text: HTMLTextAreaElem
 }
 
 export function openProjectPrompts(project: Project, hasDraft: boolean) {
-  const prompts = projectPrompts(project);
+  openPromptDialog(projectPrompts(project), "Prompts", hasDraft);
+}
+export function openIssuePrompt(project: Project, hasDraft: boolean) {
+  openPromptDialog([reportIssuePrompt(project)], "Report issue", hasDraft);
+}
+function openPromptDialog(prompts: ProjectPrompt[], title: string, hasDraft: boolean) {
   const dialog = document.createElement("dialog");
   dialog.className = "prompts-dialog";
   dialog.setAttribute("aria-labelledby", "prompts-title");
-  dialog.innerHTML = `<div class="dialog-title"><h2 id="prompts-title">Prompts</h2><button class="icon" aria-label="Close prompts" autofocus>×</button></div>
-    <p class="prompt-project">${h(project.owner)}/${h(project.name)}</p>
-    <p class="hint">Choose a task. Copy the prompt into your agent.</p>
-    ${hasDraft ? '<p class="prompt-draft">You have a browser draft. Save to GitHub before asking an agent to edit it.</p>' : ""}
-    <div class="prompt-list">${prompts.map((p) => `<details class="prompt-card"><summary>${h(p.title)}</summary><p class="prompt-destination">${h(p.destination)}</p><div class="prompt-terminal"><div class="prompt-terminal-bar"><span>Agent prompt</span><button data-copy="${p.id}" aria-label="Copy ${h(p.title)} prompt">Copy prompt</button></div><textarea readonly spellcheck="false" aria-label="${h(p.title)} prompt">${h(p.text)}</textarea><p class="prompt-copy-status" role="status" aria-live="polite"></p></div></details>`).join("")}</div>`;
+  dialog.innerHTML = `<div class="dialog-title"><h2 id="prompts-title">${h(title)}</h2><button class="icon" aria-label="Close prompts" autofocus>×</button></div>
+    ${prompts.length > 1 ? `<div class="prompt-tasks" role="group" aria-label="Prompt task">${prompts.map((p) => `<button class="quiet" data-task="${p.id}" aria-pressed="false">${h(p.title)}</button>`).join("")}</div>` : ""}
+    ${hasDraft ? '<p class="prompt-draft">Save your draft to GitHub before asking an agent to edit.</p>' : ""}
+    <div class="prompt-footer"><p class="prompt-destination"></p><button class="prompt-copy">Copy prompt</button></div>
+    <details class="prompt-preview"><summary>Read prompt</summary><textarea class="prompt-text" readonly spellcheck="false"></textarea></details>
+    <p class="prompt-copy-status" role="status" aria-live="polite"></p>`;
   dialog.querySelector(".dialog-title button")!.addEventListener("click", () => dialog.close());
   dialog.addEventListener("close", () => dialog.remove(), { once: true });
+  const text = dialog.querySelector<HTMLTextAreaElement>(".prompt-text")!;
+  const copy = dialog.querySelector<HTMLButtonElement>(".prompt-copy")!;
+  const status = dialog.querySelector<HTMLElement>(".prompt-copy-status")!;
+  const tasks = [...dialog.querySelectorAll<HTMLButtonElement>("[data-task]")];
+  const select = (prompt: typeof prompts[number]) => {
+    tasks.forEach(button => button.setAttribute("aria-pressed", String(button.dataset.task === prompt.id)));
+    text.value = prompt.text;
+    text.scrollTop = 0;
+    text.setAttribute("aria-label", `${prompt.title} prompt`);
+    dialog.querySelector(".prompt-destination")!.textContent = prompt.destination;
+    copy.textContent = "Copy prompt";
+    copy.setAttribute("aria-label", `Copy ${prompt.title} prompt`);
+    status.textContent = "";
+  };
   for (const prompt of prompts) {
-    const button = dialog.querySelector<HTMLButtonElement>(`[data-copy="${prompt.id}"]`)!;
-    const terminal = button.closest(".prompt-terminal")!;
-    const text = terminal.querySelector("textarea")!;
-    const status = terminal.querySelector<HTMLElement>(".prompt-copy-status")!;
-    bindPromptCopy(button, text, status);
+    const button = tasks.find(button => button.dataset.task === prompt.id);
+    if (button) button.onclick = () => select(prompt);
   }
+  select(prompts[0]);
+  bindPromptCopy(copy, text, status);
   document.body.append(dialog);
   dialog.showModal();
 }

@@ -1,15 +1,23 @@
+import githubSetup from "./github-setup.generated";
 import latexSpecs from "./latex-specs.generated";
-import importSkill from "./import-skill.generated";
 import { modelTaggingInstructions } from "./authoring";
+import { defaultMainFolder } from "./workspace";
+const preferences = `
+%%%%%
+
+## Instructions and Preferences
+
+% Add your LaTeX-specific instructions for agents here.
+`;
 export const taggingInstructions = `# Agent instructions — AgentsLaTeX
 
 AgentsLaTeX (agentlatex.com): LaTeX, TeX, PDF, manuscript, figures, bibliography,
 agent attribution and GitHub sync. This is the starting point for agents searching
-for project instructions. For importing a ChatGPT conversation, Python scripts,
-derivations or results, read skills/agentslatex-import-conversation/SKILL.md and the
-root IMPORTS.md index first. Append every import's origin and destination there;
-preserve earlier entries and files. Each conversation import has its own folder.
+for project instructions. For importing a conversation, use the website's Import a
+conversation prompt. On the first import, create the import skill and IMPORTS.md
+index from that prompt. Later imports read them first and preserve earlier entries.
 
+For agent connection and GitHub setup, read skills/GitHub-setup.md.
 Read latex-specs.md before editing this paper. Compilation runs in the user's browser
 with BusyTeX / TeX Live 2026. Use ordinary .tex, .bib and image files.
 
@@ -38,38 +46,16 @@ commit. Never force-push or overwrite another contributor's changes. Resolve con
 explicitly. If compilation is not available in your environment, say so; the user
 can compile in AgentsLaTeX. Check paired IDs and review the diff before committing.
 
-Main document and engine are in .agentlatex.json. Keep manuscript files under agentlatex/
+Main document and engine are in .agentlatex.json. Keep manuscript files under agentlatex/main/
 for new projects; preserve existing layouts when importing. Do not commit build
 outputs, credentials, tokens, or local machine paths. Do not invent scientific sources.
-`;
-export function templateFiles(folder = "agentlatex"): Record<string, string> {
+${preferences}`;
+export function templateFiles(folder = defaultMainFolder): Record<string, string> {
   const prefix = folder ? folder + "/" : "";
   const result: Record<string, string> = {
     "AGENTS.md": taggingInstructions,
-    "CLAUDE.md": "@AGENTS.md\n",
     "latex-specs.md": latexSpecs,
-    "skills/agentslatex-import-conversation/SKILL.md": importSkill,
-    "IMPORTS.md": `# Conversation import index
-
-Agents: read skills/agentslatex-import-conversation/SKILL.md before every import.
-Always record what was imported and where it went here. Read the latest branch first.
-Append entries; never replace earlier entries or imported files. Keep each import in
-its own uniquely named folder under the configured workspace's imports/ directory.
-For a continuation, link the earlier import and add only newly recovered work.
-Check for duplicate imports and directory collisions. Keep this entry and its files
-in the same commit. Resolve concurrent index changes by preserving both entries.
-This is a shared working index, not a tamper-proof authorship record.
-
-## Imports
-
-No conversations imported yet. Replace this sentence when adding the first entry.
-
-<!-- Append a heading per import with: unique ID; actual date; topic; chat provider
-and title; source reference if available and safe; destination folder; SUMMARY.md
-link; recovered/reconstructed/missing material; related prior import IDs. The summary
-lists each file's repository-relative path, purpose and origin. Do not publish private
-chat links or credentials. Git history records the commit; no self-referential SHA needed. -->
-`,
+    "skills/GitHub-setup.md": githubSetup,
     ".agentlatex.json":
       JSON.stringify(
         { version: 1, folder, main: prefix + "main.tex", references: [], engine: "pdf" },
@@ -81,8 +67,7 @@ chat links or credentials. Git history records the commit; no self-referential S
     ".gitignore":
       "*.aux\n*.log\n*.out\n*.toc\n*.synctex.gz\n*.fls\n*.fdb_latexmk\n*.bbl\n*.blg\n.DS_Store\n.env*\n",
     "agentlatex/AGENTS.md":
-      "# Manuscript editing\n\nFollow ../AGENTS.md and ../latex-specs.md. Tag **every** new or rewritten agent passage with paired `% agentlatex:begin agent id=...` / `% agentlatex:end id=...` comments. Inside each block, include `% agentlatex:author` JSON recording model, version and reasoning as specified in the root instructions. Preserve untouched text, tags and earlier author records.\n",
-    "agentlatex/CLAUDE.md": "@../AGENTS.md\n",
+      "# Manuscript editing\n\nFollow ../AGENTS.md and ../latex-specs.md. Tag every new or rewritten passage with paired `agentlatex:begin` / `agentlatex:end` comments and `agentlatex:author` metadata (model, version, reasoning). Preserve untouched text and existing attribution.\n" + preferences,
     "agentlatex/main.tex": String.raw`% Agents: read ../AGENTS.md. Tag every new or rewritten manuscript passage.
 \documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}

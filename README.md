@@ -23,7 +23,7 @@ See [current acceptance](docs/GITHUB_ACCEPTANCE.md).
   there open on GitHub, or can be linked without copying. New files start in the main
   folder and can be moved into its subfolders.
 - The settings icon beside Synced selects the main folder, default opening document
-  and engine separately. New projects use `agentlatex/main.tex`; existing layouts stay
+  and engine separately. New projects use `agentlatex/main/main.tex`; existing layouts stay
   in place. Without a specified document, the default is `main.tex` in that folder.
 - **Upload ↑ → Files… / Folder…** adds local files or folder contents to the main folder, preserving
   subfolders. It does not watch/sync the disk folder. **Save to GitHub** publishes them.

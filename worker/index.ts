@@ -8,16 +8,19 @@ import {
   type Project,
   type Entry,
 } from "../shared/contracts";
-import { parentFolder, inFolder, joinFolder } from "../shared/workspace";
+import { parentFolder, inFolder, joinFolder, defaultMainFolder } from "../shared/workspace";
 import { templateFiles, taggingInstructions } from "../shared/template";
 import { ApiError, github, listRepos, readTree, commitFiles } from "./github";
 import {
   session,
+  renewSession,
   login,
   callback,
   originCheck,
   setCookie,
   sessionName,
+  cookie,
+  hash,
   type Bindings,
 } from "./auth";
 type ProjectRow = {
@@ -39,6 +42,7 @@ const asProject = (r: ProjectRow, repo: Repo): Project => ({
   engine: r.engine,
   url: repo.html_url,
   writable: !!repo.permissions?.push,
+  updatedAt: repo.pushed_at,
 });
 async function body(req: Request) {
   const raw = await limitedBody(req, 1_000_000);
@@ -162,12 +166,11 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
   if (path === "/api/auth/callback") return callback(req, env);
   if (!path.startsWith("/api/")) return env.ASSETS.fetch(req);
   if (!["GET", "HEAD"].includes(req.method)) originCheck(req);
-  const auth = await session(req, env),
-    token = auth.token;
   if (path === "/api/auth/logout" && req.method === "POST") {
-    await env.DB.prepare("DELETE FROM sessions WHERE id=?")
-      .bind(auth.row.id)
-      .run();
+    // Logout must work even when the GitHub token expired or refresh is unavailable.
+    const raw = cookie(req, sessionName(req));
+    if (raw) await env.DB.prepare("DELETE FROM sessions WHERE id=?")
+      .bind(await hash(raw)).run();
     return new Response("{}", {
       headers: {
         "Content-Type": "application/json",
@@ -175,13 +178,20 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
       },
     });
   }
+  const auth = await session(req, env),
+    token = auth.token;
   if (path === "/api/me") {
-    const { installations } = await listRepos(token);
-    return json({
+    const response = json({
       user: { id: auth.row.user_id, login: auth.row.login },
-      installations: installations.length,
       installUrl: `https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/new`,
     });
+    const renewed = await renewSession(req, env, auth.row);
+    if (renewed) response.headers.set("Set-Cookie", renewed);
+    return response;
+  }
+  if (path === "/api/installation-status") {
+    const { installations } = await listRepos(token);
+    return json({ installations: installations.length });
   }
   if (path === "/api/repositories") {
     const { repositories } = await listRepos(token);
@@ -266,14 +276,14 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
         "Start paper with AgentsLaTeX",
       );
     }
-    await register(env, repo, "agentlatex/main.tex", "pdf");
+    await register(env, repo, joinFolder(defaultMainFolder, "main.tex"), "pdf");
     return json((await projectFor(env, token, repo.id)).project, 201);
   }
   if (path === "/api/connect" && req.method === "POST") {
     const input = connectProject.parse(await body(req));
     const repo = await repoFor(token, input.repositoryId, true);
     const tree = await readTree(token, repo);
-    const folder = input.folder ?? (input.main ? parentFolder(input.main) : "agentlatex");
+    const folder = input.folder ?? (input.main ? parentFolder(input.main) : defaultMainFolder);
     const main = input.main ?? joinFolder(folder, "main.tex");
     if (!inFolder(main, folder) || !/\.tex$/i.test(main))
       throw new ApiError(400, "Choose a .tex document inside the main folder.");
@@ -287,17 +297,13 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
     if (existing) return json((await projectFor(env, token, repo.id)).project);
     const files: Record<string, string> = {};
     const templates = templateFiles(folder);
-    for (const name of ["AGENTS.md", "CLAUDE.md", "latex-specs.md", "skills/agentslatex-import-conversation/SKILL.md", "IMPORTS.md"]) {
+    for (const name of new Set(["AGENTS.md", "latex-specs.md", "skills/GitHub-setup.md", joinFolder(folder, "AGENTS.md")])) {
       const found = tree.files.find((f) => f.path === name);
       if (!found) files[name] = templates[name];
       else if (name === "AGENTS.md") {
         const text = await blobText(token, repo, found);
         if (!text.includes("agentlatex:begin"))
           files[name] = text + "\n\n" + taggingInstructions;
-      } else if (name === "CLAUDE.md") {
-        const text = await blobText(token, repo, found);
-        if (!text.includes("@AGENTS.md"))
-          files[name] = text + "\n\n@AGENTS.md\n";
       }
     }
     if (!tree.files.some(f => f.path === main)) {

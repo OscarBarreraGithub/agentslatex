@@ -18,6 +18,7 @@ export interface Session {
   expires: number;
   refresh_lock: number;
 }
+export const SESSION_SECONDS = 180 * 86400;
 const now = () => Math.floor(Date.now() / 1000);
 const bytes = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 const encode = (b: Uint8Array) =>
@@ -125,7 +126,12 @@ export async function session(req: Request, env: Bindings) {
       )
         .bind(await seal(env, t), row.id)
         .run();
-    } catch {
+    } catch (error) {
+      const status = (error as { status?: number }).status;
+      if (status !== 400 && status !== 401) {
+        await env.DB.prepare("UPDATE sessions SET refresh_lock=0 WHERE id=?").bind(row.id).run();
+        throw new ApiError(503, "GitHub is temporarily unavailable. Your sign-in and draft are preserved; try again shortly.");
+      }
       await env.DB.prepare("DELETE FROM sessions WHERE id=?")
         .bind(row.id)
         .run();
@@ -133,6 +139,15 @@ export async function session(req: Request, env: Bindings) {
     }
   }
   return { row, token: t.token };
+}
+/** Renew on visits, at most once a week; preserve existing valid sessions. */
+export async function renewSession(req: Request, env: Bindings, row: Session): Promise<string | undefined> {
+  if (row.expires >= now() + SESSION_SECONDS - 7 * 86400) return;
+  const raw = cookie(req, sessionName(req));
+  if (!raw) return;
+  const result = await env.DB.prepare("UPDATE sessions SET expires=? WHERE id=? AND expires>?")
+    .bind(now() + SESSION_SECONDS, row.id, now()).run();
+  return result.meta.changes ? setCookie(req, sessionName(req), raw, SESSION_SECONDS) : undefined;
 }
 function pickToken(t: Token): Token {
   return {
@@ -155,6 +170,7 @@ export async function login(req: Request, env: Bindings) {
   u.searchParams.set("client_id", env.GITHUB_CLIENT_ID);
   u.searchParams.set("redirect_uri", env.APP_ORIGIN + "/api/auth/callback");
   u.searchParams.set("state", state);
+  u.searchParams.set("prompt", "select_account");
   return new Response(null, {
     status: 302,
     headers: {
@@ -196,13 +212,13 @@ export async function callback(req: Request, env: Bindings) {
       user.id,
       user.login,
       await seal(env, pickToken(result)),
-      now() + 30 * 86400,
+      now() + SESSION_SECONDS,
     )
     .run();
-  const headers = new Headers({ Location: env.APP_ORIGIN + "/?welcome=1" });
+  const headers = new Headers({ Location: env.APP_ORIGIN + "/" });
   headers.append(
     "Set-Cookie",
-    setCookie(req, sessionName(req), raw, 30 * 86400),
+    setCookie(req, sessionName(req), raw, SESSION_SECONDS),
   );
   headers.append("Set-Cookie", setCookie(req, "agentslatex_oauth", "", 0));
   return new Response(null, { status: 302, headers });

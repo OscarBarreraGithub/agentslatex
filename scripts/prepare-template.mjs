@@ -11,3 +11,9 @@ await writeFile(
     JSON.stringify(await readFile("latex-specs.md", "utf8")) +
     ";\n",
 );
+
+await writeFile(
+  "shared/github-setup.generated.ts",
+  "// Generated from skills/GitHub-setup.md.\nexport default " +
+    JSON.stringify(await readFile("skills/GitHub-setup.md", "utf8")) + ";\n",
+);

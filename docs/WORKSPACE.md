@@ -2,7 +2,7 @@
 
 The main folder (`folder`) and default opening document (`main`) are separate fields
 in `.agentlatex.json`, edited from the settings icon beside Synced. New projects use
-`agentlatex/`; absent `main` resolves to `<folder>/main.tex`. Legacy configurations
+`agentlatex/main/`; absent `main` resolves to `<folder>/main.tex`. Legacy configurations
 infer the folder from their existing main document. No existing files are moved. The folder picker uses a labeled ← Back button.
 The Default document and Compiler dropdowns have two-pixel borders and a minimum
 44px height, including Default document when connecting an existing repository.
@@ -13,6 +13,15 @@ listed separately. See entire repo adds a second tree. Its links open GitHub in 
 tab; drag or the + action links the original path through `references`. It does not
 copy files or create filesystem symlinks. Compile loads main-folder and linked paths.
 TeX resolves relative inputs from the selected document's containing folder.
+Hide entire repo has a top divider only while the repository tree is expanded.
+
+New and newly connected papers receive root AGENTS.md and latex-specs.md plus a short
+AGENTS.md in the manuscript folder (unless that is already the root). Existing guides
+are preserved; missing manuscript instructions are added even when main.tex already
+exists. AGENTS.md is the only generated instruction filename; no CLAUDE.md duplicates.
+The manuscript guide includes an editable Instructions and Preferences section.
+Import bookkeeping and the import skill are created by the first conversation import,
+not by an empty project. Existing projects are not automatically moved or stripped.
 
 New file asks for a name and creates it at the main-folder root. File moves inside
 that folder are browser drafts until Save to GitHub, reject occupied destinations,
@@ -78,10 +87,55 @@ open, alongside existing second-account and real import/upload acceptance.
 
 New project converts whitespace to hyphens automatically before creation. Invalid
 characters receive an inline explanation and example; no generic browser pattern
-message. Project settings links to the repository’s GitHub settings for renaming.
+message. Creating shows a small animated spinner until GitHub responds, then the
+Opening paper indicator while the editor loads. No percentage is invented. Failure
+restores Try again and the editable name; reduced-motion users keep the status text.
+Project settings links to the repository’s GitHub settings for renaming.
 Reopen the project afterward to fetch its current name and URL. Projects and drafts
 are keyed by numeric repository ID, so a repository rename does not create a new
 project or discard drafts. GitHub controls who may rename the repository.
 
 File rename/move notices are now simply “Renamed.” / “Moved.” plus Save to GitHub.
 Renaming still does not rewrite references in other source files automatically.
+
+## Switching projects and cached PDFs
+
+Home shows project rows, newest GitHub push first, with the saved update time. A
+per-GitHub-user project-list cache appears after session validation, then refreshes
+in the background. Opening a project always rechecks GitHub authorization and its
+snapshot. Clean file bytes are reused only for matching blob hashes; unsaved drafts
+remain separate. Connect existing lists authorized unlinked repos by default, with
+already-connected projects in a collapsed section that opens the existing editor.
+
+GitHub connection lands directly on Your projects, without an introductory chooser.
+Sign out removes the current server session, expires its cookie and clears that user's
+cached project list. Local drafts remain scoped to the user so signing out does not
+discard unsaved work. Connecting again always opens GitHub's account picker; it does
+not require signing out of GitHub.com. This is one selected account at a time.
+
+The last successful PDF and SyncTeX map are cached locally per user/project. At most
+five builds / 64 MiB total are retained; oversized builds render normally without
+being retained. Cache failure is nonfatal and never deletes drafts. Reopening restores
+the PDF/page without compiling. Its input signature includes source/figure hashes,
+linked files, selected compilation path and engine; mismatches show Earlier edit.
+A PDF from another selected document is labelled with its filename. No PDF is uploaded
+to Cloudflare/GitHub. This is a cache, not offline authorization or a backup.
+
+## PDF navigation
+
+The PDF pane uses PDF.js's continuous viewer, text and annotation layers. Scroll/wheel,
+page input and arrows navigate the same document. Existing PDF TOC/cross-reference
+links jump to their destinations (the document must contain link annotations, usually
+from hyperref); external links open separately. The upstream rendering queue buffers
+nearby pages and releases distant canvases. Each canvas is limited to 4 MiPixels;
+page placeholders remain lightweight. No PDF scripting or annotation-editing UI.
+
+Double-click PDF text to jump to the corresponding source line. Double-click a TeX
+line number to locate it in the PDF with a temporary soft glow. Normal double-click
+word selection in the source is preserved. There is no Show in PDF button/menu.
+SyncTeX comes from the browser build and is bound to that build's inputs. If source
+has changed, compile again before navigation. Included/linked files resolve by exact
+repository path; generated files/package sources are excluded. SyncTeX is line/box
+mapping, not semantic attribution; macros, figures and unmapped lines can resolve to
+nearby source or have no match. Version-history UI and Frankenstein attribution remain
+deferred.

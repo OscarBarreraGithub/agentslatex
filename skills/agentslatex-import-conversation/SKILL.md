@@ -44,8 +44,8 @@ Show the actual device code when applicable, and wait for the person to finish.
 
 The instruction file is skills/agentslatex-import-conversation/SKILL.md. The shared
 index is IMPORTS.md at the repository root, across all conversations and workspaces.
-Read both from the latest branch before every import. If these files are absent in
-an older project, create this skill from the supplied instructions and create
+Read both from the latest branch before every import. They are intentionally absent
+until the first import. If missing, create this skill from the supplied instructions and create
 IMPORTS.md with the rules and entry fields below. Preserve existing instructions.
 
 Always keep track of what was imported and what went where in IMPORTS.md. Append a

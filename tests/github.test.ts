@@ -101,13 +101,17 @@ test("unchanged remote files preserve local edits; only overlapping changes conf
 });
 test("template contains a working main, shared instructions and valid Agent markers", () => {
   const files = templateFiles();
-  assert.ok(files["agentlatex/main.tex"].includes("\\documentclass"));
-  assert.equal(files["CLAUDE.md"], "@AGENTS.md\n");
+  assert.ok(files["agentlatex/main/main.tex"].includes("\\documentclass"));
+  assert.ok(!Object.keys(files).some(path => path.endsWith("CLAUDE.md")));
+  assert.ok(!files["IMPORTS.md"]);
+  assert.ok(!files["skills/agentslatex-import-conversation/SKILL.md"]);
   assert.ok(files["AGENTS.md"].includes("Every manuscript passage"));
-  assert.ok(files["agentlatex/AGENTS.md"].includes("every"));
-  assert.deepEqual(agentRanges(files["agentlatex/main.tex"]).errors, []);
-  assert.equal(agentRanges(files["agentlatex/main.tex"]).ranges.length, 1);
-  assert.equal(JSON.parse(files[".agentlatex.json"]).main, "agentlatex/main.tex");
+  assert.ok(files["agentlatex/main/AGENTS.md"].includes("every"));
+  assert.ok(files["agentlatex/main/AGENTS.md"].includes("## Instructions and Preferences"));
+  assert.ok(files["AGENTS.md"].includes("## Instructions and Preferences"));
+  assert.deepEqual(agentRanges(files["agentlatex/main/main.tex"]).errors, []);
+  assert.equal(agentRanges(files["agentlatex/main/main.tex"]).ranges.length, 1);
+  assert.equal(JSON.parse(files[".agentlatex.json"]).main, "agentlatex/main/main.tex");
 });
 test("tag errors are explicit and unmarked text has no Agent range", () => {
   assert.deepEqual(agentRanges("Manual prose").ranges, []);

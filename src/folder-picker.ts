@@ -3,7 +3,7 @@ import { escapeHtml as h } from "./api";
 
 /** A folder-only browser. Selection is separate from the default document. */
 export function folderPicker(container: HTMLElement, paths: string[], initial: string, change: (folder: string) => void) {
-  const dirs = new Set([...directories(paths), initial]);
+  const dirs = new Set([...directories(paths), ...directories([initial + "/main.tex"]), initial]);
   let current = initial;
   function draw() {
     const children = [...dirs].filter(p => p && p !== current &&

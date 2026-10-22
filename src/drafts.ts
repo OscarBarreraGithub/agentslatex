@@ -11,6 +11,13 @@ export interface ProjectDraft {
   references?: string[];
   engine: "pdf" | "lua" | "xe";
 }
+/** Reuse saved bytes only when GitHub still identifies them as the same blob. */
+export function cachedDraftFiles(saved: ProjectDraft | undefined, entries: Entry[]): FileInput[] {
+  if (!saved || saved.dirty.length) return [];
+  const previous = new Map(saved.entries.map(entry => [entry.path, entry.sha]));
+  const current = new Map(entries.map(entry => [entry.path, entry.sha]));
+  return saved.files.filter(file => current.has(file.path) && current.get(file.path) === previous.get(file.path));
+}
 export async function projectDraft(
   key: string,
   value?: ProjectDraft,

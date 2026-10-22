@@ -31,6 +31,7 @@
 #repo-explorer { min-height: 110px; max-height: 42%; display: flex; flex-direction: column; border-top: 1px solid var(--border); }
 #repo-tree { overflow: auto; padding: 8px; min-height: 0; }
 #show-repo { border-radius: 0; font-size: 13px; min-height: 37px; }
+#show-repo[aria-expanded="true"] { border-top: 1px solid var(--border); }
 .file-row { display: flex; text-decoration: none; }
 .file-row[draggable=true] { cursor: grab; }
 .repo-file { display: flex; min-width: 0; align-items: center; }
@@ -207,17 +208,19 @@ h2 {
   margin-bottom: 30px;
 }
 .project-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
 }
 .project-card {
-  padding: 24px;
+  padding: 18px 12px;
   text-align: left;
-  min-height: 108px;
+  min-height: 78px;
   justify-content: flex-start;
-  background: var(--surface);
-  border-color: #2b2d34;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
   gap: 18px;
 }
 .project-card strong {
@@ -233,11 +236,9 @@ h2 {
   margin-top: 7px;
   font-size: 12px;
 }
-.document-icon {
-  font-size: 28px;
-  font-family: Georgia, serif;
-  color: #bcb7e6;
-}
+.project-info { min-width: 0; }
+.project-updated { margin-left: auto; text-align: right; font-size: 12px; color: var(--muted); white-space: normal; max-width: 220px; }
+.project-card .arrow { margin-left: 0; }
 .arrow {
   margin-left: auto;
   color: #7f8291;
@@ -293,6 +294,7 @@ h2 {
   padding: 13px 23px;
   min-height: 46px;
 }
+.landing .signin-note { font-size: 14px; margin: 18px 0 0; }
 .landing footer {
   font-size: 12px;
   color: #7f828d;
@@ -313,7 +315,10 @@ h2 {
   height: 18px;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+  flex: 0 0 auto;
 }
+button[aria-busy="true"]:disabled { opacity: 1; }
+button .spinner { width: 15px; height: 15px; border-color: currentColor; border-right-color: transparent; }
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -611,19 +616,10 @@ button.danger { color: #f2a8b5; border-color: #72434e; }
 .pagination input::-webkit-inner-spin-button {
   display: none;
 }
-#pdf-scroll {
-  flex: 1;
-  overflow: auto;
-  min-height: 0;
-  padding: 25px 20px;
-  text-align: center;
-}
-#pdf {
-  box-shadow: 0 8px 35px #0003;
-  max-width: 100%;
-  height: auto !important;
-  vertical-align: top;
-}
+#pdf-region { position: relative; flex: 1; min-height: 0; }
+#pdf-scroll { position: absolute; inset: 0; overflow: auto; overscroll-behavior: contain; }
+#pdf-pages { padding: 16px 0; }
+#pdf-pages .page { box-shadow: 0 8px 35px #0003; }
 #pdf-empty {
   height: 100%;
   display: flex;
@@ -756,19 +752,20 @@ dialog::backdrop {
   padding: 22px;
 }
 .prompts-dialog .dialog-title { margin-bottom: 8px; }
-.prompt-project { color: var(--muted); overflow-wrap: anywhere; }
-.prompt-list { display: grid; gap: 10px; }
-.prompt-card { border: 1px solid #3b4050; border-radius: 9px; overflow: hidden; }
-.prompt-card summary {
-  padding: 15px;
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 550;
-  background: #20232d;
+.prompt-tasks { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.prompt-tasks button { min-height: 42px; border-radius: 0; border-width: 0 0 2px; padding: 8px 0; font-size: 14px; }
+.prompt-tasks button[aria-pressed="true"] { color: #e7e1ff; border-bottom-color: var(--accent); }
+.prompt-text { display: block; width: 100%; height: clamp(150px, 35dvh, 300px); resize: none; border: 0; padding: 0 6px 0 0; background: transparent; color: #bfc1cb; font: 13px/1.65 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.prompt-text:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.prompt-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 14px 0; }
+.prompt-destination { color: #a8acb8; font-size: 13px; line-height: 1.5; }
+.prompt-copy { min-height: 42px; flex-shrink: 0; }
+.prompts-dialog .prompt-copy-status { padding: 10px 0 0; font-size: 13px; }
+@media (max-width: 520px) {
+  .prompt-tasks { display: grid; gap: 0; }
+  .prompt-tasks button { justify-content: flex-start; }
+  .prompt-footer { gap: 10px; }
 }
-.prompt-card summary:hover { background: #292d39; }
-.prompt-card summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
-.prompt-destination { padding: 12px 15px; color: #b7bdcc; font-size: 14px; line-height: 1.5; }
 .prompt-terminal { background: #151a25; color: #eef0f5; }
 .prompt-terminal-bar {
   display: flex;
@@ -819,16 +816,16 @@ dialog::backdrop {
 .error:empty {
   display: none;
 }
-.onboard-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
 .repo-list {
-  max-height: 350px;
+  max-height: min(350px, 50dvh);
   overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   margin-bottom: 16px;
 }
+.connected-projects { margin-top: 12px; border-top: 1px solid var(--border); }
+.connected-projects summary { cursor: pointer; padding: 14px 5px; font-size: 13px; color: var(--muted); }
+.connected-projects summary span { margin-left: 6px; }
 .repo-row {
   width: 100%;
   justify-content: space-between;
@@ -1070,3 +1067,9 @@ dialog::backdrop {
 @media (max-width: 760px) { #mobile-refresh { display: inline-flex; } }
 
 .project-rename { margin-top: 12px; }
+
+.prompt-preview summary { padding: 8px 0; color: var(--muted); cursor: pointer; font-size: 13px; }
+.prompt-preview[open] summary { margin-bottom: 10px; }
+
+.synctex-glow { position: absolute; pointer-events: none; z-index: 10; background: #9c7eff24; box-shadow: 0 0 15px 5px #9470ff55; border-radius: 4px; }
+.cm-lineNumbers .cm-gutterElement { cursor: pointer; }

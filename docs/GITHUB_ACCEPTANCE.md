@@ -231,3 +231,58 @@ and editor/workspace/CSS bytes match the checked build. The signed-out productio
 landing page was visually verified in Chrome. The authenticated failure/retry and
 new-project workflow evidence is from the local fixture, not a new live-account test.
 Owned fixture/preview servers and the verification tab were closed.
+
+## Current working slice — 2026-10-22 (deployment pending)
+
+Implementation: compact Connect agent/import prompts with Copy before Read prompt;
+shared skills/GitHub-setup.md, optional import scaffolding, single AGENTS.md convention,
+agentlatex/main default for new projects, existing project paths preserved; creation
+spinner/failure retry; recent-first project rows and already-connected filtering;
+Report issue agent prompt; repository-tree divider; adjusted wordmark.
+
+Caching: per-user home-list persistence, fresh authorization/snapshot checks before
+opening, matching-blob reuse, separate bounded PDF/SyncTeX cache and stale labels.
+Identity lookup no longer lists GitHub repositories; that work happens during the
+background list refresh or when installation status is needed for creation.
+
+PDF: PDF.js continuous rendering queue, link annotations/TOC, two-way SyncTeX using
+line-number/PDF double clicks, exact included-file paths and stale-source refusal.
+Session: 180-day renewable cookie/server session with weekly visit renewal; temporary
+GitHub refresh failures preserve the session. Actual token rotation on GitHub is
+still a remaining acceptance item; mocked failure/expiry/renewal checks passed.
+
+Focused checks: GitHub contracts 9, draft cache 1, PDF signature 1, session 5 and
+SyncTeX 1 passed; Client/Worker typechecks and hosted build passed. SyncTeX test first
+exposed floating-point comparison precision; tolerance corrected. Adding glyph-level
+mapping exposed a box tie that favored a container; the tie now favors the contained
+text record. No broad compiler matrix rerun for these viewer/UI changes.
+
+Chrome local synthetic fixture: 200-page document compiled in 1.18s (excludes engine
+loading); TOC jumped to page 3, normal scrolling advanced pages, page input reached
+200. Returning through Already connected restored the saved PDF on page 200 without
+recompiling; GitHub-file fixture reads remained 7 before/after reopening. Cached home
+rows appeared while a deliberately delayed list request was pending. Private source
+was not inspected. These are local single-run observations, not a production latency
+or maximum-memory guarantee. Final mobile and deployed checks follow below.
+
+Demo instruction cleanup was separately applied to the owner-authorized synthetic
+agentslatex-demo repo at a9e70093f97bbc657c2b6af9db2cb6506852e93e: removed generated
+CLAUDE.md duplicates and compacted the paper guide; no manuscript was moved or edited.
+
+Final local checks: first connection (including legacy welcome=1 URL) lands directly
+on projects; sign-out lands on the signed-out message and clears the project list.
+Reconnect requests GitHub's documented select_account picker. Logout works without
+GitHub refresh even for an expired session, can be repeated, and rejects wrong-origin
+requests. The fixture checks the app transitions; the live account picker is checked
+after deployment, not simulated as evidence of GitHub behavior.
+
+Desktop PDF double-click now selects the exact synthetic sentence (line 12), rather
+than its following equation. At 360×800 Chrome emulation the compact Connect agent
+prompt fits; cached page 200 restores when the PDF pane is opened. Hidden-pane page
+navigation initially triggered a PDF.js offsetParent warning; navigation is now
+deferred until visible, and the warning is gone. The only remaining console error
+was the fixture's absent favicon, not an editor failure. Physical-device interaction
+and touch double-tap behavior have not been established by this emulation.
+
+Workers Free / $0 / Current plan rechecked in the account dashboard immediately
+before this release. No plan, binding or subscription change.

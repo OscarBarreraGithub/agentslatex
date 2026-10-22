@@ -51,3 +51,9 @@ The wordmark is LaTeX-typeset artwork using Latin Modern (Computer Modern-derive
 lettering and a Baskerville lowercase g, converted to SVG outlines. The font software is not bundled with the UI.
 Editable source and generated artwork are in `src/assets/wordmark.tex` and
 `src/assets/wordmark.svg`. Latin Modern: https://www.gust.org.pl/projects/e-foundry/latin-modern
+
+The SyncTeX navigation parser in src/synctex.ts is adapted from TeXlyre,
+AGPL-3.0, commit ccbe092027bc45e9e37b852bdbe48fb29661f3e0:
+https://github.com/TeXlyre/texlyre/blob/ccbe092027bc45e9e37b852bdbe48fb29661f3e0/src/utils/latexSynctexParser.ts
+Changes include gzip decoding through fflate, PDF-point units and offsets, and
+repository-relative path matching restricted to compiler inputs.

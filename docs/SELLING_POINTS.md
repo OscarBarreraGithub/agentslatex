@@ -80,3 +80,8 @@ summary are the default.
 shared IMPORTS.md index, separate artifact folders and links between follow-ups, so
 collaborators can find where imported work came from. This is an agent-guided workflow;
 imports do not run automatically and require actual write access or a bundle handoff.
+
+Typography update: Baskerville g is 30.6 pt (85% of its original 36 pt), following
+review of smaller local previews; the T is lowered by .12ex. Superscript n and
+single-color outlined TeX lettering are retained. GitHub App avatar uses the owner's
+drawn Science with Agents alien.

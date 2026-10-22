@@ -9,67 +9,58 @@ export interface ProjectPrompt {
   text: string;
 }
 
+export function reportIssuePrompt(project: Project): ProjectPrompt {
+  return {
+    id: "issue", title: "Report issue", destination: "Paste into your agent to diagnose and report.",
+    text: `Help me diagnose an AgentsLaTeX problem. Ask what happened, what I expected,
+and how to reproduce it if I have not described those details yet.
+
+Private diagnostic context (do not include in a public issue):
+Project: https://github.com/${project.owner}/${project.name}
+Main document: ${project.main}
+Compiler: ${project.engine}
+
+First distinguish a document/project issue (LaTeX source, paths, GitHub access,
+unsaved edits, local setup) from a bug in agentlatex.com. Inspect only relevant,
+authorized files and logs. Preserve my draft, scientific content and account settings.
+For a project issue, explain and fix the smallest cause, following AGENTS.md and
+latex-specs.md. Do not file a website bug for an ordinary source error.
+
+For a reproducible site bug, search existing issues at
+https://github.com/OscarBarreraGithub/agentslatex/issues to avoid duplicates.
+If already reported, give me that issue link. Otherwise create a GitHub issue there
+on my behalf using your available GitHub tool or gh CLI. Include a clear title,
+steps to reproduce, expected and actual behavior, relevant browser/OS information,
+and a minimal synthetic example when useful. Distinguish observations from guesses.
+Do not publish private repository names/URLs, manuscript text, conversations,
+credentials or unredacted logs. Reproduce with synthetic content instead.
+
+Check existing GitHub sign-in first. If sign-in is needed, guide me step by step
+and show the actual login URL and device code before waiting. Never ask for tokens
+or passwords. If you cannot create issues with your tools, prepare the issue text
+and open the repository's New issue page for me; do not claim it was submitted.
+After creation, verify the issue exists and give me its link.`,
+  };
+}
+
 export function projectPrompts(project: Project): ProjectPrompt[] {
   // Use the selected project's actual configuration, including legacy layouts.
   const context = `My AgentsLaTeX project:\nRepository: https://github.com/${project.owner}/${project.name}\nBranch: ${JSON.stringify(project.branch)}\nMain document: ${JSON.stringify(project.main)}\nWebsite: https://agentlatex.com/?project=${project.id}\nRead .agentlatex.json for the current workspace and compiler settings.\n`;
-  const browserSetup = `
-If we are in a browser chat without GitHub access, guide me through connecting it
-one step at a time. In ChatGPT, open Settings > Apps or Plugins > GitHub and follow
-the connection flow. In Claude, use + > Add from GitHub and follow sign-in. Select
-this repository when asked, wait for me to finish, and verify you can read it. If
-work/school approval is required, explain that next step. Use the controls actually
-shown; official help if needed:
-https://help.openai.com/en/articles/11145903-connecting-github-to-chatgpt-deep-resear
-https://support.claude.com/en/articles/10167454-use-the-github-integration
-My AgentsLaTeX sign-in does not connect the chat's GitHub account. A read connection
-does not grant write tools: ChatGPT's standard GitHub app is read-only. Check actual
-write capability; if absent, prepare files and guide me through a local-agent handoff.
-Do not request passwords/tokens or repeatedly reconnect to try to enable uploads.
-`;
   return [
     {
-      id: "setup",
-      title: "Set up GitHub on my computer",
-      destination: "Paste into an agent on your computer.",
-      text: context + browserSetup + `
-Help me open this existing project on my computer. I am new to GitHub; explain one
-concrete step at a time in plain language. A repository is the shared project folder.
-Do routine checks yourself when your tools allow it, and wait when I need to sign in.
-
-First check whether you can operate on MY computer. If you only have a cloud session,
-say so and guide me to a local agent or terminal; do not install tools in the cloud
-and claim my computer is set up. Detect my operating system. Check for git and gh
-(GitHub CLI) and existing authentication before installing or signing in again.
-If tools are missing, explain the appropriate official installer for my system.
-Use gh auth status to check sign-in without printing credentials. Preserve my other
-accounts. If login is needed, guide me through gh auth login using the browser flow.
-Show the exact sign-in URL AND actual one-time code in your message before waiting;
-keep the login interactive. Say a website is open only if you actually opened it.
-Never ask me to paste passwords, tokens, or private keys. Verify login after I finish.
-
-Check my access to the supplied repository. If access is missing, explain how to accept
-the collaborator invitation or ask its owner; do not create a replacement repository.
-Use an existing checkout when available. Otherwise ask where I want the project folder
-and clone there without replacing existing files. Use the supplied branch and preserve
-local changes. Read AGENTS.md and latex-specs.md. Finish with the local folder location,
-the GitHub link, and the next simple step. Do not modify the paper during setup.`,
-    },
-    {
-      id: "import",
-      title: "Import a conversation",
-      destination: "Paste into the conversation you want to bring over.",
-      text: context + `\nGo through our conversation and preserve its useful work in this project.
-First read skills/agentslatex-import-conversation/SKILL.md and root IMPORTS.md in
-this repository. Keep an entry in IMPORTS.md of what was imported and where it went.
-Do not overwrite previous imports. The instructions below also work if these files
-have not yet been added to this project.\n\n` +
-        importSkill.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "").trim() + "\n\n" + modelTaggingInstructions,
-    },
-    {
       id: "work",
-      title: "Work on this project",
+      title: "Connect agent",
       destination: "Paste into the agent you normally work with.",
-      text: context + browserSetup + `
+      text: context + `
+First read skills/GitHub-setup.md in this repository. It guides local and browser
+agents through GitHub access. If this older project does not have it yet, read
+https://github.com/OscarBarreraGithub/agentslatex/blob/main/skills/GitHub-setup.md
+and add the same guide under skills/GitHub-setup.md when you can write to the repo.
+If you cannot access the private repository yet, use that public guide first.
+Guide me through any required sign-in step by step; show the actual login URL and
+one-time code before waiting. Preserve existing accounts and check actual read/write
+capabilities. A read-only connection does not let you push edits.
+
 Use this existing repository for our work. Check your actual GitHub read/write access;
 if it is unavailable, tell me the next concrete setup step. Use an existing checkout
 or clone the supplied repository, preserving local changes. Read root AGENTS.md,
@@ -88,6 +79,17 @@ If a local compiler is available, follow latex-specs.md and check the changed do
 Otherwise say it needs browser compilation. Finish with changed files, the commit link,
 validation actually performed, and any remaining issue. Wait for my task if none was
 given; opening the project does not authorize inventing manuscript changes.\n\n` + modelTaggingInstructions,
+    },
+    {
+      id: "import",
+      title: "Import a conversation",
+      destination: "Paste into the conversation you want to bring over.",
+      text: context + `\nGo through our conversation and preserve its useful work in this project.
+First read skills/agentslatex-import-conversation/SKILL.md and root IMPORTS.md in
+this repository. Keep an entry in IMPORTS.md of what was imported and where it went.
+Do not overwrite previous imports. On the first import these files do not exist yet;
+create them from the instructions below.\n\n` +
+        importSkill.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "").trim() + "\n\n" + modelTaggingInstructions,
     },
   ];
 }

@@ -1,14 +1,16 @@
+import { projectListCache, clearProjectList } from "./cache";
 import { api, escapeHtml as h, RequestError } from "./api";
 import type { Me, Project, Repo, Entry } from "../shared/contracts";
 import { newProject as newProjectInput, normalizeProjectName } from "../shared/contracts";
 import "./style.css";
 import { wordmark } from "./brand";
 import { folderPicker } from "./folder-picker";
-import { inFolder, joinFolder } from "../shared/workspace";
+import { inFolder, joinFolder, defaultMainFolder } from "../shared/workspace";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 let me: Me;
+let cachedProjects: Project[] | undefined;
 let dispose: undefined | (() => Promise<void>);
 const mark = wordmark;
 export function toast(message: string) {
@@ -35,7 +37,9 @@ function shell() {
       await dispose?.();
       dispose = undefined;
       await api("/auth/logout", {});
-      location.href = "/";
+      clearProjectList(me.user.id);
+      cachedProjects = undefined;
+      location.href = "/?signedout=1";
     })().catch(failure);
 }
 function modal(title: string, content: string) {
@@ -54,16 +58,18 @@ async function projects() {
     `<div class="page-heading"><h1>Your projects</h1><div class="actions"><button id="connect-existing">Connect existing</button><button id="new" class="primary">＋ New project</button></div></div><div id="project-list" class="project-list"><p class="muted">Loading projects…</p></div>`;
   $("new").onclick = () => newProject();
   $("connect-existing").onclick = () => void existing().catch(failure);
-  const items = await api<Project[]>("/projects");
-  $("project-list").innerHTML = items.length
+  const list = $("project-list");
+  function draw(items: Project[]) {
+  list.innerHTML = items.length
     ? items
+        .slice().sort((a, b) => (Date.parse(b.updatedAt ?? "") || 0) - (Date.parse(a.updatedAt ?? "") || 0))
         .map(
           (p) =>
-            `<button class="project-card" data-project="${p.id}"><span class="document-icon">≡</span><span><strong>${h(p.name)}</strong><small>${h(p.owner)} / ${h(p.branch)}</small></span><span class="arrow">↗</span></button>`,
+            `<button class="project-card" data-project="${p.id}"><span class="project-info"><strong>${h(p.name)}</strong><small>${h(p.owner)} / ${h(p.branch)}</small></span><span class="project-updated" title="Last saved update on GitHub">${p.updatedAt && Number.isFinite(Date.parse(p.updatedAt)) ? `Updated ${h(new Date(p.updatedAt).toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}` : ""}</span><span class="arrow" aria-hidden="true">→</span></button>`,
         )
         .join("")
     : `<div class="empty-projects"><span class="empty-symbol">＋</span><h2>A place for your next paper.</h2><button class="primary" id="first-project">Create a project</button></div>`;
-  document
+  list
     .querySelectorAll<HTMLButtonElement>("[data-project]")
     .forEach(
       (b) =>
@@ -71,6 +77,14 @@ async function projects() {
           void openProject(Number(b.dataset.project)).catch(failure)),
     );
   if ($("first-project")) $("first-project").onclick = () => newProject();
+  }
+  cachedProjects ??= projectListCache(me.user.id);
+  if (cachedProjects) draw(cachedProjects);
+  const items = await api<Project[]>("/projects");
+  if (!list.isConnected) return;
+  cachedProjects = items;
+  projectListCache(me.user.id, items);
+  draw(items);
 }
 function newProject() {
   if (me.installations === 0) {
@@ -88,6 +102,8 @@ function newProject() {
   nameInput.onchange = () => { nameInput.value = normalizeProjectName(nameInput.value); };
   $("create-form").onsubmit = (e) => {
     e.preventDefault();
+    const button = $<HTMLButtonElement>("create");
+    if (button.disabled) return;
     const input = newProjectInput.safeParse({ name: nameInput.value, requestId });
     if (!input.success) {
       $("form-error").textContent = input.error.issues[0].message;
@@ -96,17 +112,23 @@ function newProject() {
     }
     nameInput.value = input.data.name;
     void (async () => {
-      const button = $<HTMLButtonElement>("create");
       button.disabled = true;
-      button.textContent = "Creating…";
+      button.setAttribute("aria-busy", "true");
+      button.innerHTML = '<span class="spinner" aria-hidden="true"></span><span role="status">Creating…</span>';
+      nameInput.readOnly = true;
+      $("form-error").textContent = "";
       try {
+        if (me.installations === undefined) me.installations = (await api<{installations: number}>("/installation-status")).installations;
+        if (!me.installations) { d.close(); installation(); return; }
         const p = await api<Project>("/projects", input.data);
         d.close();
         await openProject(p.id);
       } catch (e) {
         $("form-error").textContent = (e as Error).message;
         button.disabled = false;
+        button.removeAttribute("aria-busy");
         button.textContent = "Try again";
+        nameInput.readOnly = false;
       }
     })();
   };
@@ -119,19 +141,27 @@ function installation() {
 }
 async function existing() {
   const d = modal(
-    "Connect an existing paper",
+    "Connect an existing project",
     `<div id="repos" class="repo-list">Loading repositories…</div><a class="button quiet wide" href="${h(me.installUrl)}">Choose repositories on GitHub ↗</a>`,
   );
-  const repos = await api<Repo[]>("/repositories");
-  $("repos").innerHTML = repos.length
-    ? repos
+  const list = $("repos");
+  const [repos, connected] = await Promise.all([api<Repo[]>("/repositories"), api<Project[]>("/projects")]);
+  if (!d.open || !list.isConnected) return d;
+  const linked = new Set(connected.map(p => p.id));
+  const available = repos.filter(repo => !linked.has(repo.id));
+  list.innerHTML = (available.length
+    ? available
         .map(
           (r) =>
             `<button class="repo-row" data-repo="${r.id}"><span>${h(r.full_name)}</span><span>＋</span></button>`,
         )
         .join("")
-    : '<p class="hint">Choose repositories on GitHub to make them available here.</p>';
-  document.querySelectorAll<HTMLButtonElement>("[data-repo]").forEach(
+    : `<p class="hint">${repos.length ? "All available repositories are already connected." : "Choose repositories on GitHub to make them available here."}</p>`)
+    + (connected.length ? `<details class="connected-projects"><summary>Already connected <span>${connected.length}</span></summary>${connected.map(p => `<button class="repo-row" data-connected="${p.id}"><span>${h(p.owner)}/${h(p.name)}</span><span aria-hidden="true">→</span></button>`).join("")}</details>` : "");
+  list.querySelectorAll<HTMLButtonElement>("[data-connected]").forEach(button => {
+    button.onclick = () => { d.close(); void openProject(Number(button.dataset.connected)).catch(failure); };
+  });
+  list.querySelectorAll<HTMLButtonElement>("[data-repo]").forEach(
     (b) =>
       (b.onclick = () =>
         void (async () => {
@@ -141,10 +171,10 @@ async function existing() {
             const tree = await api<{ files: Entry[] }>(
               "/repositories/" + id + "/files",
             );
-            let folder = "agentlatex";
+            let folder = defaultMainFolder;
             const dialog = modal(
               "Choose your main folder",
-              `<form id="connect-form"><div id="connect-folder" class="folder-picker"></div><label class="field">Default document<select id="connect-main"></select></label><p class="hint">Files stay in place. A new agentlatex folder starts with main.tex.</p><button class="primary wide" id="connect-submit">Connect project</button></form>`,
+              `<form id="connect-form"><div id="connect-folder" class="folder-picker"></div><label class="field">Default document<select id="connect-main"></select></label><p class="hint">Choose your paper folder, or start in agentlatex/main. Existing files stay in place.</p><button class="primary wide" id="connect-submit">Connect project</button></form>`,
             );
             const fillDocuments = () => {
               const preferred = joinFolder(folder, "main.tex");
@@ -188,7 +218,7 @@ async function openProject(id: number) {
   dispose = undefined;
   history.replaceState(null, "", `/?project=${id}`);
   app.innerHTML =
-    '<div class="loading-screen"><span class="spinner"></span><span>Opening paper…</span></div>';
+    '<div class="loading-screen" role="status"><span class="spinner" aria-hidden="true"></span><span>Opening paper…</span></div>';
   try {
     const { mountEditor } = await import("./workspace");
     dispose = await mountEditor(
@@ -208,29 +238,19 @@ async function start() {
     toast(
       "Sign-in did not finish. Please connect to GitHub again. Your drafts are safe.",
     );
+  if (new URLSearchParams(location.search).has("signedout")) {
+    const note = document.createElement("p");
+    note.className = "signin-note";
+    note.setAttribute("role", "status");
+    note.textContent = "Signed out. Connect again to choose a GitHub account.";
+    document.querySelector(".connect-button")!.after(note);
+  }
   try {
     me = await api<Me>("/me");
     const params = new URLSearchParams(location.search);
     const id = Number(params.get("project"));
     if (id > 0) await openProject(id);
-    else {
-      await projects();
-      if (
-        params.has("welcome") &&
-        !localStorage.getItem("agentslatex-onboarded:" + me.user.id)
-      ) {
-        localStorage.setItem("agentslatex-onboarded:" + me.user.id, "1");
-        modal(
-          "Have a paper already?",
-          `<div class="onboard-actions"><button id="bring" class="primary">Connect existing</button><button id="fresh">Start fresh</button></div>`,
-        );
-        $("bring").onclick = () => {
-          $<HTMLDialogElement>("modal").close();
-          void existing().catch(failure);
-        };
-        $("fresh").onclick = () => $<HTMLDialogElement>("modal").close();
-      }
-    }
+    else await projects();
   } catch (e) {
     if (!(e instanceof RequestError && e.status === 401)) failure(e);
   }
