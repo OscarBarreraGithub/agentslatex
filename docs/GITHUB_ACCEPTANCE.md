@@ -96,3 +96,11 @@ header and prompt dialog. Clean incoming updates and dirty-draft preservation pa
 in the local synthetic fixture, including explicit My draft conflict resolution.
 This closes the landscape layout recheck, not physical phone/Windows or every mobile
 file upload workflow. No provider conversation import was performed.
+
+Deployed code checkpoint `10d49b2` as Worker version
+`b025f1f3-5479-424c-897c-a7e15b31f41d`. Workers Free / $0 / Current plan was verified
+in the account dashboard before deployment. Public health and the new workspace asset
+returned HTTP 200. The existing signed-in synthetic demo opened on agentlatex.com;
+Prompts showed the correct repository and the deployed import-index/browser-connection
+instructions. Eleven affected checks passed (eight GitHub, three refresh/transport),
+plus the skill validator and hosted Client/Worker build. No new paid service or schema.

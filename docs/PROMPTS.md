@@ -51,3 +51,6 @@ copy/paste, Escape/return focus, and 360×800, 412×915, 915×412 responsive lay
 These are emulated viewport checks, not physical phones. Clipboard-denied fallback was
 inspected, not forced. Repeated-import and provider-login instructions were reviewed;
 no claim that a real ChatGPT/Claude conversation was imported end to end.
+
+The deployed demo project's Prompts menu and selected-repository import instructions
+were checked at agentlatex.com. Deployment evidence is in GITHUB_ACCEPTANCE.md.
