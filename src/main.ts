@@ -107,7 +107,7 @@ function finishFirstProject(pending: PendingProject) {
   createUrl.search = new URLSearchParams({ name: pending.name, visibility: "private" }).toString();
   const d = modal("Finish creating your project", `<p class="hint">GitHub needs a repository before you can give AgentsLaTeX access. Create <strong>${h(pending.name)}</strong> first, then select only that repository.</p>
     <ol class="setup-steps">
-      <li><a class="button" href="${h(createUrl.href)}" target="_blank" rel="noopener">Create on GitHub ↗</a><p class="hint">Owner: ${h(me.user.login)}. Keep it private and turn on Add README.</p></li>
+      <li><a class="button" href="${h(createUrl.href)}" target="_blank" rel="noopener">Create on GitHub ↗</a><p class="hint">Owner: ${h(me.user.login)}. Keep it private. We’ll add the starter files.</p></li>
       <li><a class="button" href="${h(me.installUrl)}" target="_blank" rel="noopener">Connect this repository ↗</a><p class="hint">Choose Only select repositories, then ${h(pending.name)}.</p></li>
     </ol><p class="hint">Return here when done. We’ll add the starter files and open your project.</p>
     <button id="finish-project" class="primary wide">Finish setup</button><button id="cancel-project" class="quiet wide">Cancel setup</button>`);

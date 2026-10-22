@@ -15,9 +15,12 @@ The app uses the confidential OAuth web flow with single-use state. Users author
 identity through OAuth. Repository creation is a repository permission granted by
 installation; sign-in alone does not grant it. New project attempts direct private
 creation when available. A GitHub 403 at creation offers a remembered first-project
-setup: create the named private repository on GitHub with a README, install on only
+setup: create the named private repository on GitHub, install on only
 that repository, then Finish setup to initialize it through the existing connect path.
 Never require an unrelated repository or all-repository access to bootstrap.
+Empty repositories are supported: browsing their folders makes no changes; Finish
+setup or Connect creates the initial README commit and then the starter files.
+Retries preserve existing files, including a README created by a collaborator.
 Connect existing uses installation on selected repositories. User access tokens are restricted by
 both user and app access. Installation tokens are not used. A GitHub CLI login cannot
 register this app or substitute for a website user's authorization.

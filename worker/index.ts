@@ -11,7 +11,7 @@ import {
 import { parentFolder, inFolder, joinFolder, defaultMainFolder } from "../shared/workspace";
 import { templateFiles } from "../shared/template";
 import { connectInstructions } from "../shared/instructions";
-import { ApiError, github, listRepos, readTree, commitFiles } from "./github";
+import { ApiError, github, listRepos, readTree, readSetupTree, initializeRepository, commitFiles } from "./github";
 import {
   session,
   renewSession,
@@ -289,19 +289,12 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
   if (path === "/api/connect" && req.method === "POST") {
     const input = connectProject.parse(await body(req));
     const repo = await repoFor(token, input.repositoryId, true);
-    let tree;
-    try {
-      tree = await readTree(token, repo);
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 409 && /empty/i.test(e.message))
-        throw new ApiError(409, "Add a README to this empty repository on GitHub, then finish setup again.");
-      throw e;
-    }
     const folder = input.folder ?? (input.main ? parentFolder(input.main) : defaultMainFolder);
     const main = input.main ?? joinFolder(folder, "main.tex");
     if (!inFolder(main, folder) || !/\.tex$/i.test(main))
       throw new ApiError(400, "Choose a .tex document inside the main folder.");
-    if (input.main && !tree.files.some(f => f.path === main))
+    const initialTree = await readSetupTree(token, repo);
+    if (input.main && !initialTree?.files.some(f => f.path === main))
       throw new ApiError(400, "That document was not found. Choose it again.");
     const existing = await env.DB.prepare(
       "SELECT repo_id FROM projects WHERE repo_id=?",
@@ -309,9 +302,10 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
       .bind(repo.id)
       .first();
     if (existing) return json((await projectFor(env, token, repo.id)).project);
+    const templates = templateFiles(folder);
+    const tree = initialTree ?? await initializeRepository(token, repo, templates["README.md"]!);
     const files = await connectInstructions(tree.files.map(f => f.path), folder,
       path => blobText(token, repo, tree.files.find(f => f.path === path)!));
-    const templates = templateFiles(folder);
     if (!tree.files.some(f => f.path === main)) {
       for (const [path, content] of Object.entries(templates))
         if (!path.endsWith("AGENTS.md") && inFolder(path, folder) && !tree.files.some(f => f.path === path) && !(path in files)) files[path] = content;
@@ -334,7 +328,7 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
   const repository = path.match(/^\/api\/repositories\/(\d+)\/files$/);
   if (repository) {
     const repo = await repoFor(token, Number(repository[1]));
-    return json(await readTree(token, repo));
+    return json(await readSetupTree(token, repo) ?? { revision: null, tree: null, files: [] });
   }
   const match = path.match(
     /^\/api\/projects\/(\d+)(?:\/(file|blob|save|head))?$/,

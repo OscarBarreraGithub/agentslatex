@@ -109,6 +109,34 @@ export async function readTree(
     ),
   };
 }
+// Setup can browse an empty repository without creating anything on a GET.
+export async function readSetupTree(token: string, repo: Repo) {
+  try {
+    return await readTree(token, repo);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 409 && /repository is empty/i.test(e.message))
+      return null;
+    throw e;
+  }
+}
+export async function initializeRepository(token: string, repo: Repo, readme: string) {
+  try {
+    // The Git database API cannot initialize an empty repository. Contents can.
+    // Omitting sha makes this create-only: never replace a collaborator's README.
+    await github(token, "/repos/" + repo.full_name + "/contents/README.md", "PUT", {
+      message: "Initialize paper for AgentsLaTeX",
+      content: btoa(String.fromCharCode(...new TextEncoder().encode(readme))),
+      branch: repo.default_branch,
+    });
+  } catch (e) {
+    if (!(e instanceof ApiError) || e.status !== 409) throw e;
+    // Another setup may have created the first commit while this request ran.
+    const current = await readSetupTree(token, repo);
+    if (!current) throw e;
+    return current;
+  }
+  return readTree(token, repo);
+}
 export async function commitFiles(
   token: string,
   repo: Repo,
