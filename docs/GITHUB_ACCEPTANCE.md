@@ -518,3 +518,10 @@ verification and correction of stale www parking and missing canonical HTTPS
 redirects, an owner-approved review was submitted in Chrome. Google displayed
 “Request submitted successfully.” The issue remains flagged; this is submission
 evidence, not a cleared security review or proof of the classification's cause.
+
+Deployed source e9d9522 as Worker d228148e-58a9-4fe1-8aa8-11fa2a4c4d49 after
+checking Workers Free / $0 / Current plan. Live index, editor-B0fipB4M.js and all
+three changed Markdown guides byte-match the build. Health returned 200; anonymous
+identity/projects requests returned 401. The existing signed-in Chrome synthetic
+project reopened to Synced after a full reload. This checks the normal deployed
+session path; the transient failure was injected only in the local fixture.
