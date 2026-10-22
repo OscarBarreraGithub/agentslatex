@@ -366,3 +366,25 @@ Plain Markdown opened inline as text rather than downloading or requesting sign-
 This closes the deferred desktop docs visual check. No rendering fix or deployment
 was needed; it does not establish a mobile-device check or remove the separate
 chat web-reader limitation. The GitHub fallback remains available.
+
+## First project without an installed repository — 2026-10-22
+
+Removed the New project installation-count gate. The existing GitHub App has account
+Repository creation write permission; GitHub documents automatic access to repositories
+created with that permission. Server creation already uses the authorized user token.
+Connect existing retains the selected-repository installation flow.
+
+Client/Worker typechecks and hosted build passed. Chrome desktop with
+`tsx tests/ui-fixture.ts --first-project` (port 4394) started with no projects or
+installations. New project → name → Create reached the editor directly. An injected
+503 triggered the existing automatic retry with the same request ID; the fixture
+confirmed it, and no installation-status request occurred. This is synthetic browser
+acceptance, not a completed real first-user GitHub authorization/creation check.
+No account permissions, existing repositories or credentials were changed. Workers
+Free / $0 / Current plan was rechecked before deployment. No compiler matrix was run.
+
+The same release includes the requested first-line preferences placeholder and blank
+space in newly generated AGENTS.md files, removal of the starter bibliography's
+"Cite real sources only" text, and the recorded Check citations workflow TODO.
+The 10 affected template/GitHub contract checks passed for those template changes.
+Existing user instruction files remain preserved.

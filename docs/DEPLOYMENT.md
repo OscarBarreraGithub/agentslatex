@@ -12,9 +12,16 @@ Register a public GitHub App (installable by any account), with:
 - Expiring user tokens enabled; OAuth during installation disabled; webhooks disabled.
 
 The app uses the confidential OAuth web flow with single-use state. Users authorize
-identity and install on selected repositories. User access tokens are restricted by
+identity and account-level repository creation. New project creates a private repository
+directly, including for users with no installations or existing repositories; GitHub
+automatically gives the app access to repositories it creates. Do not gate creation on
+installation count or send new users to an empty repository-selection screen.
+Connect existing uses installation on selected repositories. User access tokens are restricted by
 both user and app access. Installation tokens are not used. A GitHub CLI login cannot
 register this app or substitute for a website user's authorization.
+
+See [GitHub's permission guidance](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/choosing-permissions-for-a-github-app)
+for the account-level Repository creation permission and automatic access.
 
 If a manifest submission goes through GitHub sign-in first, GitHub can lose the POST
 body and report “We didn't find an App Manifest.” Return to the original setup form

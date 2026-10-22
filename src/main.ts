@@ -87,10 +87,6 @@ async function projects() {
   draw(items);
 }
 function newProject() {
-  if (me.installations === 0) {
-    installation();
-    return;
-  }
   const d = modal(
     "New project",
     `<form id="create-form" novalidate><label class="field">Project name<input id="project-name" required maxlength="80" placeholder="my-paper" autocomplete="off" aria-describedby="form-error"></label><p class="hint">A private repository in your GitHub account.</p><button class="primary wide" id="create" type="submit">Create project</button></form>`,
@@ -118,8 +114,8 @@ function newProject() {
       nameInput.readOnly = true;
       $("form-error").textContent = "";
       try {
-        if (me.installations === undefined) me.installations = (await api<{installations: number}>("/installation-status")).installations;
-        if (!me.installations) { d.close(); installation(); return; }
+        // Account-level Repository creation grants access to the new repository.
+        // Selecting an existing repository is only needed for Connect existing.
         const p = await api<Project>("/projects", input.data);
         d.close();
         await openProject(p.id);
@@ -132,12 +128,6 @@ function newProject() {
       }
     })();
   };
-}
-function installation() {
-  modal(
-    "Connect your repositories",
-    `<p class="hint">Choose which repositories AgentsLaTeX can open. New projects are private.</p><a class="button primary wide" href="${h(me.installUrl)}">Continue on GitHub ↗</a>`,
-  );
 }
 async function existing() {
   const d = modal(

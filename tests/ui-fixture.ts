@@ -5,7 +5,10 @@ import { createReadStream } from "node:fs";
 import { createHash } from "node:crypto";
 import { resolve, extname } from "node:path";
 import { templateFiles } from "../shared/template";
-const origin = "http://127.0.0.1:4393";
+const firstProject = process.argv.includes("--first-project");
+const port = firstProject ? 4394 : 4393;
+const origin = `http://127.0.0.1:${port}`;
+let creationRequest: string | undefined;
 let rev = 1;
 let created = false;
 const contents = new Map<string, Buffer>();
@@ -63,12 +66,26 @@ http
         if (p === "/api/me")
           return send({
             user: { id: 999992, login: "Local UI fixture" },
-            installations: 1,
+            ...(firstProject ? {} : { installations: 1 }),
             installUrl: "#",
           });
+        if (p === "/api/installation-status") {
+          console.log("Installation gate requested");
+          return send({ installations: firstProject ? 0 : 1 });
+        }
         if (p === "/api/projects" && req.method === "GET")
           return send(created ? [project] : []);
         if (p === "/api/projects" && req.method === "POST") {
+          if (firstProject) {
+            if (!creationRequest) {
+              creationRequest = body.requestId;
+              console.log("First project: simulated creation failure");
+              return send({ error: "Temporary GitHub error. Try again." }, 503);
+            }
+            if (body.requestId !== creationRequest)
+              return send({ error: "Retry must preserve the creation request ID." }, 409);
+            console.log("First project: retry preserved request ID and created project");
+          }
           created = true;
           project.name = body.name;
           return send(project, 201);
@@ -164,4 +181,4 @@ http
       res.end((e as Error).message);
     }
   })
-  .listen(4393, "127.0.0.1", () => console.log("Local UI fixture: " + origin));
+  .listen(port, "127.0.0.1", () => console.log("Local UI fixture: " + origin));
