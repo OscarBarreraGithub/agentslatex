@@ -352,3 +352,9 @@ GitHub's raw copy. An explicit raw-GitHub fallback was therefore added to remind
 and prompts, and the central guide links all four source counterparts. This is a
 reader compatibility fallback, not a second maintained copy. Visual acceptance stays
 unverified. Local Wrangler was stopped; the owner's synthetic 4393 preview stays up.
+
+Fallback follow-up source cd1b67e deployed as Worker
+12675b74-b8e7-456b-80b5-b620b0615611. Final public verification matched /docs/AGENTS.md
+with GitHub's raw source, confirmed no-cache, and found editor-Cc3gL1rw.js on the
+landing page. Client/Worker typechecks and packaging passed after the pointer change.
+The prior 16 focused contract checks passed before this text-only fallback addition.
