@@ -110,7 +110,12 @@ the repeated owner/branch subtitle. The signed-in account remains in the header.
 per-GitHub-user project-list cache appears after session validation, then refreshes
 in the background. Opening a project always rechecks GitHub authorization and its
 snapshot. Clean file bytes are reused only for matching blob hashes; unsaved drafts
-remain separate. Connect existing lists authorized unlinked repos by default, with
+remain separate. Every file downloaded from GitHub is checked against its tree entry
+(size and Git blob ID) before it is cached, compiled or edited; an interrupted download
+reports an error instead of leaving a truncated file. Text files that are not valid
+UTF-8 are decoded as Windows-1252 so older Latin-1 manuscripts keep their characters;
+they are stored as UTF-8 only if edited and saved. Editing an executable file keeps its
+mode. Connect existing lists authorized unlinked repos by default, with
 already-connected projects in a collapsed section that opens the existing editor.
 
 GitHub connection lands directly on Your projects, without an introductory chooser.

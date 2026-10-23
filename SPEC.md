@@ -96,7 +96,9 @@ original path, with no copy or OS symlink. New files start in the main-folder ro
 Moves are draft changes, reject name collisions, and save through the existing safe
 GitHub checkpoint. TeX references are not automatically rewritten on moves.
 Only the saved/default branch is exposed; there is no branch switching UI and existing
-non-main branch configurations are preserved rather than redirected silently.
+non-main branch configurations are preserved rather than redirected silently. If the
+saved branch no longer exists because GitHub's default branch was renamed, opening the
+project follows the current default once and records it, so the project stays openable.
 
 Version-control UI is explicitly a later TODO: explore meaningful checkpoints, readable
 diffs and agent-assisted explanations/restoration on top of GitHub history. No second
@@ -110,6 +112,8 @@ Sessions last 180 days and renew on visits (at most weekly), including upgrades 
 still-valid older 30-day sessions. GitHub access tokens refresh automatically while
 the refresh token remains valid. Temporary upstream/network refresh failures preserve
 the session for retry; explicit invalid/expired credentials require reconnecting.
-Sign-out deletes the server session and clears the home-list cache. Cookie protections
+Sign-out deletes the server session and clears the home-list cache. A stored token that
+can no longer be decrypted (for example after a SESSION_KEY rotation) ends that session
+and asks for a reconnection rather than failing every request. Cookie protections
 remain HttpOnly, Secure on HTTPS, SameSite=Lax. Browser cookie removal, GitHub revocation
 or roughly six months without renewal can require sign-in. This is not permanent access.

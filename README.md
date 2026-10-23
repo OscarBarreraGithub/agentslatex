@@ -75,8 +75,8 @@ fixture is excluded from the deployed worker. It is not a real account or reposi
 
 Compiler fixtures remain available through `pnpm dev` at
 **http://127.0.0.1:4390/tests.html**. That Vite server is the compiler laboratory; the
-account/project application needs the Worker API above. Original prototype browser
-drafts are retained in their separate IndexedDB database.
+account/project application needs the Worker API above. The hosted build omits the
+laboratory page, since its fixtures and evidence route are local only.
 
 ## Evidence and scope
 

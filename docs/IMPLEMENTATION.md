@@ -105,3 +105,37 @@ SWA conversation. No claim of broad load certification or complete native LaTeX 
   redirects. Google confirmed “Request submitted successfully” for the authorized
   review on 2026-10-22. Next: check Google's result; do not submit duplicates or
   describe the browser warning as cleared. See GITHUB_ACCEPTANCE.md.
+
+## Review hardening — 2026-10-22
+
+A scoped code review (branch `review/hardening-2026-10-22`, by Claude Fable 5.1) looked
+for incorrect implementations and subtle failure modes rather than new features. It is
+not deployment acceptance and does not close AL-12. Changes, each with a unit test:
+
+- Session refresh: a request that races a concurrent token rotation now re-reads the
+  stored token after taking the lock instead of sending the consumed refresh token,
+  which GitHub rejects and which deleted the session. A token that no longer decrypts
+  (SESSION_KEY rotation) ends the session with 401 rather than 500 on every call.
+- GitHub transport: non-JSON error bodies and fetch timeouts map to 503 with
+  Retry-After instead of a generic failure; ref paths are encoded per segment so
+  branch names containing `/` work; file streaming no longer carries a 30-second
+  abort past the response headers, and the browser verifies size and Git blob ID of
+  every downloaded file.
+- Saves keep an existing file's executable mode. A project whose saved branch was
+  renamed on GitHub follows the current default branch once instead of being
+  unopenable; an existing non-default branch is still never redirected.
+- Workspace: malformed `.agentlatex.json` content no longer throws raw parse errors
+  from rename/move/settings, connect returns a clear 400, and automatic refresh defers
+  to manual Refresh; manual Refresh keeps unchanged blobs loaded; a restored draft
+  shows Updates available immediately when its base is behind GitHub.
+- Compiler: bibliography tooling is detected from uncommented source, so the starter's
+  commented `\bibliography` line no longer triggers a bibtex run. Text that is not valid
+  UTF-8 decodes as Windows-1252 instead of becoming replacement characters that a save
+  would commit. SyncTeX forward lookup skips an opening vertical box.
+- Cleanup: unused prototype draft storage, the unused installation-status endpoint and
+  dead path helpers were removed; the compiler laboratory page is omitted from the
+  hosted build; stale creation receipts are pruned at sign-in; invalid file names get
+  a readable message.
+
+Next: run `pnpm test`, `pnpm build:hosted` and the real Connect → edit → save → compile →
+refresh journey before merging; see the pull request for what was and was not run.

@@ -12,7 +12,11 @@ It currently does not use ETags. Only a changed head triggers snapshot/file load
 Unchanged cached blobs stay loaded. Changed visible content and configuration are
 prepared before applying an update; typing or switching files during the request
 postpones it. A draft shows Updates available and stops automatic checks until the
-user refreshes/resolves it. There is no automatic merge decision or force-push.
+user refreshes/resolves it; a restored draft whose saved base already differs from
+GitHub shows it on opening. An incoming `.agentlatex.json` that cannot be parsed also
+leaves the update for manual Refresh rather than failing into backoff. Manual Refresh
+keeps loaded files whose GitHub blob is unchanged. There is no automatic merge decision
+or force-push.
 
 Clean updates preserve the selected pane and keep the PDF visible, marked stale when
 needed. Unchanged selected files keep their editor state. Compilation and outgoing
