@@ -525,3 +525,24 @@ three changed Markdown guides byte-match the build. Health returned 200; anonymo
 identity/projects requests returned 401. The existing signed-in Chrome synthetic
 project reopened to Synced after a full reload. This checks the normal deployed
 session path; the transient failure was injected only in the local fixture.
+
+## REVTeX and bibliography fixes — 2026-10-23
+
+Source `982bde5` is deployed as Worker
+`9ab7772d-3a9b-4988-98e6-0e08a64e74ba`. Workers Free / $0 / Current plan was
+verified in the dashboard immediately before publishing. Live settings retain
+Worker issue detection, the existing D1 binding and secrets, and no R2 binding.
+Health returned 200 and anonymous identity access returned 401. The live editor,
+workspace, patched pipeline and REVTeX support files byte-match the tested build.
+
+An isolated Chrome browser loaded the production frontend and compiler assets with
+synthetic project responses intercepted locally. Its REVTeX paper, image, equation
+and bibliography compiled to one page in 0.67s. A missing document class showed the
+primary LaTeX error; correcting the draft compiled in 0.64s, with no page errors.
+These timings exclude compiler download/initialization. This verifies hosted asset
+delivery and compiler failure/retry, not a new production GitHub sign-in/save check.
+No private manuscript was accessed and no production repository was changed.
+
+The preceding local production-package matrix passed 37/37 cases; see TESTING.md.
+It was not repeated for deployment. PR #3 (`90ece76`, fresh-clone build/download
+portability) was reviewed separately and remains unmerged at this checkpoint.
