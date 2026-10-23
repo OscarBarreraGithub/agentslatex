@@ -37,3 +37,27 @@ test("SyncTeX resolves exact included paths in PDF points, including XeTeX offse
   assert.ok(Math.abs(shifted.forward(paths[1],7)!.rects[0].x - 200) < 0.001);
   assert.equal(shifted.reverse(1,230,195)?.line,6);
 });
+test("a line whose first record is a vertical box still finds its visible box on a later page", () => {
+  const paths = ["paper/main.tex", "paper/sections/part.tex"];
+  const text = `SyncTeX Version:1
+Input:1:/home/web_user/project_dir/paper/main.tex
+Input:2:/home/web_user/project_dir/paper/sections/part.tex
+Output:pdf
+Magnification:1000
+Unit:1
+X Offset:0
+Y Offset:0
+Content:
+{1
+[2,9:6578176,19734528:6578176,657818,0
+]
+}1
+{2
+(2,9:6578176,6578176:6578176,657818,0
+)
+}2
+Postamble:
+`;
+  const map = parseSynctex(gzipSync(strToU8(text)), paths[0], paths);
+  assert.equal(map.forward(paths[1], 9)?.page, 2);
+});

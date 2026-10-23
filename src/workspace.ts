@@ -8,11 +8,11 @@ import { renderMarkdown } from "./markdown";
 import { parentFolder, inFolder, joinFolder, workspaceConfig, workspacePaths, fileDestination, renamedPath, missingExtension, unlinkReference } from "../shared/workspace";
 import { fileContent } from "./file-content";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { zipSync, strToU8 } from "fflate";
+import { zipSync } from "fflate";
 import type { FileInput } from "texlyre-busytex";
 import { Compiler, type Engine } from "./compiler";
 import { pdfjs } from "./pdf";
-import { pdfCache, buildSignature, type CachedBuild } from "./cache";
+import { pdfCache, buildSignature, gitBlobSha, type CachedBuild } from "./cache";
 import { parseSynctex, type SourceMapData } from "./synctex";
 import { PaperViewer } from "./pdf-viewer";
 import { api, request, RequestError, escapeHtml as h } from "./api";
@@ -323,7 +323,15 @@ export async function mountEditor(
   }
   function writeSettings() {
     const previous = files.get(".agentlatex.json")?.content;
-    const preserved = typeof previous === "string" ? JSON.parse(previous) : {};
+    // The settings file is editable in the source pane; a half-typed edit must not make
+    // rename, move or settings throw a raw JSON parse error.
+    let preserved: Record<string, unknown> = {};
+    if (typeof previous === "string") {
+      try {
+        const parsed: unknown = JSON.parse(previous);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) preserved = parsed as Record<string, unknown>;
+      } catch { /* Rewrite the file from the current settings. */ }
+    }
     files.set(".agentlatex.json", { path: ".agentlatex.json", content: JSON.stringify({ ...preserved, version: 1, folder, main, references, engine }, null, 2) + "\n" });
     dirty.add(".agentlatex.json");
   }
@@ -426,7 +434,12 @@ export async function mountEditor(
     if (entry.size > 20 * 1024 * 1024)
       throw Error(entry.path + " exceeds the 20 MB per-file limit.");
     const r = await request(`/projects/${id}/file?sha=${entry.sha}`, { signal });
-    const content = fileContent(entry.path, new Uint8Array(await r.arrayBuffer()));
+    const data = new Uint8Array(await r.arrayBuffer());
+    // A streamed download can be cut short without an HTTP error. Never cache, compile
+    // or later save bytes that GitHub would not identify as the requested blob.
+    if (data.byteLength !== entry.size || (await gitBlobSha(data)) !== entry.sha)
+      throw Error(`${entry.path} did not download completely. Check your connection and try again.`);
+    const content = fileContent(entry.path, data);
     return { path: entry.path, content };
   }
   async function getFile(path: string, signal?: AbortSignal) {
@@ -505,12 +518,14 @@ export async function mountEditor(
     const saving = [...dirty].map((path) => ({
       path,
       file: files.get(path) ? { ...files.get(path)! } : undefined,
+      // Keep an existing file's mode: editing a script must not drop its executable bit.
+      mode: snapshot.files.find((f) => f.path === path)?.mode === "100755" ? "100755" as const : undefined,
     }));
     try {
       const changes = [];
       for (const item of saving) {
         if (!item.file) {
-          changes.push({ path: item.path, sha: null });
+          changes.push({ path: item.path, sha: null, mode: undefined });
           continue;
         }
         const raw = bytes(item.file);
@@ -521,7 +536,7 @@ export async function mountEditor(
             body: raw.slice().buffer as ArrayBuffer,
           })
         ).json()) as { sha: string };
-        changes.push({ path: item.path, sha: b.sha });
+        changes.push({ path: item.path, sha: b.sha, mode: item.mode });
       }
       const result = await api<{ revision: string }>(
         "/projects/" + id + "/save",
@@ -535,7 +550,7 @@ export async function mountEditor(
             path: c.path,
             sha: c.sha,
             type: "blob",
-            mode: "100644",
+            mode: c.mode ?? "100644",
             size: bytes(saving.find((f) => f.path === c.path)!.file!).length,
           });
         const original = saving.find((f) => f.path === c.path)!.file;
@@ -595,7 +610,11 @@ export async function mountEditor(
         let nextMain = remote.project.main, nextEngine = remote.project.engine, nextFolder = parentFolder(nextMain), nextReferences: string[] = [];
         const settingFile = prepared.get(".agentlatex.json");
         if (settingFile) {
-          const cfg = workspaceConfig(JSON.parse(String(settingFile.content)), remote.project.main);
+          let cfg: ReturnType<typeof workspaceConfig>;
+          // An agent may have committed an unreadable settings file. Manual Refresh
+          // reports that; automatic refresh must not fail into a long backoff over it.
+          try { cfg = workspaceConfig(JSON.parse(String(settingFile.content)), remote.project.main); }
+          catch { markRemote(true); return; }
           nextMain = cfg.main; nextEngine = cfg.engine; nextFolder = cfg.folder; nextReferences = cfg.references;
         }
         const remoteVisible = workspacePaths(remote.files.map(f => f.path), nextFolder, nextReferences);
@@ -650,8 +669,11 @@ export async function mountEditor(
         });
         if (!accepted) return;
       }
+      // Drop clean copies only when GitHub's blob changed; identical blobs stay loaded.
+      const remoteSha = new Map(remote.files.map(f => [f.path, f.sha]));
+      const localSha = new Map(snapshot.files.map(f => [f.path, f.sha]));
       for (const path of [...files.keys()]) {
-        if (!dirty.has(path) || choices.get(path) === "github")
+        if (choices.get(path) === "github" || (!dirty.has(path) && remoteSha.get(path) !== localSha.get(path)))
           files.delete(path);
       }
       for (const [path, choice] of choices)
@@ -1050,6 +1072,9 @@ export async function mountEditor(
   }
   if (!saved?.dirty.length) { await readSettings(); selected = main; }
   tree(); updateSaveState();
+  // A restored draft sits on its own saved base; show pending GitHub changes at once
+  // rather than after the first 30-second check.
+  if (saved?.dirty.length && remote.revision !== snapshot.revision) markRemote(true);
   if (!visiblePaths().includes(selected)) {
     if (selected) notify("The opening document was not found. Choose a file or update Project settings.");
     selected = "";

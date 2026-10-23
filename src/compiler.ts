@@ -6,6 +6,7 @@ import {
   type FileInput,
   type CompileResult,
 } from "texlyre-busytex";
+import { bibliographyTools } from "./bibliography";
 export type Engine = "pdf" | "lua" | "xe";
 export type Bundle = "extra" | "recommended";
 export interface Build extends CompileResult {
@@ -90,20 +91,17 @@ export class Compiler {
       progress("Compiling…");
       startCompileDeadline();
       const compiling = performance.now();
-      const allSource = files
-        .filter((f) => typeof f.content === "string" && f.path.endsWith(".tex"))
-        .map((f) => f.content)
-        .join("\n");
+      const detected = bibliographyTools(
+        files
+          .filter((f): f is FileInput & { content: string } => typeof f.content === "string" && f.path.endsWith(".tex"))
+          .map((f) => f.content),
+      );
       const tool =
         engine === "lua"
           ? new LuaLatex(this.runner)
           : engine === "xe"
             ? new XeLatex(this.runner)
             : new PdfLatex(this.runner);
-      const biblatex =
-        /\\(?:usepackage|RequirePackage)(?:\[[^\]]*\])?\{[^}]*\bbiblatex\b/.test(
-          allSource,
-        );
       const result = await tool.compile({
         input: sourceText,
         mainTexPath: main,
@@ -111,10 +109,8 @@ export class Compiler {
         rerun: true,
         verbose: "info",
         shellEscape: false,
-        bibtex:
-          options.bibtex ??
-          (!biblatex && /\\bibliography\s*\{/.test(allSource)),
-        biber: options.biber ?? biblatex,
+        bibtex: options.bibtex ?? detected.bibtex,
+        biber: options.biber ?? detected.biber,
       });
       return {
         ...result,

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { workspaceConfig, workspacePaths, fileDestination, renamedPath, missingExtension, unlinkReference } from "../shared/workspace";
+import { workspaceConfig, workspacePaths, fileDestination, renamedPath, missingExtension, unlinkReference, joinFolder } from "../shared/workspace";
 import { fileContent } from "../src/file-content";
 import { renderMarkdown } from "../src/markdown";
 import { templateFiles } from "../shared/template";
@@ -56,4 +56,20 @@ test("unlinking removes only the reference, retaining other links and original p
   assert.deepEqual(unlinkReference("shared/a.tex", ["shared/a.tex", "shared/b.tex"], paths), ["shared/b.tex"]);
   assert.deepEqual(unlinkReference("shared/a.tex", ["shared"], paths), ["shared/b.tex"]);
   assert.deepEqual(paths, ["paper/main.tex", "shared/a.tex", "shared/b.tex"]);
+});
+test("invalid names explain themselves instead of exposing a schema issue list", () => {
+  for (const name of ["..", "a\u0000b", ".git"]) {
+    assert.throws(() => joinFolder("paper", name), e => e instanceof Error && !e.message.includes("[") && /plain project-relative name/.test(e.message));
+    assert.throws(() => renamedPath("paper/draft", name, ["paper/draft"]), e => e instanceof Error && !e.message.includes("["));
+  }
+  assert.equal(joinFolder("", "main.tex"), "main.tex");
+});
+test("Latin-1 manuscripts keep their characters instead of becoming replacement marks", () => {
+  const latin1 = new Uint8Array([0x63, 0x61, 0x66, 0xe9]); // "café" in ISO-8859-1
+  assert.equal(fileContent("paper/old.tex", latin1), "café");
+  const utf8 = new TextEncoder().encode("naïve — ok");
+  assert.equal(fileContent("paper/new.tex", utf8), "naïve — ok");
+  assert.equal(fileContent("paper/new.bib", utf8), "naïve — ok");
+  const binary = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 1]);
+  assert.equal(fileContent("figures/plot.png", binary), binary);
 });

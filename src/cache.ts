@@ -22,6 +22,13 @@ export interface CachedBuild {
   page: number;
   savedAt: number;
 }
+/** The Git blob object ID GitHub reports for these bytes. */
+export async function gitBlobSha(data: Uint8Array): Promise<string> {
+  const header = new TextEncoder().encode(`blob ${data.byteLength}\0`);
+  const blob = new Uint8Array(header.length + data.byteLength);
+  blob.set(header); blob.set(data, header.length);
+  return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-1", blob)), b => b.toString(16).padStart(2, "0")).join("");
+}
 /** Match the entire compiler input, including dirty drafts, without downloading unchanged files. */
 export async function buildSignature(paths: string[], entries: Entry[], files: Map<string, FileInput>, dirty: Set<string>, target: string, engine: string): Promise<string> {
   const remote = new Map(entries.map(e => [e.path, e.sha]));
@@ -31,11 +38,7 @@ export async function buildSignature(paths: string[], entries: Entry[], files: M
     if (!sha) {
       const content = files.get(path)?.content;
       if (content === undefined) throw Error("Missing build input: " + path);
-      const data = typeof content === "string" ? new TextEncoder().encode(content) : content;
-      const header = new TextEncoder().encode(`blob ${data.byteLength}\0`);
-      const blob = new Uint8Array(header.length + data.byteLength);
-      blob.set(header); blob.set(data, header.length);
-      sha = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-1", blob)), b => b.toString(16).padStart(2, "0")).join("");
+      sha = await gitBlobSha(typeof content === "string" ? new TextEncoder().encode(content) : content);
     }
     manifest.push(path + ":" + sha);
   }
