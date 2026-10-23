@@ -23,6 +23,11 @@ The development server now serves these parts as raw bytes, like the hosted asse
 That interrupted run is not counted as a pass. No compiler binary or TeX Live data
 was rebuilt. The production deployment and its acceptance are tracked separately.
 
+Hosted follow-up: deployed source `982bde5` passed the real signed-in Chrome edit,
+GitHub save, REVTeX compile and reload workflow on 2026-10-23. The synthetic paper's
+equation, citation, bibliography and TikZ figure rendered correctly in one page
+(0.90s after loading). See GITHUB_ACCEPTANCE.md for the saved commit and scope.
+
 ## Earlier compiler baseline
 
 On 2026-10-21, **32/32 checks passed in Chrome 155 and 32/32 in Safari 26.5.2 on this Mac**.

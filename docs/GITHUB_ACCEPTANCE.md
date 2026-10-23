@@ -546,3 +546,23 @@ No private manuscript was accessed and no production repository was changed.
 The preceding local production-package matrix passed 37/37 cases; see TESTING.md.
 It was not repeated for deployment. PR #3 (`90ece76`, fresh-clone build/download
 portability) was reviewed separately and remains unmerged at this checkpoint.
+
+### Signed-in production check — 2026-10-23
+
+The owner's existing signed-in Chrome session on agentlatex.com opened the retained
+synthetic `agentlatex-empty-retry-check-20261022` project. Through the normal editor,
+two new files (`revtex-live-check.tex` and its `.bib`) were added and saved. GitHub
+read-back confirmed commit `1814c17e0ef7103e945df3a41d4cabe0a15fdd62` contains exactly
+those two files; the original starter and project settings stayed unchanged.
+
+The live browser compiled the saved APS/PRD REVTeX document in **0.90s, one page**,
+excluding the first compiler download. Visual inspection confirmed the equation,
+resolved equation reference and citation, bibliography, and TikZ vector figure.
+Reloading the page reopened the synced project; selecting the test document restored
+the source and matching cached PDF marked Up to date. No intercepted API responses,
+local server or private research manuscript was used in this check.
+
+This closes the existing-account edit → GitHub save → REVTeX compile → reopen check
+for deployed source `982bde5`. It does not repeat first-time OAuth consent, a second
+account's collaboration, or physical Windows/mobile checks. The test project and PDF
+are retained for inspection. No additional deployment was needed.
