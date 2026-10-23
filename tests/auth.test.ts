@@ -91,3 +91,44 @@ test("explicit connection always asks GitHub to choose an account", async () => 
   assert.equal(redirect.searchParams.get("redirect_uri"),"https://agentlatex.com/api/auth/callback");
   assert.ok(redirect.searchParams.get("state"));
 });
+test("a stored token that no longer decrypts ends the session cleanly instead of failing every request", async () => {
+  const f=await fixture();
+  f.row.token="AAAAAAAAAAAAAAAA.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+  const original=globalThis.fetch;
+  globalThis.fetch=async()=>{throw Error("No GitHub call is needed to reject a damaged session");};
+  try {
+    await assert.rejects(session(f.req,f.env), e => (e as {status:number}).status===401);
+    assert.equal(f.deleted(),true);
+    // Identity is still reported until the row is gone; afterwards the client is asked to reconnect.
+    assert.equal((await worker.fetch(f.req,f.env)).status,401);
+  } finally { globalThis.fetch=original; }
+});
+test("a concurrent request that already rotated the token is reused rather than refreshed again", async () => {
+  const expiring={token:"stale", refreshToken:"consumed", expiresAt:new Date(0).toISOString(), refreshTokenExpiresAt:new Date(Date.now()+86400000).toISOString()};
+  const rotated={token:"fresh", refreshToken:"next", expiresAt:new Date(Date.now()+8*3600*1000).toISOString(), refreshTokenExpiresAt:new Date(Date.now()+86400000).toISOString()};
+  const row: Session = {id:"synthetic", user_id:42, login:"fixture", expires:now()+86400, refresh_lock:0, token:""};
+  let deleted=false, unlocked=0;
+  const env = { SESSION_KEY: btoa("a".repeat(32)), GITHUB_CLIENT_ID:"fixture", GITHUB_CLIENT_SECRET:"fixture", GITHUB_APP_SLUG:"fixture",
+    DB: { prepare(sql: string) {
+      return { bind() { return this; },
+        async first() { return deleted ? null : row; },
+        async run() {
+          if (sql.startsWith("DELETE")) deleted=true;
+          // Another request finishes its refresh between our read and our lock.
+          if (sql.startsWith("UPDATE sessions SET refresh_lock=?")) { row.refresh_lock=now()+30; row.token=await seal(env, rotated); }
+          if (sql.startsWith("UPDATE sessions SET refresh_lock=0")) { row.refresh_lock=0; unlocked++; }
+          return {meta:{changes:1}};
+        } };
+    } }
+  } as unknown as Bindings;
+  row.token=await seal(env, expiring);
+  const original=globalThis.fetch;
+  globalThis.fetch=async()=>{throw Error("The consumed refresh token must not be sent to GitHub");};
+  try {
+    const result=await session(new Request("https://agentlatex.com/api/projects",{headers:{Cookie:"__Host-agentslatex=synthetic-cookie"}}), env);
+    assert.equal(result.token,"fresh");
+    assert.equal(deleted,false);
+    assert.equal(unlocked,1);
+    assert.equal(row.refresh_lock,0);
+  } finally { globalThis.fetch=original; }
+});

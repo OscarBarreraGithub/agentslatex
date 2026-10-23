@@ -101,10 +101,21 @@ export async function sessionIdentity(req: Request, env: Bindings) {
     );
   return row;
 }
+const expiring = (t: Token) => !!t.expiresAt && Date.parse(t.expiresAt) < Date.now() + 60000;
+async function storedToken(env: Bindings, row: Session): Promise<Token> {
+  try {
+    return await unseal(env, row.token);
+  } catch {
+    // A rotated SESSION_KEY or damaged row would otherwise fail every request as 500
+    // while /api/me still reports a signed-in user. Ask for a clean reconnection instead.
+    await env.DB.prepare("DELETE FROM sessions WHERE id=?").bind(row.id).run();
+    throw new ApiError(401, "Reconnect to GitHub. Your draft is safe.");
+  }
+}
 export async function session(req: Request, env: Bindings) {
   const row = await sessionIdentity(req, env);
-  let t = await unseal(env, row.token);
-  if (t.expiresAt && Date.parse(t.expiresAt) < Date.now() + 60000) {
+  let t = await storedToken(env, row);
+  if (expiring(t)) {
     if (!t.refreshToken || !t.refreshTokenExpiresAt)
       throw new ApiError(401, "Reconnect to GitHub.");
     const locked = await env.DB.prepare(
@@ -114,6 +125,18 @@ export async function session(req: Request, env: Bindings) {
       .run();
     if (!locked.meta.changes)
       throw new ApiError(503, "Reconnecting to GitHub. Try again in a moment.");
+    // A concurrent request may have rotated the refresh token between our read and the
+    // lock. Re-read before refreshing: reusing a consumed refresh token is rejected by
+    // GitHub and would delete a perfectly good session.
+    const latest = await env.DB.prepare("SELECT * FROM sessions WHERE id=?").bind(row.id).first<Session>();
+    if (latest) {
+      const current = await storedToken(env, latest);
+      if (!expiring(current)) {
+        await env.DB.prepare("UPDATE sessions SET refresh_lock=0 WHERE id=?").bind(row.id).run();
+        return { row, token: current.token };
+      }
+      t = current;
+    }
     try {
       const auth = createOAuthUserAuth({
         clientType: "github-app",
@@ -167,6 +190,8 @@ export async function login(req: Request, env: Bindings) {
   await env.DB.batch([
     env.DB.prepare("DELETE FROM oauth_states WHERE expires<?").bind(now()),
     env.DB.prepare("DELETE FROM sessions WHERE expires<?").bind(now()),
+    // Creation receipts only make a retried New project idempotent; they are not needed for long.
+    env.DB.prepare("DELETE FROM creations WHERE created<?").bind(Date.now() - 7 * 86400 * 1000),
     env.DB.prepare(
       "INSERT INTO oauth_states(id,verifier,expires) VALUES(?,?,?)",
     ).bind(await hash(state), "", now() + 600),
