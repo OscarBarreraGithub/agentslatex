@@ -20,8 +20,11 @@ test("included auxiliary files work, cycles terminate, and explicit overrides su
   assert.deepEqual(select({ "main.bcf": "<bcf:controlfile>" }, null, false), { bibtex: false, backend: "bibtex8" });
   assert.equal(select({ "main.aux": "\\@input{main.aux}" }).bibtex, false);
 });
-test("pinned runtime stops on fatal output even when WASM reports exit zero", async () => {
-  const patched = patchPipeline(await readFile("public/compiler/busytex_pipeline.js", "utf8"));
+// The pinned pipeline ships with the compiler assets; without them this check cannot run.
+const pipelinePath = "public/compiler/busytex_pipeline.js";
+const pipeline = await readFile(pipelinePath, "utf8").catch(() => undefined);
+test("pinned runtime stops on fatal output even when WASM reports exit zero", { skip: pipeline === undefined && pipelinePath + " is not installed; run pnpm setup" }, async () => {
+  const patched = patchPipeline(pipeline);
   assert.equal(patchPipeline(patched), patched);
   const start = patched.indexOf("    _run_cmd(");
   const end = patched.indexOf("    async read_project_files(", start);
