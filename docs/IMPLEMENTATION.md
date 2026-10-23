@@ -132,8 +132,10 @@ not deployment acceptance and does not close AL-12. Changes, each with a unit te
 - Compiler: bibliography tooling is detected from uncommented source, so the starter's
   commented `\bibliography` line no longer triggers a bibtex run. Text that is not valid
   UTF-8 decodes as Windows-1252 instead of becoming replacement characters, is saved
-  back in that encoding while its characters still fit, and compiles with its legacy
-  inputenc option read as utf8. SyncTeX forward lookup skips an opening vertical box.
+  back in that encoding, and compiles with its legacy inputenc option read as utf8; a
+  character that encoding cannot hold stops the save with a message naming the file,
+  character and line instead of silently switching the file to UTF-8. SyncTeX forward
+  lookup skips an opening vertical box.
 - Layout and footprint (owner request): new projects use `agentlatex/` rather than
   `agentlatex/main/`, and the starter is five files — root AGENTS.md pointer block,
   `.agentlatex.json`, README, `main.tex`, `references.bib`. No `.gitignore`, nested

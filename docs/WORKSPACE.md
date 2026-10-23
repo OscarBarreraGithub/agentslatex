@@ -115,8 +115,9 @@ reports an error instead of leaving a truncated file. Text files that are not va
 UTF-8 are decoded as Windows-1252 so older Latin-1 manuscripts keep their characters,
 and are saved back in that encoding while every character still fits it, so a
 `\usepackage[latin1]{inputenc}` declaration stays true; the preview compiles the Unicode
-text with that legacy option read as utf8. A character outside the old encoding makes the
-saved file UTF-8. While `.agentlatex.json` holds an edit that is not valid JSON yet,
+text with that legacy option read as utf8. A character outside the old encoding stops the
+save with a message naming the file, character and line; the draft is kept. While
+`.agentlatex.json` holds an edit that is not valid JSON yet,
 rename, move, link, delete and settings changes stop with a message instead of
 overwriting it. Editing an executable file keeps its mode. Connect existing lists authorized unlinked repos by default, with
 already-connected projects in a collapsed section that opens the existing editor.

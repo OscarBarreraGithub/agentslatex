@@ -32,7 +32,7 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const bytes = (f: DraftFile) =>
   typeof f.content === "string"
-    ? encodeText(f.content, f.encoding)
+    ? encodeText(f.content, f.encoding, f.path)
     : f.content;
 export async function mountEditor(
   app: HTMLElement,
@@ -518,18 +518,20 @@ export async function mountEditor(
       mode: snapshot.files.find((f) => f.path === path)?.mode === "100755" ? "100755" as const : undefined,
     }));
     try {
+      // Encode every file before the first upload: a file that cannot be written in its
+      // own encoding stops the save here, with nothing uploaded and the draft untouched.
+      const encoded = saving.map((item) => ({ ...item, raw: item.file ? bytes(item.file) : undefined }));
       const changes = [];
-      for (const item of saving) {
-        if (!item.file) {
+      for (const item of encoded) {
+        if (!item.raw) {
           changes.push({ path: item.path, sha: null, mode: undefined });
           continue;
         }
-        const raw = bytes(item.file);
         const b = (await (
           await request("/projects/" + id + "/blob", {
             method: "PUT",
             headers: { "Content-Type": "application/octet-stream" },
-            body: raw.slice().buffer as ArrayBuffer,
+            body: item.raw.slice().buffer as ArrayBuffer,
           })
         ).json()) as { sha: string };
         changes.push({ path: item.path, sha: b.sha, mode: item.mode });
@@ -547,7 +549,7 @@ export async function mountEditor(
             sha: c.sha,
             type: "blob",
             mode: c.mode ?? "100644",
-            size: bytes(saving.find((f) => f.path === c.path)!.file!).length,
+            size: encoded.find((f) => f.path === c.path)!.raw!.length,
           });
         const original = saving.find((f) => f.path === c.path)!.file;
         const current = files.get(c.path);

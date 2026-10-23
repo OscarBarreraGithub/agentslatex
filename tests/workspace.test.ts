@@ -85,8 +85,10 @@ test("Latin-1 manuscripts are saved back in their own encoding and compile as UT
   const all = Uint8Array.from({ length: 256 }, (_, i) => i);
   const text = decodeFile("paper/all.tex", all);
   assert.deepEqual(encodeText(text.content as string, text.encoding), all);
-  // A character the old encoding cannot hold converts the file to UTF-8 rather than losing it.
-  assert.deepEqual(encodeText("α", "windows-1252"), new TextEncoder().encode("α"));
+  // A character the old encoding cannot hold stops the save and names the place, rather
+  // than silently switching the file to UTF-8 under its latin1 declaration.
+  assert.throws(() => encodeText("% ok\nx → y\n", "windows-1252", "paper/old.tex"),
+    e => e instanceof Error && e.message.startsWith("paper/old.tex is stored as Latin-1") && e.message.includes('"→" (line 2)') && e.message.includes("utf8"));
   assert.deepEqual(encodeText("café"), new TextEncoder().encode("café"));
   // The build reads a legacy declaration as utf8; other options and the saved source are untouched.
   const tex = "\\usepackage[latin1]{inputenc}\n\\usepackage[T1]{fontenc}\n% \\usepackage[utf8]{inputenc}\n";

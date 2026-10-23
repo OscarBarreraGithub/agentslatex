@@ -43,18 +43,21 @@ export function decodeFile(path: string, data: Uint8Array): { content: string | 
 export const fileContent = (path: string, data: Uint8Array) => decodeFile(path, data).content;
 
 /**
- * Bytes for saving or exporting text: the encoding the file was read from while every
- * character still fits it, otherwise UTF-8. A character outside Windows-1252 therefore
- * converts the file, and its inputenc declaration then needs utf8.
+ * Bytes for saving or exporting text, in the encoding the file was read from. A character
+ * that encoding cannot hold is refused, naming the place, rather than silently switching
+ * the file to UTF-8: that would leave its bytes at odds with its inputenc declaration
+ * while the preview, which compiles the Unicode text, looked right.
  */
-export function encodeText(text: string, encoding?: TextEncoding): Uint8Array {
+export function encodeText(text: string, encoding?: TextEncoding, path = "This file"): Uint8Array {
   if (encoding === "windows-1252") {
     const table = windows1252Bytes(), out = new Uint8Array(text.length);
-    let length = 0;
+    let length = 0, line = 1;
     for (const char of text) {
       const byte = table.get(char);
-      if (byte === undefined) return new TextEncoder().encode(text);
+      if (byte === undefined)
+        throw Error(`${path} is stored as Latin-1 (Windows-1252), which has no "${char}" (line ${line}). Remove it, or convert the file to UTF-8 and change its inputenc declaration to utf8 first.`);
       out[length++] = byte;
+      if (char === "\n") line++;
     }
     return out.subarray(0, length);
   }
