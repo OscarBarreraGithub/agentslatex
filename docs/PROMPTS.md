@@ -12,7 +12,7 @@ capability detection, existing connectors/checkouts, necessary git/gh setup, act
 login URLs and codes, and handoff when write tools are unavailable. It is read online rather than copied into paper repositories.
 Local instructions are preserved. There is no separate Set up GitHub task in the UI.
 Connect agent also links the live agent/LaTeX guides for old and new projects and asks
-the canonical marked root/main-folder reminder through the live guide, preserving local rules.
+the canonical marked root reminder through the live guide, preserving local rules.
 Conversation-import bookkeeping is still added only on the first import.
 
 Project settings → Report issue provides one copyable diagnosis prompt. It directs

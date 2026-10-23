@@ -22,11 +22,12 @@ test("workspace links retain original paths and file moves reject collisions", (
 });
 test("new and connected-folder starters use portable relative compile paths", () => {
   const files = templateFiles();
-  assert.equal(JSON.parse(files[".agentlatex.json"]).folder, "agentlatex/main");
-  assert.ok(files["agentlatex/main/main.tex"].includes("\\graphicspath{{figures/}}"));
+  assert.equal(JSON.parse(files[".agentlatex.json"]).folder, "agentlatex");
+  assert.ok(files["agentlatex/main.tex"].includes("\\graphicspath{{figures/}}"));
   const nested = templateFiles("research/paper");
-  assert.ok(nested["research/paper/AGENTS.md"].includes("https://agentlatex.com/docs/AGENTS.md"));
-  assert.ok(templateFiles("")["AGENTS.md"].includes("Tag every new or rewritten agent passage"));
+  assert.ok(nested["research/paper/main.tex"].includes("\\graphicspath{{figures/}}"));
+  assert.ok(!("research/paper/AGENTS.md" in nested));
+  assert.ok(templateFiles("")["AGENTS.md"].includes("% agent:begin"));
 });
 test("Markdown renders normal structure without raw HTML, executable links or image requests", () => {
   const html = renderMarkdown('# Notes\n\n**Result**\n\n<script>alert(1)</script>\n\n[x](javascript:alert(1))\n\n![secret](https://example.com/pixel)\n\n[Source](https://example.com/paper)');

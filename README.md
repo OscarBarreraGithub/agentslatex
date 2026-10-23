@@ -23,19 +23,25 @@ else's repository, use the downloadable-bundle handoff. [Agent setup guide](skil
 ## The workflow
 
 - Connect to GitHub, then choose repositories the app may access.
-- **New project** creates a private repository with a working paper and agent guides.
-  **Connect existing** preserves an existing repository's layout and adds instructions.
+- **New project** creates a private repository with five files: a root `AGENTS.md`
+  pointer, `.agentlatex.json`, a README, `agentlatex/main.tex` and `agentlatex/references.bib`.
+  **Connect existing** preserves the repository's layout and adds only the pointer block
+  (appended to an existing `AGENTS.md`, never overwriting it) and `.agentlatex.json`;
+  the starter manuscript is written only if the chosen main document does not exist.
 - The tree opens your main folder. **See entire repo** adds a second explorer; files
   there open on GitHub, or can be linked without copying. New files start in the main
   folder and can be moved into its subfolders.
 - The settings icon beside Synced selects the main folder, default opening document
-  and engine separately. New projects use `agentlatex/main/main.tex`; existing layouts stay
+  and engine separately. New projects use `agentlatex/main.tex`; existing layouts stay
   in place. Without a specified document, the default is `main.tex` in that folder.
 - **Upload ↑ → Files… / Folder…** adds local files or folder contents to the main folder, preserving
   subfolders. It does not watch/sync the disk folder. **Save to GitHub** publishes them.
 - **Download source ZIP** includes the main folder, linked files, browser edits and
   agent/configuration guides, preserving repository paths. It contains no Git history.
-- Browser drafts save automatically. **Save to GitHub** makes a versioned checkpoint;
+- Browser drafts save automatically to this browser's storage a moment after each edit,
+  survive closed tabs and lost connections, and are restored when the project is reopened
+  (they are one browser's copy: clearing site data, private windows and other devices do
+  not have them). **Save to GitHub** makes a versioned checkpoint;
   clean projects refresh automatically while visible. With a draft, **Updates available**
   lets you review incoming changes. Overlapping file changes need an explicit
   choice; saves never force-push. Export downloads a source ZIP.
@@ -44,8 +50,8 @@ else's repository, use the downloadable-bundle handoff. [Agent setup guide](skil
   when stale. Stop cancels a build; corrected source can compile again.
 - Invite collaborators using GitHub's repository settings. They use their own GitHub
   login. GitHub controls repository access; the app cannot grant broader access.
-- Codex/Claude agents edit and commit ordinary files in that same repository. Root and
-  nested instructions require paired Agent comments. **Show AI** highlights those
+- Codex/Claude agents edit and commit ordinary files in that same repository. The root
+  instructions require paired Agent comments. **Show AI** highlights those
   source passages; untagged text is Manual. No custom MCP is needed for this workflow.
 - **Prompts** in the project header offers **Connect agent** (including GitHub setup)
   and **Import a conversation**, linking current online instructions. Each

@@ -9,7 +9,7 @@ import {
   type Entry,
 } from "../shared/contracts";
 import { parentFolder, inFolder, joinFolder, defaultMainFolder } from "../shared/workspace";
-import { templateFiles } from "../shared/template";
+import { templateFiles, starterManuscript } from "../shared/template";
 import { connectInstructions } from "../shared/instructions";
 import { ApiError, github, githubFetch, refPath, listRepos, readTree, readSetupTree, initializeRepository, commitFiles } from "./github";
 import {
@@ -313,11 +313,14 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
     if (existing) return json((await projectFor(env, token, repo.id)).project);
     const templates = templateFiles(folder);
     const tree = initialTree ?? await initializeRepository(token, repo, templates["README.md"]!);
-    const files = await connectInstructions(tree.files.map(f => f.path), folder,
+    // Existing repositories get exactly two additions: the root AGENTS.md pointer block
+    // (appended, never overwritten) and the settings file. The starter manuscript is
+    // written only when the chosen main document does not exist yet.
+    const files = await connectInstructions(tree.files.map(f => f.path),
       path => blobText(token, repo, tree.files.find(f => f.path === path)!));
     if (!tree.files.some(f => f.path === main)) {
-      for (const [path, content] of Object.entries(templates))
-        if (!path.endsWith("AGENTS.md") && inFolder(path, folder) && !tree.files.some(f => f.path === path) && !(path in files)) files[path] = content;
+      for (const [path, content] of Object.entries(starterManuscript(folder)))
+        if (!tree.files.some(f => f.path === path)) files[path] = content;
     }
     const priorConfig = tree.files.find(f => f.path === ".agentlatex.json");
     let preserved: Record<string, unknown> = {};

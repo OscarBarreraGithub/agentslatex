@@ -220,7 +220,7 @@ async function existing() {
             let folder = defaultMainFolder;
             const dialog = modal(
               "Choose your main folder",
-              `<form id="connect-form"><div id="connect-folder" class="folder-picker"></div><label class="field">Default document<select id="connect-main"></select></label><p class="hint">Choose your paper folder, or start in agentlatex/main. Existing files stay in place.</p><button class="primary wide" id="connect-submit">Connect project</button></form>`,
+              `<form id="connect-form"><div id="connect-folder" class="folder-picker"></div><label class="field">Default document<select id="connect-main"></select></label><p class="hint">Choose your paper folder, or start in agentlatex. Existing files stay in place.</p><button class="primary wide" id="connect-submit">Connect project</button></form>`,
             );
             const fillDocuments = () => {
               const preferred = joinFolder(folder, "main.tex");

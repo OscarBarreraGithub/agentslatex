@@ -1,6 +1,6 @@
 import { projectConfig, safePath } from "./contracts";
 
-export const defaultMainFolder = "agentlatex/main";
+export const defaultMainFolder = "agentlatex";
 export const parentFolder = (path: string) => path.split("/").slice(0, -1).join("/");
 export const inFolder = (path: string, folder: string) => !folder || path.startsWith(folder + "/");
 export function joinFolder(folder: string, name: string) {

@@ -2,7 +2,7 @@
 
 The main folder (`folder`) and default opening document (`main`) are separate fields
 in `.agentlatex.json`, edited from the settings icon beside Synced. New projects use
-`agentlatex/main/`; absent `main` resolves to `<folder>/main.tex`. Legacy configurations
+`agentlatex/`; absent `main` resolves to `<folder>/main.tex`. Legacy configurations
 infer the folder from their existing main document. No existing files are moved. The folder picker uses a labeled ← Back button.
 The Default document and Compiler dropdowns have two-pixel borders and a minimum
 44px height, including Default document when connecting an existing repository.
@@ -15,15 +15,14 @@ copy files or create filesystem symlinks. Compile loads main-folder and linked p
 TeX resolves relative inputs from the selected document's containing folder.
 Hide entire repo has a top divider only while the repository tree is expanded.
 
-New and newly connected papers receive short root and manuscript-folder AGENTS.md
-reminders linking to https://agentlatex.com/docs/AGENTS.md and latex-specs.md there.
-Shared specs/setup/import guides are no longer copied into user repositories. The root
-and folder reminders repeat only the essential tagging rule and when to reread docs.
-Existing instructions are preserved; a marked block is appended once, reusing existing
-filename casing. A root workspace gets one file. New files start with the editable
-"% Add your LaTeX-specific instructions for agents here." placeholder, followed by
-seven blank lines before the shared reminder. Existing custom text is not rearranged.
-No CLAUDE.md duplicates or intermediate agentlatex/AGENTS.md.
+New and newly connected papers receive one short reminder block in the root AGENTS.md
+linking to https://agentlatex.com/docs/AGENTS.md and latex-specs.md there. Shared
+specs/setup/import guides are not copied into user repositories, and no `.gitignore`,
+nested AGENTS.md or CLAUDE.md is written. The block repeats only the essential tagging
+rule and when to reread docs. An existing AGENTS.md (any casing) is preserved: the
+marked block is appended once and never overwrites custom text; a file with a single
+stray marker is left alone. A new file starts with a one-line HTML comment placeholder
+for the owner's own instructions, then the block.
 The first import creates IMPORTS.md and artifacts, not a copied skill. Older connected
 projects are not silently rewritten, stripped or moved; their current Connect agent
 prompt directs the agent to live docs and to append missing pointers when it has access.

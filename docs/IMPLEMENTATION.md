@@ -10,8 +10,8 @@ for this limitation. The user confirmed Codex can edit the shared test repositor
 this does not establish browser-connector access or every two-user save scenario.
 
 Deliver connect → projects + New project / Connect existing → editor.
-Visible file tree, ordinary agentlatex/main/ files, browser compilation, clear progress/errors.
-New project = private repository + working template + root/nested agent instructions.
+Visible file tree, ordinary agentlatex/ files, browser compilation, clear progress/errors.
+New project = private repository + working template + one root agent instruction pointer.
 Agent passages use paired comments; other text is Manual. Detailed provenance later.
 
 Use GitHub App user tokens server-side, selected repositories, secure sessions,
@@ -132,6 +132,13 @@ not deployment acceptance and does not close AL-12. Changes, each with a unit te
   commented `\bibliography` line no longer triggers a bibtex run. Text that is not valid
   UTF-8 decodes as Windows-1252 instead of becoming replacement characters that a save
   would commit. SyncTeX forward lookup skips an opening vertical box.
+- Layout and footprint (owner request): new projects use `agentlatex/` rather than
+  `agentlatex/main/`, and the starter is five files — root AGENTS.md pointer block,
+  `.agentlatex.json`, README, `main.tex`, `references.bib`. No `.gitignore`, nested
+  AGENTS.md or `figures/.gitkeep` is written. Connecting an existing repository adds
+  only the pointer block (appended to the existing root AGENTS.md, any casing) and
+  `.agentlatex.json`, plus the starter manuscript only if the chosen main document is
+  missing. The reminder block is condensed to the same instructions in fewer lines.
 - Cleanup: unused prototype draft storage, the unused installation-status endpoint and
   dead path helpers were removed; the compiler laboratory page is omitted from the
   hosted build; stale creation receipts are pruned at sign-in; invalid file names get
