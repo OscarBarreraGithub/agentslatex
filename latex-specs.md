@@ -10,11 +10,17 @@ preserve original papers and distinguish source-based text from new explanations
 - Default engine: **pdfLaTeX**. The app also offers LuaLaTeX and XeLaTeX.
 - The default browser configuration loads **texlive-extra alone**, a cumulative bundle.
   Basic/recommended are not loaded alongside it. Do not load overlapping bundles.
+- The compiler also supplies the unmodified **REVTeX 4.2f** runtime and bibliography
+  styles. Papers may use `\documentclass[aps,prd,twocolumn]{revtex4-2}` without copying
+  journal files into the repository. Explicit project copies take precedence.
 - Compilation runs in a Web Worker. No native executable, shell escape, network fetch
   of manuscript resources, or installed OS font is implicitly available to the TeX job.
-- The adapter runs multiple passes, detects ordinary BibTeX versus BibLaTeX/Biber usage,
-  and returns a PDF plus SyncTeX. Its default build deadline is 120 seconds, including
-  initialization. That is an application setting, not a universal LaTeX limit.
+- The adapter runs multiple passes and selects BibTeX/Biber from the selected build's
+  generated `.aux`/`.bcf` files, including actual inputs. Unrelated source files and
+  commented commands do not enable bibliography processing. A supplied `.bbl` needs
+  no BibTeX run unless the document also requests bibliography generation.
+  It returns a PDF plus SyncTeX. The execution deadline is 120 seconds; initial compiler
+  loading has a separate ten-minute deadline. These are application settings.
 - Fresh browser loading can be substantial: configured default assets total about
   **364 MiB uncompressed**; Biber adds about **30 MiB** on demand. Loopback measurements
   are not internet first-visit timings. Caching is upstream; do not promise offline

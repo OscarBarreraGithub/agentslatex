@@ -3,11 +3,13 @@ import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { gzipSync } from "node:zlib";
 import { pathToFileURL } from "node:url";
+import { prepareCompilerSupport } from "./compiler-support.mjs";
 
 const required = [
   "busytex.js", "busytex.wasm", "busytex_worker.js", "busytex_pipeline.js",
   "busytex_biber.js", "texlive-extra.js", "texlive-extra.data",
   "biber.js", "biber.wasm", "biber.data",
+  "revtex-4.2f.json", "revtex-4.2f.zip",
 ];
 const partSize = 20 * 1024 * 1024; // Below Cloudflare's 25 MiB per-asset limit.
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -55,7 +57,8 @@ export function compilerFetch(manifest, nativeFetch, base) {
   };
 }
 
-export async function prepareStaticCompiler(target = "dist/compiler/1.4.1-static1") {
+export async function prepareStaticCompiler(target = "dist/compiler/1.4.1-static2") {
+  await prepareCompilerSupport();
   await rm(target, { recursive: true, force: true });
   await mkdir(target, { recursive: true });
   const manifest = {};

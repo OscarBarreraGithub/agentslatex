@@ -15,6 +15,8 @@ type Case = {
   timeoutMs?: number;
   group?: string;
   reason?: string;
+  noBibliography?: boolean;
+  resolvedReferences?: boolean;
 };
 const root = document.querySelector<HTMLElement>("#tests")!;
 root.innerHTML = `<div class="test-page"><a href="/">← Editor</a><h1>Compiler checks</h1><p>Real browser builds. Success requires PDF page/text checks; expected failures must fail. Times separate package loading from compilation. No AI calls.</p><div class="test-controls"><label>Bundle <select id="bundle"><option value="extra">Complete authoring bundle</option><option value="recommended">Smaller recommended bundle (probe)</option></select></label><label>Cases <select id="scope"><option value="all">All fixtures</option><option value="core">Core and failure/retry</option><option value="stress">Large files / 200 pages</option><option value="tikz">TikZ and plots</option></select></label><button id="run" class="primary">Run checks</button><button id="stop" disabled>Stop</button><button id="download-results" disabled>Download evidence</button></div><p id="state" role="status">Ready</p><p id="heartbeat">UI heartbeat</p><table><thead><tr><th>Case</th><th>Result</th><th>Compile</th><th>Load</th><th>Pages / PDF</th><th>UI delay</th></tr></thead><tbody id="rows"></tbody></table><pre id="details"></pre></div>`;
@@ -138,12 +140,15 @@ $("run").onclick = async () => {
           result.success && result.pdf
             ? await inspectPdf(result.pdf)
             : undefined;
-        const pass =
+        const lastTexLog = result.logs.filter(l => /^(pdf|xe|lua)/.test(l.cmd)).at(-1)?.log ?? "";
+        const bibliographyCorrect = !fixture.noBibliography || !result.logs.some(l => /^(bibtex|biber)/.test(l.cmd));
+        const referencesResolved = !fixture.resolvedReferences || (!!lastTexLog && !/Citation[^\n]*undefined|There were undefined references/.test(lastTexLog));
+        const pass = bibliographyCorrect && referencesResolved && (
           fixture.expect === "pass"
             ? !!result.success &&
               info?.pages === fixture.pages &&
               (!fixture.contains || info.text.includes(fixture.contains))
-            : fixture.expect === "fail" && !result.success;
+            : fixture.expect === "fail" && !result.success);
         row = {
           id: fixture.id,
           label: fixture.label,
@@ -163,6 +168,9 @@ $("run").onclick = async () => {
             .split("\n")
             .filter((l) => /Warning:|Overfull \\/.test(l)),
           reason: fixture.reason,
+          bibliographyCorrect,
+          referencesResolved,
+          commands: result.logs.map(l => l.cmd),
         };
         await save(
           fixture.id + ".log",

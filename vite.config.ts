@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, stat } from "node:fs/promises";
+import { createReadStream } from "node:fs";
 import { resolve } from "node:path";
 export default defineConfig({
   publicDir: process.env.DEPLOY === "1" ? false : "public",
@@ -7,12 +8,26 @@ export default defineConfig({
     {
       name: "local-test-evidence",
       configureServer(server) {
+        // Static compiler parts are gzip files, not HTTP gzip-encoded responses.
+        // Vite's default handler adds Content-Encoding and would decompress them twice.
+        server.middlewares.use(async (req, res, next) => {
+          const pathname = req.url?.split("?")[0] ?? "";
+          if (!pathname.startsWith("/compiler/") || !pathname.endsWith(".gz")) return next();
+          const root = resolve("public/compiler");
+          const file = resolve(root, pathname.slice("/compiler/".length));
+          if (!file.startsWith(root + "/")) return next();
+          try {
+            const info = await stat(file);
+            res.writeHead(200, { "Content-Type": "application/octet-stream", "Content-Length": info.size });
+            createReadStream(file).pipe(res);
+          } catch { next(); }
+        });
         server.middlewares.use("/__test-results/", async (req, res, next) => {
           if (req.method !== "POST") return next();
           const match = req.url?.match(
             /^\/?([a-zA-Z0-9-]+)\/([a-z0-9-]+\.(?:json|pdf|gz|log))$/,
           );
-          if (req.headers.origin !== "http://127.0.0.1:4390" || !match) {
+          if (req.headers.origin !== `http://127.0.0.1:${server.config.server.port}` || !match) {
             res.statusCode = 403;
             res.end();
             return;

@@ -4,8 +4,8 @@ import { readFile, readdir, stat } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { compilerFetch } from "../scripts/static-compiler.mjs";
 
-const folder = "dist/compiler/1.4.1-static1";
-const base = "https://agentlatex.com/compiler/1.4.1-static1/";
+const folder = "dist/compiler/1.4.1-static2";
+const base = "https://agentlatex.com/compiler/1.4.1-static2/";
 const manifest = JSON.parse(await readFile(folder + "/manifest.json", "utf8"));
 const fetchFile = async (url) => {
   const path = new URL(url).pathname.split("/").pop();

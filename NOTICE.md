@@ -12,11 +12,27 @@ and installed package metadata. CodeMirror is MIT; PDF.js is Apache-2.0; fflate 
 The hosted application offers its corresponding application source at `/source.zip`.
 This includes the build scripts and pinned dependency lockfile. Hosted JS loaders are
 adapted by `scripts/static-compiler.mjs` to download compressed static parts. WebAssembly
-and package data bytes are unchanged. Upstream source and build instructions:
+and TeX Live data bytes are unchanged. `scripts/compiler-support.mjs` patches the
+JavaScript pipeline to select bibliography tools from first-pass artifacts and stop
+after fatal errors even when WASM reports exit zero. Upstream source and build instructions:
 
 - https://github.com/TeXlyre/texlyre-busytex/tree/v1.4.1
 - https://github.com/TeXlyre/texlyre-busytex/releases/tag/assets-v1.4.1
 - https://github.com/TeXlyre/texlyre-busytex
+
+## REVTeX
+
+The compiler supplies the unmodified REVTeX 4.2f runtime files and bibliography styles,
+copyright 1999–2022 The American Physical Society, under LPPL 1.3c or later as specified
+by upstream. The complete upstream distribution, including its sources and README,
+is served at `/compiler/1.4.1-static2/revtex-4.2f.zip`.
+
+- https://ctan.org/pkg/revtex
+- https://mirrors.ctan.org/install/macros/latex/contrib/revtex.tds.zip
+- Archive SHA-256: `594346d851a4a8f73de31235b83cbb105bf7730cc4b8eca23c3c87f159a48400`
+
+Runtime files are extracted at setup/build time and retained byte-for-byte; no package
+source is modified or stored in a user's manuscript repository.
 
 ## Markdown preview
 

@@ -60,7 +60,9 @@ pnpm exec wrangler deploy
 
 `build:hosted` packages pinned compiler binaries into static files below 25 MiB each.
 An adapter in the generated loader streams/decompresses the parts in the browser;
-compiler bytes remain identical. The versioned static path is `1.4.1-static1`.
+WASM and TeX Live data bytes remain identical. The versioned static path is `1.4.1-static2`.
+The build adds pinned REVTeX 4.2f files and a small, checked BusyTeX JavaScript patch
+for bibliography selection and fatal-error handling; see scripts/compiler-support.mjs.
 The first download is still substantial; subsequent compiler loads use browser cache.
 Static downloads bypass the Worker, with no R2 storage/operation charges. Do not add
 `/compiler/*` to `run_worker_first` or enable Workers Caching.

@@ -1,5 +1,30 @@
 # Browser compiler testing
 
+## REVTeX and bibliography correction — 2026-10-23
+
+Local headless Chrome 155 passed **37/37 browser checks** with the production-packaged
+`1.4.1-static2` assets: the existing 32 cases plus unrelated bibliography sources,
+a supplied `.bbl`, REVTeX APS/PRD with a PNG/equation/resolved reference, a missing
+class that must stop before BibTeX, and successful recovery. The shared pipeline
+changed, so the existing matrix was run once after correcting the local server.
+The journal fixture compiled in 0.64s (warm), one page; its rendered page was visually
+inspected. This is loopback/headless evidence, not hosted or physical-device timing.
+
+The normal editor also compiled the synthetic REVTeX paper (0.67s), displayed the
+missing-class error after an edit, preserved the draft, and compiled a corrected
+retry (0.65s). This used the local authenticated UI fixture, not real GitHub accounts.
+Three focused runtime tests, both TypeScript checks, the hosted build and two static
+asset checks passed. All 19 supplied REVTeX runtime/style files match the upstream
+archive byte-for-byte. Existing source files override these compiler-only defaults.
+
+An initial local run failed during loading because Vite served gzip parts with
+`Content-Encoding: gzip`, causing a second decompression in the compiler loader.
+The development server now serves these parts as raw bytes, like the hosted assets.
+That interrupted run is not counted as a pass. No compiler binary or TeX Live data
+was rebuilt. The production deployment and its acceptance are tracked separately.
+
+## Earlier compiler baseline
+
 On 2026-10-21, **32/32 checks passed in Chrome 155 and 32/32 in Safari 26.5.2 on this Mac**.
 This includes 23 successful compilations, eight expected compilation failures, and an
 expected deadline followed by recovery. It is not a claim that all inputs compile.

@@ -6,7 +6,6 @@ import {
   type FileInput,
   type CompileResult,
 } from "texlyre-busytex";
-import { bibliographyTools } from "./bibliography";
 export type Engine = "pdf" | "lua" | "xe";
 export type Bundle = "extra" | "recommended";
 export interface Build extends CompileResult {
@@ -16,6 +15,7 @@ export interface Build extends CompileResult {
 }
 export class Compiler {
   private runner?: BusyTexRunner;
+  private journalFiles?: Record<string, string>;
   private active = false;
   private cancelActive?: () => void;
   constructor(private bundle: Bundle = "extra") {}
@@ -86,16 +86,19 @@ export class Compiler {
             progress("Loading compiler · " + Math.round(p.percent) + "%"),
         });
         await this.runner.initialize(true);
+        const response = await fetch(asset("revtex-4.2f.json"));
+        if (!response.ok) throw Error("Could not load the REVTeX support files. Try compiling again.");
+        this.journalFiles = await response.json() as Record<string, string>;
         loadSeconds = (performance.now() - loading) / 1000;
       }
       progress("Compiling…");
       startCompileDeadline();
       const compiling = performance.now();
-      const detected = bibliographyTools(
-        files
-          .filter((f): f is FileInput & { content: string } => typeof f.content === "string" && f.path.endsWith(".tex"))
-          .map((f) => f.content),
-      );
+      // Compiler-only defaults, never saved into the paper. Explicit project files win.
+      const directory = main.slice(0, main.lastIndexOf("/") + 1);
+      const paths = new Set(files.map(f => f.path));
+      const journalFiles = Object.entries(this.journalFiles ?? {}).map(([name, content]) =>
+        ({ path: directory + name, content })).filter(f => !paths.has(f.path));
       const tool =
         engine === "lua"
           ? new LuaLatex(this.runner)
@@ -105,12 +108,13 @@ export class Compiler {
       const result = await tool.compile({
         input: sourceText,
         mainTexPath: main,
-        additionalFiles: files.filter((f) => f.path !== main),
+        additionalFiles: [...files.filter((f) => f.path !== main), ...journalFiles],
         rerun: true,
         verbose: "info",
         shellEscape: false,
-        bibtex: options.bibtex ?? detected.bibtex,
-        biber: options.biber ?? detected.biber,
+        // Automatic selection uses the first pass's .aux/.bcf, including actual inputs.
+        bibtex: options.bibtex,
+        biber: options.biber,
       });
       return {
         ...result,

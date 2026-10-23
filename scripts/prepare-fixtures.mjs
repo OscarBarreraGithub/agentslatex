@@ -22,6 +22,8 @@ async function add(
     timeoutMs,
     group = "core",
     reason,
+    noBibliography,
+    resolvedReferences,
   } = {},
 ) {
   const dir = join(source, id);
@@ -43,6 +45,8 @@ async function add(
     timeoutMs,
     group,
     reason,
+    noBibliography,
+    resolvedReferences,
   });
 }
 const demo = wrap(
@@ -460,6 +464,25 @@ await add(
   ),
   { files: { [spaced]: png(320, 200, 999) }, contains: "Space in filename" },
 );
+// Issue #2: journal class, actual bibliography inputs, and fatal-pass recovery.
+const archive = { "archive/original.tex": String.raw`\bibliography{unrelated}`, "template.tex": "% \\bibliography{unrelated}" };
+await add("bibliography-unrelated", "Unrelated bibliography stays off", wrap("Independent document."),
+  { files: archive, contains: "Independent document.", group: "bibliography", noBibliography: true });
+await add("bibliography-supplied", "Supplied bibliography stays intact", wrap(String.raw`Manual citation \cite{manual}.\input{paper.bbl}`),
+  { files: { ...archive, "paper.bbl": String.raw`\begin{thebibliography}{1}\bibitem{manual}Provided reference, 2026.\end{thebibliography}` }, contains: "Provided reference", group: "bibliography", noBibliography: true, resolvedReferences: true });
+await add("revtex", "REVTeX APS/PRD with figure and reference", String.raw`\documentclass[aps,prd,10pt,twocolumn]{revtex4-2}
+\usepackage{graphicx,amsmath}
+\begin{document}
+\title{Browser physics fixture}\author{Test Author}\maketitle
+\section{Results} A resolved citation \cite{einstein} and Equation~\ref{eq:energy}.
+\begin{equation}\label{eq:energy}E=mc^2\end{equation}
+\begin{figure}[h]\includegraphics[width=.8\linewidth]{figure.png}\caption{Synthetic test image.}\end{figure}
+\input{sections/references}
+\end{document}`, { files: { ...archive, "figure.png": png(320, 200, 42), "sections/references.tex": "\\bibliography{references}", "references.bib": "@article{einstein,author={Albert Einstein},title={On the Electrodynamics of Moving Bodies},journal={Annalen der Physik},volume={17},pages={891--921},year={1905}}" }, contains: "Einstein", group: "bibliography", resolvedReferences: true });
+await add("fatal-before-bibliography", "Missing class stops before bibliography", String.raw`\documentclass{missing-class-for-test}\begin{document}Test.\bibliography{missing}\end{document}`,
+  { expect: "fail", group: "bibliography", noBibliography: true });
+await add("bibliography-recovery", "Compile succeeds after fatal class failure", wrap("Bibliography failure recovery."),
+  { contains: "Bibliography failure recovery.", group: "bibliography" });
 await writeFile(
   join(output, "manifest.json"),
   JSON.stringify(fixtures, null, 2) + "\n",

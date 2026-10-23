@@ -408,5 +408,79 @@
     "pages": 1,
     "contains": "Space in filename",
     "group": "core"
+  },
+  {
+    "id": "bibliography-unrelated",
+    "label": "Unrelated bibliography stays off",
+    "files": [
+      "main.tex",
+      "archive/original.tex",
+      "template.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Independent document.",
+    "group": "bibliography",
+    "noBibliography": true
+  },
+  {
+    "id": "bibliography-supplied",
+    "label": "Supplied bibliography stays intact",
+    "files": [
+      "main.tex",
+      "archive/original.tex",
+      "template.tex",
+      "paper.bbl"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Provided reference",
+    "group": "bibliography",
+    "noBibliography": true,
+    "resolvedReferences": true
+  },
+  {
+    "id": "revtex",
+    "label": "REVTeX APS/PRD with figure and reference",
+    "files": [
+      "main.tex",
+      "archive/original.tex",
+      "template.tex",
+      "figure.png",
+      "sections/references.tex",
+      "references.bib"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Einstein",
+    "group": "bibliography",
+    "resolvedReferences": true
+  },
+  {
+    "id": "fatal-before-bibliography",
+    "label": "Missing class stops before bibliography",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "fail",
+    "pages": 1,
+    "group": "bibliography",
+    "noBibliography": true
+  },
+  {
+    "id": "bibliography-recovery",
+    "label": "Compile succeeds after fatal class failure",
+    "files": [
+      "main.tex"
+    ],
+    "engine": "pdf",
+    "expect": "pass",
+    "pages": 1,
+    "contains": "Bibliography failure recovery.",
+    "group": "bibliography"
   }
 ]
