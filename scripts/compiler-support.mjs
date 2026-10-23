@@ -39,10 +39,31 @@ export function patchPipeline(source) {
   return marker + "\nconst agentslatexBibliography = " + bibliographyFromAux.toString() + ";\n" + source;
 }
 
+// mirrors.ctan.org redirects to a different mirror on every request, and not every mirror
+// completes a TLS handshake with Node. The checksum below is what guarantees the bytes.
+const revtexMirrors = [
+  "https://mirrors.ctan.org",
+  "https://ctan.math.utah.edu/ctan/tex-archive",
+  "https://mirrors.rit.edu/CTAN",
+];
+async function downloadRevtex() {
+  const failures = [];
+  for (const mirror of revtexMirrors) {
+    try {
+      const response = await fetch(mirror + "/install/macros/latex/contrib/revtex.tds.zip");
+      if (!response.ok) throw Error("HTTP " + response.status);
+      return new Uint8Array(await response.arrayBuffer());
+    } catch (error) { failures.push(mirror + ": " + (error.cause?.message ?? error.message)); }
+  }
+  throw Error("REVTeX download failed from every mirror:\n" + failures.join("\n"));
+}
+
 export async function prepareCompilerSupport() {
   const folder = "public/compiler";
   const pipeline = folder + "/busytex_pipeline.js";
-  const original = await readFile(pipeline, "utf8");
+  const original = await readFile(pipeline, "utf8").catch(error => {
+    throw error.code === "ENOENT" ? Error("Compiler assets are not installed; run pnpm setup first.") : error;
+  });
   const patched = patchPipeline(original);
   if (patched !== original) await writeFile(pipeline, patched);
 
@@ -52,9 +73,7 @@ export async function prepareCompilerSupport() {
   try { archive = await readFile(archivePath); }
   catch (error) {
     if (error.code !== "ENOENT") throw error;
-    const response = await fetch("https://mirrors.ctan.org/install/macros/latex/contrib/revtex.tds.zip");
-    if (!response.ok) throw Error("REVTeX download failed: " + response.status);
-    archive = new Uint8Array(await response.arrayBuffer());
+    archive = await downloadRevtex();
   }
   if (createHash("sha256").update(archive).digest("hex") !== "594346d851a4a8f73de31235b83cbb105bf7730cc4b8eca23c3c87f159a48400")
     throw Error("REVTeX archive checksum mismatch; no package installed.");

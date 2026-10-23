@@ -129,8 +129,9 @@ not deployment acceptance and does not close AL-12. Changes, each with a unit te
   overwritten, connect returns a clear 400, and automatic refresh defers
   to manual Refresh; manual Refresh keeps unchanged blobs loaded; a restored draft
   shows Updates available immediately when its base is behind GitHub.
-- Compiler: bibliography tooling is detected from uncommented source, so the starter's
-  commented `\bibliography` line no longer triggers a bibtex run. Text that is not valid
+- Compiler: bibliography tooling is selected from the first pass's `.aux`/`.bcf` files
+  (scripts/compiler-support.mjs), so unrelated sources and the starter's commented
+  `\bibliography` line do not trigger a bibtex run. Text that is not valid
   UTF-8 decodes as Windows-1252 instead of becoming replacement characters, is saved
   back in that encoding, and compiles with its legacy inputenc option read as utf8; a
   character that encoding cannot hold stops the save with a message naming the file,

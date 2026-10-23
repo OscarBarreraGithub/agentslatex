@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "node scripts/compiler-support.mjs && node scripts/build-docs.mjs && vite --host 127.0.0.1 --port 4390 --strictPort",
     "start": "vite preview --host 127.0.0.1 --port 4390 --strictPort",
-    "build": "node scripts/compiler-support.mjs && node scripts/build-docs.mjs && tsc --noEmit && tsc -p tsconfig.worker.json && vite build",
+    "build": "node scripts/build-docs.mjs && tsc --noEmit && tsc -p tsconfig.worker.json && vite build",
     "typecheck": "tsc --noEmit",
     "setup": "node scripts/setup-assets.mjs && node scripts/compiler-support.mjs && node scripts/prepare-fixtures.mjs",
     "test": "tsx --test tests/*.test.ts && node --test tests/project.test.mjs tests/compiler-support.test.mjs",
