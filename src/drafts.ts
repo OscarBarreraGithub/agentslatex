@@ -1,9 +1,9 @@
-import type { FileInput } from "texlyre-busytex";
+import type { DraftFile } from "./file-content";
 import type { Entry } from "../shared/contracts";
 export interface ProjectDraft {
   revision: string;
   entries: Entry[];
-  files: FileInput[];
+  files: DraftFile[];
   dirty: string[];
   selected: string;
   main: string;
@@ -12,7 +12,7 @@ export interface ProjectDraft {
   engine: "pdf" | "lua" | "xe";
 }
 /** Reuse saved bytes only when GitHub still identifies them as the same blob. */
-export function cachedDraftFiles(saved: ProjectDraft | undefined, entries: Entry[]): FileInput[] {
+export function cachedDraftFiles(saved: ProjectDraft | undefined, entries: Entry[]): DraftFile[] {
   if (!saved || saved.dirty.length) return [];
   const previous = new Map(saved.entries.map(entry => [entry.path, entry.sha]));
   const current = new Map(entries.map(entry => [entry.path, entry.sha]));

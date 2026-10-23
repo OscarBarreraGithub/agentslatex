@@ -55,24 +55,24 @@ to agents until the user saves them. Keep referenced files at their configured p
 If compilation is not available in your environment, say so; the user
 can compile in AgentsLaTeX. Check paired begin/end markers and review the diff before committing.
 
-Main document and engine are in root .agentlatex.json. Keep manuscript files under agentlatex/main/
+Main document and engine are in root .agentlatex.json. Keep manuscript files under agentlatex/
 for new projects; preserve existing layouts when importing. Do not commit build
 outputs, credentials, tokens, or local machine paths. Do not invent scientific sources.
 
 ## Keep instructions current
 
 Shared guides live at https://agentlatex.com/docs; do not copy them into the paper
-repository. Keep the short root and manuscript-folder AGENTS.md reminders, plus local
+repository. Keep the short root AGENTS.md reminder block, plus local
 preferences. The first conversation import creates IMPORTS.md and its artifacts, not
 a copy of the import skill. Later imports read the latest index before appending.
 
 When working on an older project with copied app guides, use these live docs for
 current app behavior while preserving project-specific preferences. Do not delete or
-replace older files automatically. With write access, inspect root and configured
-main-folder AGENTS.md files (reuse existing filename casing). If the exact marker
+replace older files automatically. With write access, inspect the root AGENTS.md
+(reuse existing filename casing). If the exact marker
 `<!-- agentlatex:instructions -->` is absent, append the complete
 [canonical reminder block](https://agentlatex.com/docs/project-reminder.md), including
-both HTML markers, once to each file. Preserve all existing content and preferences.
+both HTML markers, once. Preserve all existing content and preferences.
 A plain link without the marker is not the canonical block; keep that older link and
 append the block once. If both markers already exist, compare with the current
 canonical reminder and replace only the text between and including those markers

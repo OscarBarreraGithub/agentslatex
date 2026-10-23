@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { workspaceConfig, workspacePaths, fileDestination, renamedPath, missingExtension, unlinkReference } from "../shared/workspace";
-import { fileContent } from "../src/file-content";
+import { workspaceConfig, workspacePaths, fileDestination, renamedPath, missingExtension, unlinkReference, joinFolder, settingsDraft } from "../shared/workspace";
+import { fileContent, decodeFile, encodeText, declareUtf8Input } from "../src/file-content";
 import { renderMarkdown } from "../src/markdown";
 import { templateFiles } from "../shared/template";
 
@@ -22,11 +22,12 @@ test("workspace links retain original paths and file moves reject collisions", (
 });
 test("new and connected-folder starters use portable relative compile paths", () => {
   const files = templateFiles();
-  assert.equal(JSON.parse(files[".agentlatex.json"]).folder, "agentlatex/main");
-  assert.ok(files["agentlatex/main/main.tex"].includes("\\graphicspath{{figures/}}"));
+  assert.equal(JSON.parse(files[".agentlatex.json"]).folder, "agentlatex");
+  assert.ok(files["agentlatex/main.tex"].includes("\\graphicspath{{figures/}}"));
   const nested = templateFiles("research/paper");
-  assert.ok(nested["research/paper/AGENTS.md"].includes("https://agentlatex.com/docs/AGENTS.md"));
-  assert.ok(templateFiles("")["AGENTS.md"].includes("Tag every new or rewritten agent passage"));
+  assert.ok(nested["research/paper/main.tex"].includes("\\graphicspath{{figures/}}"));
+  assert.ok(!("research/paper/AGENTS.md" in nested));
+  assert.ok(templateFiles("")["AGENTS.md"].includes("% agent:begin"));
 });
 test("Markdown renders normal structure without raw HTML, executable links or image requests", () => {
   const html = renderMarkdown('# Notes\n\n**Result**\n\n<script>alert(1)</script>\n\n[x](javascript:alert(1))\n\n![secret](https://example.com/pixel)\n\n[Source](https://example.com/paper)');
@@ -56,4 +57,50 @@ test("unlinking removes only the reference, retaining other links and original p
   assert.deepEqual(unlinkReference("shared/a.tex", ["shared/a.tex", "shared/b.tex"], paths), ["shared/b.tex"]);
   assert.deepEqual(unlinkReference("shared/a.tex", ["shared"], paths), ["shared/b.tex"]);
   assert.deepEqual(paths, ["paper/main.tex", "shared/a.tex", "shared/b.tex"]);
+});
+test("invalid names explain themselves instead of exposing a schema issue list", () => {
+  for (const name of ["..", "a\u0000b", ".git"]) {
+    assert.throws(() => joinFolder("paper", name), e => e instanceof Error && !e.message.includes("[") && /plain project-relative name/.test(e.message));
+    assert.throws(() => renamedPath("paper/draft", name, ["paper/draft"]), e => e instanceof Error && !e.message.includes("["));
+  }
+  assert.equal(joinFolder("", "main.tex"), "main.tex");
+});
+test("Latin-1 manuscripts keep their characters instead of becoming replacement marks", () => {
+  const latin1 = new Uint8Array([0x63, 0x61, 0x66, 0xe9]); // "café" in ISO-8859-1
+  assert.equal(fileContent("paper/old.tex", latin1), "café");
+  const utf8 = new TextEncoder().encode("naïve — ok");
+  assert.equal(fileContent("paper/new.tex", utf8), "naïve — ok");
+  assert.equal(fileContent("paper/new.bib", utf8), "naïve — ok");
+  const binary = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 1]);
+  assert.equal(fileContent("figures/plot.png", binary), binary);
+});
+test("Latin-1 manuscripts are saved back in their own encoding and compile as UTF-8", () => {
+  const latin1 = new Uint8Array([0x63, 0x61, 0x66, 0xe9]);
+  const old = decodeFile("paper/old.tex", latin1);
+  assert.equal(old.content, "café");
+  assert.equal(old.encoding, "windows-1252");
+  assert.deepEqual(encodeText("café", "windows-1252"), latin1);
+  assert.equal(decodeFile("paper/new.tex", new TextEncoder().encode("café")).encoding, undefined);
+  // Every byte survives a round trip, including the 0x80–0x9F punctuation range.
+  const all = Uint8Array.from({ length: 256 }, (_, i) => i);
+  const text = decodeFile("paper/all.tex", all);
+  assert.deepEqual(encodeText(text.content as string, text.encoding), all);
+  // A character the old encoding cannot hold stops the save and names the place, rather
+  // than silently switching the file to UTF-8 under its latin1 declaration.
+  assert.throws(() => encodeText("% ok\nx → y\n", "windows-1252", "paper/old.tex"),
+    e => e instanceof Error && e.message.startsWith("paper/old.tex is stored as Latin-1") && e.message.includes('"→" (line 2)') && e.message.includes("utf8"));
+  assert.deepEqual(encodeText("café"), new TextEncoder().encode("café"));
+  // The build reads a legacy declaration as utf8; other options and the saved source are untouched.
+  const tex = "\\usepackage[latin1]{inputenc}\n\\usepackage[T1]{fontenc}\n% \\usepackage[utf8]{inputenc}\n";
+  assert.equal(declareUtf8Input(tex), "\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n% \\usepackage[utf8]{inputenc}\n");
+  assert.equal(declareUtf8Input("\\usepackage[ansinew,T1]{inputenc}"), "\\usepackage[utf8,T1]{inputenc}");
+  assert.equal(declareUtf8Input("\\usepackage[utf8]{inputenc}\\usepackage{inputenc}"), "\\usepackage[utf8]{inputenc}\\usepackage{inputenc}");
+});
+test("a half-typed settings edit is kept rather than overwritten", () => {
+  assert.deepEqual(settingsDraft(undefined), {});
+  assert.deepEqual(settingsDraft("  \n"), {});
+  assert.deepEqual(settingsDraft('{"version": 1, "note": "keep"}'), { version: 1, note: "keep" });
+  for (const draft of ['{"version": 1, "folder": "pap', "[1, 2]", "null", '"text"']) {
+    assert.throws(() => settingsDraft(draft), e => e instanceof Error && /^Finish editing \.agentlatex\.json first/.test(e.message) && !/unexpected|token|position/i.test(e.message));
+  }
 });

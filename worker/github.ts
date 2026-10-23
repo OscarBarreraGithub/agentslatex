@@ -9,13 +9,27 @@ export class ApiError extends Error {
     super(message);
   }
 }
+/** Git refs may contain "/"; encode each segment so the path stays valid either way. */
+export const refPath = (branch: string) => branch.split("/").map(encodeURIComponent).join("/");
+/** A GitHub outage or timeout is temporary; report it as such instead of a generic failure. */
+export async function githubFetch(input: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch (e) {
+    if (e instanceof DOMException && (e.name === "TimeoutError" || e.name === "AbortError"))
+      throw new ApiError(503, "GitHub did not respond in time. Your draft is safe; please try again.", undefined, 30);
+    if (e instanceof TypeError)
+      throw new ApiError(503, "GitHub could not be reached. Your draft is safe; please try again.", undefined, 30);
+    throw e;
+  }
+}
 export async function github<T>(
   token: string,
   path: string,
   method = "GET",
   body?: unknown,
 ): Promise<T> {
-  const res = await fetch("https://api.github.com" + path, {
+  const res = await githubFetch("https://api.github.com" + path, {
     method,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -28,7 +42,12 @@ export async function github<T>(
     signal: AbortSignal.timeout(25000),
   });
   if (!res.ok) {
-    const data = (await res.json()) as { message?: string };
+    // Outages return HTML or empty bodies; a parse failure must not hide the real status.
+    let data: { message?: string } = {};
+    try {
+      const parsed: unknown = JSON.parse(await res.text());
+      if (parsed && typeof parsed === "object") data = parsed;
+    } catch { /* not JSON */ }
     const throttled = res.status === 429 || res.headers.has("retry-after") || res.headers.get("x-ratelimit-remaining") === "0";
     const wait = Math.max(Number(res.headers.get("retry-after")) || 0,
       res.headers.get("x-ratelimit-remaining") === "0" ? (Number(res.headers.get("x-ratelimit-reset")) || 0) - Date.now() / 1000 : 0,
@@ -86,7 +105,7 @@ export async function readTree(
   const root = "/repos/" + repo.full_name;
   const ref = await github<{ object: { sha: string } }>(
     token,
-    root + "/git/ref/heads/" + encodeURIComponent(branch),
+    root + "/git/ref/heads/" + refPath(branch),
   );
   const commit = await github<{ tree: { sha: string } }>(
     token,
@@ -151,7 +170,7 @@ export async function commitFiles(
   const root = "/repos/" + repo.full_name;
   const current = await github<{ object: { sha: string } }>(
     token,
-    root + "/git/ref/heads/" + encodeURIComponent(branch),
+    root + "/git/ref/heads/" + refPath(branch),
   );
   if (current.object.sha !== base)
     throw new ApiError(
@@ -185,7 +204,7 @@ export async function commitFiles(
   try {
     await github(
       token,
-      root + "/git/refs/heads/" + encodeURIComponent(branch),
+      root + "/git/refs/heads/" + refPath(branch),
       "PATCH",
       { sha: commit.sha, force: false },
     );

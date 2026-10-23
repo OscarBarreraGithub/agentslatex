@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { buildSignature } from "../src/cache";
+import { buildSignature, gitBlobSha } from "../src/cache";
 import type { Entry } from "../shared/contracts";
 const file = {path:"paper/main.tex", content:"Original"};
 const sha = createHash("sha1").update(`blob ${Buffer.byteLength(file.content)}\0${file.content}`).digest("hex");
@@ -16,4 +16,10 @@ test("PDF cache signature matches a saved draft but changes with inputs, path or
   assert.notEqual(await key([file], [], "paper/other.tex"), original);
   assert.notEqual(await key([file], [], file.path, "pdf", [{...entries[0], sha:"different"}]), original);
   assert.notEqual(await key([file, {path:"shared/image.png", content:"new input"}]), original);
+});
+test("downloaded bytes are verified with the same Git blob ID GitHub reports", async () => {
+  const bytes = new TextEncoder().encode("Any file, any size\n");
+  const expected = createHash("sha1").update(`blob ${bytes.byteLength}\0`).update(bytes).digest("hex");
+  assert.equal(await gitBlobSha(bytes), expected);
+  assert.notEqual(await gitBlobSha(bytes.subarray(0, 5)), expected);
 });

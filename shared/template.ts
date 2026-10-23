@@ -1,25 +1,34 @@
 import { defaultMainFolder } from "./workspace";
 import { appendInstructions } from "./instructions";
 
+/**
+ * The smallest useful paper: one root AGENTS.md pointer, the portable settings file,
+ * a README, and a compilable main.tex with an empty bibliography beside it. Nothing
+ * else is written into a person's repository; figures/ appears when they add one.
+ */
 export function templateFiles(folder = defaultMainFolder): Record<string, string> {
   const prefix = folder ? folder + "/" : "";
   return {
     "AGENTS.md": appendInstructions(),
-    [prefix + "AGENTS.md"]: appendInstructions(),
     ".agentlatex.json": JSON.stringify(
       { version: 1, folder, main: prefix + "main.tex", references: [], engine: "pdf" }, null, 2,
     ) + "\n",
     "README.md": `# My paper
 
-Open this repository in [AgentsLaTeX](https://agentlatex.com).
-
-Manuscript: \`${prefix}main.tex\`. Images: \`${prefix}figures/\`. Bibliography: \`${prefix}references.bib\`.
-
-Agents: read **AGENTS.md** and the current [agent instructions](https://agentlatex.com/docs/AGENTS.md).
-Invite collaborators in this repository's GitHub settings. They sign in to AgentsLaTeX with their own GitHub account.
+Edit and compile in [AgentsLaTeX](https://agentlatex.com). Manuscript: \`${prefix}main.tex\`;
+bibliography: \`${prefix}references.bib\`; images go in \`${prefix}figures/\`.
+Agents: read **AGENTS.md**. Collaborators sign in with their own GitHub account after you
+invite them in this repository's settings.
 `,
-    ".gitignore": "*.aux\n*.log\n*.out\n*.toc\n*.synctex.gz\n*.fls\n*.fdb_latexmk\n*.bbl\n*.blg\n.DS_Store\n.env*\n",
-    [prefix + "main.tex"]: String.raw`% Agents: follow this folder's AGENTS.md and https://agentlatex.com/docs/AGENTS.md.
+    ...starterManuscript(folder),
+  };
+}
+
+/** The manuscript files alone, for a connected repository whose main document is missing. */
+export function starterManuscript(folder: string): Record<string, string> {
+  const prefix = folder ? folder + "/" : "";
+  return {
+    [prefix + "main.tex"]: String.raw`% Agents: follow the root AGENTS.md and https://agentlatex.com/docs/AGENTS.md.
 \documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb,graphicx}
@@ -40,6 +49,5 @@ Your paper starts here.
 \end{document}
 `,
     [prefix + "references.bib"]: "% Add bibliography entries here.\n",
-    [prefix + "figures/.gitkeep"]: "",
   };
 }

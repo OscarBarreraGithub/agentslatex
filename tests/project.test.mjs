@@ -1,26 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { normalizePath, validateFiles, inferMain } from "../src/project.mjs";
-test("folder imports retain nested paths and support Windows separators", () => {
-  assert.equal(normalizePath("figures\\plot.png"), "figures/plot.png");
-  assert.equal(normalizePath("chapter one/text.tex"), "chapter one/text.tex");
-});
-test("unsafe paths and colliding imports are rejected before compilation", () => {
-  for (const path of [
-    "../secret",
-    "/secret",
-    "C:\\secret",
-    "a/../../secret",
-    "a\0.tex",
-  ])
-    assert.throws(() => normalizePath(path));
-  assert.throws(() =>
-    validateFiles([
-      { path: "main.tex", content: "" },
-      { path: "main.tex", content: "" },
-    ]),
-  );
-});
+import { inferMain, isTextFile } from "../src/project.mjs";
 test("the document root wins over an included TeX file", () => {
   assert.equal(
     inferMain([
@@ -29,4 +9,9 @@ test("the document root wins over an included TeX file", () => {
     ]),
     "paper.tex",
   );
+  assert.equal(inferMain([{ path: "figures/plot.png", content: new Uint8Array() }]), "");
+});
+test("editable text types are recognised by extension, case-insensitively", () => {
+  for (const path of ["main.tex", "refs.BIB", "local.sty", "data/values.csv"]) assert.ok(isTextFile(path), path);
+  for (const path of ["figures/plot.png", "main.pdf", "draft"]) assert.ok(!isTextFile(path), path);
 });

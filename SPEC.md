@@ -10,7 +10,8 @@ model calls. No QUARK, agent manager or app-specific manuscript format.
 ## Current implementation
 
 One project corresponds to one GitHub repository. New projects are private and owned
-by the signed-in person, with agentlatex/main/main.tex, figures/, references.bib and agent guides.
+by the signed-in person, with agentlatex/main.tex, agentlatex/references.bib, a README,
+.agentlatex.json and one root AGENTS.md pointer block; no ignore rules or copied guides.
 Existing repositories retain their layout. Repository access comes from GitHub and
 selected GitHub App installations; every server operation uses a user access token.
 
@@ -31,7 +32,7 @@ before replacing browser copies. The main-folder source ZIP (including linked fi
 be downloaded. Compile targets the selected `.tex`; Markdown renders locally with raw
 HTML disabled and remote images suppressed. Other file types disable Compile.
 
-Agents use their normal GitHub/file tools. Short root/nested AGENTS.md reminders link
+Agents use their normal GitHub/file tools. A short root AGENTS.md reminder block links
 the live guides at https://agentlatex.com/docs; no CLAUDE.md or copied specs are generated. They
 require only paired `% agent:begin` / `% agent:end` comments, without IDs or model
 metadata. Earlier tags remain readable; new starter text has no attribution markers.
@@ -89,14 +90,16 @@ binding. A compile result says nothing about scientific validity. Coediting, cus
 and cloud ChatGPT connectors must not delay the basic GitHub workflow.
 
 The main folder is independent of the opening document in .agentlatex.json. New
-projects default to agentlatex/main/ and its main.tex; legacy projects infer their folder
+projects default to agentlatex/ and its main.tex; legacy projects infer their folder
 from the saved main document. Settings sits beside Synced. The optional second tree
 browses the entire repository: opening a file goes to GitHub; linking retains its
 original path, with no copy or OS symlink. New files start in the main-folder root.
 Moves are draft changes, reject name collisions, and save through the existing safe
 GitHub checkpoint. TeX references are not automatically rewritten on moves.
 Only the saved/default branch is exposed; there is no branch switching UI and existing
-non-main branch configurations are preserved rather than redirected silently.
+non-main branch configurations are preserved rather than redirected silently. If the
+saved branch no longer exists because GitHub's default branch was renamed, opening the
+project follows the current default once and records it, so the project stays openable.
 
 Version-control UI is explicitly a later TODO: explore meaningful checkpoints, readable
 diffs and agent-assisted explanations/restoration on top of GitHub history. No second
@@ -110,6 +113,8 @@ Sessions last 180 days and renew on visits (at most weekly), including upgrades 
 still-valid older 30-day sessions. GitHub access tokens refresh automatically while
 the refresh token remains valid. Temporary upstream/network refresh failures preserve
 the session for retry; explicit invalid/expired credentials require reconnecting.
-Sign-out deletes the server session and clears the home-list cache. Cookie protections
+Sign-out deletes the server session and clears the home-list cache. A stored token that
+can no longer be decrypted (for example after a SESSION_KEY rotation) ends that session
+and asks for a reconnection rather than failing every request. Cookie protections
 remain HttpOnly, Secure on HTTPS, SameSite=Lax. Browser cookie removal, GitHub revocation
 or roughly six months without renewal can require sign-in. This is not permanent access.

@@ -242,9 +242,12 @@ export function parseSynctex(bytes: Uint8Array, main: string, paths: string[]): 
 			const candidates = exact.length > 0 ? exact : nearest;
 			if (candidates.length === 0) return null;
 
-			const page = candidates[0].page;
-			const onPage = candidates.filter((b) => b.page === page && b.width > 0 && !b.isVbox && b.height + b.depth > 0);
-			if (onPage.length === 0) return null;
+			// A line can open with a vertical box (a float, a list) whose own record has
+			// no usable extent; take the first page that has a visible horizontal box.
+			const usable = candidates.filter((b) => b.width > 0 && !b.isVbox && b.height + b.depth > 0);
+			if (usable.length === 0) return null;
+			const page = usable[0].page;
+			const onPage = usable.filter((b) => b.page === page);
 
 			const rects = onPage.map((b) => ({
 				x: b.x,

@@ -1,6 +1,6 @@
 /** Local-only UI fixture. No credentials or production authentication bypass. */
 import http from "node:http";
-import { readFile, stat } from "node:fs/promises";
+import { stat } from "node:fs/promises";
 import { createReadStream } from "node:fs";
 import { createHash } from "node:crypto";
 import { resolve, extname } from "node:path";
@@ -13,7 +13,8 @@ let rev = 1;
 let created = false;
 const contents = new Map<string, Buffer>();
 const blobs = new Map<string, Buffer>();
-const hash = (b: Buffer) => createHash("sha1").update(b).digest("hex");
+// Real Git blob IDs: the editor verifies downloaded bytes against the tree entry.
+const hash = (b: Buffer) => createHash("sha1").update(`blob ${b.length}\0`).update(b).digest("hex");
 for (const [p, s] of Object.entries(templateFiles("paper")))
   contents.set(p, Buffer.from(s));
 // Exercise a legacy project plus a selected standalone file with relative inputs.
@@ -66,13 +67,8 @@ http
         if (p === "/api/me")
           return send({
             user: { id: 999992, login: "local-ui-fixture" },
-            ...(firstProject ? {} : { installations: 1 }),
             installUrl: "#",
           });
-        if (p === "/api/installation-status") {
-          console.log("Installation gate requested");
-          return send({ installations: firstProject ? 0 : 1 });
-        }
         if (p === "/api/projects" && req.method === "GET")
           return send(created ? [project] : []);
         if (p === "/api/projects" && req.method === "POST") {

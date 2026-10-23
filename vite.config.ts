@@ -58,6 +58,8 @@ export default defineConfig({
     },
   },
   build: {
-    rollupOptions: { input: { editor: "index.html", tests: "tests.html" } },
+    // The compiler laboratory needs the local fixtures and evidence route; the hosted
+    // build ships neither, so it does not ship the page either.
+    rollupOptions: { input: process.env.DEPLOY === "1" ? { editor: "index.html" } : { editor: "index.html", tests: "tests.html" } },
   },
 });

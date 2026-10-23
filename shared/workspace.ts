@@ -1,9 +1,14 @@
 import { projectConfig, safePath } from "./contracts";
 
-export const defaultMainFolder = "agentlatex/main";
+export const defaultMainFolder = "agentlatex";
 export const parentFolder = (path: string) => path.split("/").slice(0, -1).join("/");
 export const inFolder = (path: string, folder: string) => !folder || path.startsWith(folder + "/");
-export const joinFolder = (folder: string, name: string) => safePath.parse(folder ? folder + "/" + name : name);
+export function joinFolder(folder: string, name: string) {
+  const result = safePath.safeParse(folder ? folder + "/" + name : name);
+  // Callers show this message directly; a raw schema issue list is not readable.
+  if (!result.success) throw Error("Use a plain project-relative name without \"..\" segments, backslashes or control characters.");
+  return result.data;
+}
 export function workspaceConfig(value: unknown, legacyMain: string) {
   const cfg = projectConfig.parse(value);
   const folder = cfg.folder ?? parentFolder(cfg.main ?? legacyMain);
@@ -40,4 +45,18 @@ export const missingExtension = (path: string) => {
 export function unlinkReference(path: string, references: string[], paths: string[]) {
   return references.flatMap(ref => ref === path ? [] : inFolder(path, ref)
     ? paths.filter(p => p !== path && inFolder(p, ref)) : [ref]);
+}
+/**
+ * The editable .agentlatex.json draft, as the fields a settings write merges with.
+ * The file is editable in the source pane, so an edit that is not valid JSON yet is
+ * refused with a readable message rather than overwritten; a blank file has no edit to lose.
+ */
+export function settingsDraft(content: unknown): Record<string, unknown> {
+  if (typeof content !== "string" || !content.trim()) return {};
+  let parsed: unknown;
+  try { parsed = JSON.parse(content); }
+  catch { throw Error("Finish editing .agentlatex.json first: it is not valid JSON, and changing project settings now would discard that edit."); }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+    throw Error("Finish editing .agentlatex.json first: it must contain a JSON object before project settings can change.");
+  return parsed as Record<string, unknown>;
 }

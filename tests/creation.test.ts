@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import worker from "../worker/index";
 import { seal, type Bindings, type Session } from "../worker/auth";
 
-async function fixture() {
+async function fixture(initial: Record<string, unknown> | null = null) {
   const row: Session = { id: "test", user_id: 42, login: "fixture", token: "", expires: Math.floor(Date.now()/1000)+86400, refresh_lock: 0 };
-  let project: Record<string, unknown> | null = null;
+  let project: Record<string, unknown> | null = initial;
   let registered = 0;
   const env = { SESSION_KEY: btoa("a".repeat(32)), DB: { prepare(sql: string) {
     let values: unknown[] = [];
@@ -22,6 +22,7 @@ async function fixture() {
           const [repo_id, owner, name, branch, main, engine] = values;
           project = { repo_id, owner, name, branch, main, engine };
         }
+        if (sql.startsWith("UPDATE projects SET branch")) project = { ...project, branch: values[0] };
         return {meta:{changes:1}};
       },
     };
@@ -30,8 +31,39 @@ async function fixture() {
   const call = (path: string, data?: unknown) => worker.fetch(new Request(`https://agentlatex.com/api/${path}`, {
     method:data === undefined ? "GET" : "POST", headers:{Origin:"https://agentlatex.com",Cookie:"__Host-agentslatex=synthetic","Content-Type":"application/json"}, body:JSON.stringify(data),
   }), env);
-  return {call, registered:()=>registered};
+  return {call, registered:()=>registered, project:()=>project};
 }
+
+test("a project whose saved branch was renamed on GitHub follows the new default branch once", async () => {
+  const f = await fixture({ repo_id: 7, owner: "fixture", name: "paper", branch: "master", main: "agentlatex/main/main.tex", engine: "pdf" });
+  const original = globalThis.fetch;
+  const sha = "a".repeat(40); const refs: string[] = [];
+  const repo = {id:7,full_name:"fixture/paper",name:"paper",owner:{login:"fixture"},private:true,default_branch:"main",permissions:{push:true},html_url:"https://github.com/fixture/paper"};
+  globalThis.fetch = async (url) => {
+    const p = new URL(String(url)).pathname;
+    if (p === "/repositories/7") return Response.json(repo);
+    if (p.includes("/git/ref/heads/")) {
+      refs.push(p.split("/git/ref/heads/")[1]);
+      return p.endsWith("/heads/main") ? Response.json({object:{sha}}) : Response.json({message:"Not Found"},{status:404});
+    }
+    if (p.endsWith("/git/commits/"+sha)) return Response.json({tree:{sha}});
+    if (p.endsWith("/git/trees/"+sha)) return Response.json({tree:[{path:"agentlatex/main/main.tex",sha,size:12,mode:"100644",type:"blob"}],truncated:false});
+    throw Error(p);
+  };
+  try {
+    const r = await f.call("projects/7");
+    assert.equal(r.status, 200);
+    const body = await r.json() as { project: { branch: string }, revision: string };
+    assert.equal(body.project.branch, "main"); assert.equal(body.revision, sha);
+    assert.deepEqual(refs, ["master", "main"]);
+    assert.equal(f.project()?.branch, "main");
+    // A configured non-default branch that still exists is never redirected.
+    const g = await fixture({ repo_id: 7, owner: "fixture", name: "paper", branch: "main", main: "agentlatex/main/main.tex", engine: "pdf" });
+    repo.default_branch = "trunk";
+    assert.equal((await g.call("projects/7")).status, 200);
+    assert.equal(g.project()?.branch, "main");
+  } finally { globalThis.fetch = original; }
+});
 
 test("GitHub creation denied before installation gives a recoverable setup response", async () => {
   const f = await fixture(); const original = globalThis.fetch;
