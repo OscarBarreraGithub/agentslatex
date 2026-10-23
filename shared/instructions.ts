@@ -3,16 +3,24 @@ import { joinFolder } from "./workspace";
 
 export const docsUrl = "https://agentlatex.com/docs";
 const marker = "<!-- agentlatex:instructions -->";
+const closingMarker = "<!-- /agentlatex:instructions -->";
 const reminder = reminderLines.join("\n");
 const preferences = "% Add your LaTeX-specific instructions for agents here.\n\n\n\n\n\n\n\n";
 
-/** Refresh only our delimited block; preserve the repository owner's instructions. */
+/**
+ * Refresh only our delimited block; preserve the repository owner's instructions.
+ * A file with a lone marker is malformed: leave it untouched rather than appending a
+ * second block or deleting content (the live guide asks agents to report it).
+ */
 export function appendInstructions(existing?: string): string {
-  if (existing?.includes(marker)) return existing.replace(
+  if (existing === undefined) return preferences + reminder + "\n";
+  const hasOpen = existing.includes(marker), hasClose = existing.includes(closingMarker);
+  if (hasOpen && hasClose) return existing.replace(
     /<!-- agentlatex:instructions -->[\s\S]*?<!-- \/agentlatex:instructions -->/,
-    reminder,
+    () => reminder, // A function replacement keeps "$" sequences in the reminder literal.
   );
-  return existing === undefined ? preferences + reminder + "\n" : existing + "\n\n" + reminder + "\n";
+  if (hasOpen || hasClose) return existing;
+  return existing + "\n\n" + reminder + "\n";
 }
 
 /** Reuse existing filename casing, including agents.md, on macOS and Windows. */

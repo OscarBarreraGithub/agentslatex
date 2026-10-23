@@ -37,10 +37,12 @@ export const connectProject = z.object({
   main: safePath.optional(),
   engine: z.enum(["pdf", "lua", "xe"]).default("pdf"),
 });
+/** Git file modes the app round-trips; an edited script keeps its executable bit. */
+export const fileMode = z.enum(["100644", "100755"]);
 export const saveProject = z.object({
   base: sha,
   changes: z
-    .array(z.object({ path: safePath, sha: sha.nullable() }))
+    .array(z.object({ path: safePath, sha: sha.nullable(), mode: fileMode.optional() }))
     .min(1)
     .max(500),
   message: z.string().max(200).default("Edit paper in AgentsLaTeX"),
@@ -82,5 +84,4 @@ export interface Snapshot {
 export interface Me {
   user: { id: number; login: string };
   installUrl: string;
-  installations?: number;
 }

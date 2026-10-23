@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { commitFiles } from "../worker/github";
-import { safePath, newProject, type Repo } from "../shared/contracts";
+import { commitFiles, github, ApiError } from "../worker/github";
+import { safePath, newProject, saveProject, type Repo } from "../shared/contracts";
 import { agentRanges } from "../shared/tagging";
 import { conflictingPaths } from "../src/merge";
 import { templateFiles } from "../shared/template";
@@ -210,4 +210,52 @@ test("expired sign-in returns to a usable Connect screen", async () => {
   const local = "# Existing preferences\n" + canonical;
   assert.equal(appendInstructions(local), local);
   assert.ok(appendInstructions().includes(canonical));
+});
+test("GitHub outages with non-JSON bodies and timeouts surface as temporary failures", async () => {
+  const original = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => new Response("<html>Bad gateway</html>", { status: 502, headers: { "Content-Type": "text/html" } });
+    await assert.rejects(github("token", "/user"), e => e instanceof ApiError && e.status === 503);
+    globalThis.fetch = async () => { throw new DOMException("The operation timed out.", "TimeoutError"); };
+    await assert.rejects(github("token", "/user"), e => e instanceof ApiError && e.status === 503 && e.retryAfterSeconds > 0);
+    globalThis.fetch = async () => { throw new TypeError("fetch failed"); };
+    await assert.rejects(github("token", "/user"), e => e instanceof ApiError && e.status === 503);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+test("branches containing slashes keep a valid ref path and saves keep an executable file's mode", async () => {
+  const original = globalThis.fetch;
+  const urls: string[] = [];
+  let tree: { path: string; mode: string }[] = [];
+  globalThis.fetch = async (input, init) => {
+    const p = String(input);
+    urls.push(p);
+    if (p.includes("/git/ref/")) return Response.json({ object: { sha: base } });
+    if (p.endsWith("/git/commits/" + base)) return Response.json({ tree: { sha: base } });
+    if (p.endsWith("/git/trees")) { tree = JSON.parse(String(init?.body)).tree; return Response.json({ sha: next }); }
+    if (p.endsWith("/git/commits")) return Response.json({ sha: next });
+    if (p.includes("/git/refs/")) return Response.json({});
+    throw Error(p);
+  };
+  try {
+    const revision = await commitFiles("token", repo, "release/1.0", base,
+      [{ path: "scripts/build.sh", sha: next, mode: "100755" }, { path: "main.tex", sha: next }, { path: "old.tex", sha: null }], "Edit");
+    assert.equal(revision, next);
+    assert.ok(urls[0].endsWith("/git/ref/heads/release/1.0"), urls[0]);
+    assert.ok(urls.at(-1)!.endsWith("/git/refs/heads/release/1.0"), urls.at(-1));
+    assert.deepEqual(tree.map(f => [f.path, f.mode]), [["scripts/build.sh", "100755"], ["main.tex", "100644"], ["old.tex", "100644"]]);
+    assert.equal(saveProject.parse({ base, changes: [{ path: "a.sh", sha: next, mode: "100755" }] }).changes[0].mode, "100755");
+    assert.equal(saveProject.safeParse({ base, changes: [{ path: "a.sh", sha: next, mode: "100000" }] }).success, false);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+test("refreshing instructions replaces exactly the marked block and never duplicates a half-marked one", () => {
+  const canonical = (JSON.parse(readFileSync(new URL("../shared/project-reminder.json", import.meta.url), "utf8")) as string[]).join("\n");
+  const owner = "# Rules\nBudget: $1 per page; $& and $' are plain text here.\n";
+  const updated = appendInstructions(owner + "<!-- agentlatex:instructions -->\nold $& text\n<!-- /agentlatex:instructions -->\n");
+  assert.equal(updated, owner + canonical + "\n");
+  for (const malformed of ["# Notes\n<!-- agentlatex:instructions -->\nunterminated\n", "# Notes\nstray\n<!-- /agentlatex:instructions -->\n"])
+    assert.equal(appendInstructions(malformed), malformed);
 });

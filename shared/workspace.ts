@@ -3,7 +3,12 @@ import { projectConfig, safePath } from "./contracts";
 export const defaultMainFolder = "agentlatex/main";
 export const parentFolder = (path: string) => path.split("/").slice(0, -1).join("/");
 export const inFolder = (path: string, folder: string) => !folder || path.startsWith(folder + "/");
-export const joinFolder = (folder: string, name: string) => safePath.parse(folder ? folder + "/" + name : name);
+export function joinFolder(folder: string, name: string) {
+  const result = safePath.safeParse(folder ? folder + "/" + name : name);
+  // Callers show this message directly; a raw schema issue list is not readable.
+  if (!result.success) throw Error("Use a plain project-relative name without \"..\" segments, backslashes or control characters.");
+  return result.data;
+}
 export function workspaceConfig(value: unknown, legacyMain: string) {
   const cfg = projectConfig.parse(value);
   const folder = cfg.folder ?? parentFolder(cfg.main ?? legacyMain);

@@ -11,7 +11,7 @@ import {
 import { parentFolder, inFolder, joinFolder, defaultMainFolder } from "../shared/workspace";
 import { templateFiles } from "../shared/template";
 import { connectInstructions } from "../shared/instructions";
-import { ApiError, github, listRepos, readTree, readSetupTree, initializeRepository, commitFiles } from "./github";
+import { ApiError, github, githubFetch, refPath, listRepos, readTree, readSetupTree, initializeRepository, commitFiles } from "./github";
 import {
   session,
   sessionIdentity,
@@ -46,20 +46,18 @@ const asProject = (r: ProjectRow, repo: Repo): Project => ({
   writable: !!repo.permissions?.push,
   updatedAt: repo.pushed_at,
 });
+const fileLimit = "This file is too large. The maximum is 20 MB per file.";
 async function body(req: Request) {
-  const raw = await limitedBody(req, 1_000_000);
+  const raw = await limitedBody(req, 1_000_000, "This request is too large. Save fewer changes at a time.");
   try {
     return JSON.parse(new TextDecoder().decode(raw));
   } catch {
     throw new ApiError(400, "Invalid request.");
   }
 }
-async function limitedBody(req: Request, max: number) {
+async function limitedBody(req: Request, max: number, message = fileLimit) {
   if (Number(req.headers.get("Content-Length")) > max)
-    throw new ApiError(
-      413,
-      "This file is too large. The maximum is 20 MB per file.",
-    );
+    throw new ApiError(413, message);
   const chunks: Uint8Array[] = [];
   let size = 0;
   const reader = req.body?.getReader();
@@ -71,10 +69,7 @@ async function limitedBody(req: Request, max: number) {
         size += value.length;
         if (size > max) {
           await reader.cancel();
-          throw new ApiError(
-            413,
-            "This file is too large. The maximum is 20 MB per file.",
-          );
+          throw new ApiError(413, message);
         }
         chunks.push(value);
       }
@@ -108,6 +103,22 @@ async function projectFor(
   if (!row) throw new ApiError(404, "Project not found.");
   const repo = await repoFor(token, id, write);
   return { row, repo, project: asProject(row, repo) };
+}
+/**
+ * Open the saved branch. If that branch no longer exists (GitHub renames such as
+ * master → main move the default branch), follow the repository's current default
+ * once and remember it. An existing non-default branch is never redirected.
+ */
+async function projectTree(env: Bindings, token: string, repo: Repo, row: ProjectRow) {
+  try {
+    return await readTree(token, repo, row.branch);
+  } catch (e) {
+    if (!(e instanceof ApiError) || e.status !== 404 || repo.default_branch === row.branch) throw e;
+    const tree = await readTree(token, repo, repo.default_branch);
+    await env.DB.prepare("UPDATE projects SET branch=? WHERE repo_id=?").bind(repo.default_branch, repo.id).run();
+    row.branch = repo.default_branch;
+    return tree;
+  }
 }
 async function register(env: Bindings, r: Repo, main: string, engine: string) {
   await env.DB.prepare(
@@ -192,10 +203,6 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
   }
   const auth = await session(req, env),
     token = auth.token;
-  if (path === "/api/installation-status") {
-    const { installations } = await listRepos(token);
-    return json({ installations: installations.length });
-  }
   if (path === "/api/repositories") {
     const { repositories } = await listRepos(token);
     return json(repositories.filter((r) => r.permissions?.push));
@@ -313,7 +320,15 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
         if (!path.endsWith("AGENTS.md") && inFolder(path, folder) && !tree.files.some(f => f.path === path) && !(path in files)) files[path] = content;
     }
     const priorConfig = tree.files.find(f => f.path === ".agentlatex.json");
-    const preserved = priorConfig ? JSON.parse(await blobText(token, repo, priorConfig)) : {};
+    let preserved: Record<string, unknown> = {};
+    if (priorConfig) {
+      const text = await blobText(token, repo, priorConfig);
+      let parsed: unknown;
+      try { parsed = JSON.parse(text); } catch {
+        throw new ApiError(400, "This repository's .agentlatex.json is not valid JSON. Fix or remove it on GitHub, then connect again.");
+      }
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) preserved = parsed as Record<string, unknown>;
+    }
     files[".agentlatex.json"] = JSON.stringify({ ...preserved, version: 1, folder, main, engine: input.engine }, null, 2) + "\n";
     if (Object.keys(files).length)
       await putTexts(
@@ -337,36 +352,46 @@ async function handle(req: Request, env: Bindings): Promise<Response> {
   );
   if (match) {
     const write = ["POST", "PUT"].includes(req.method);
-    const { repo, row, project } = await projectFor(
+    const { repo, row } = await projectFor(
       env,
       token,
       Number(match[1]),
       write,
     );
     if (!match[2] && req.method === "GET") {
-      const tree = await readTree(token, repo, row.branch);
-      return json({ project, revision: tree.revision, files: tree.files });
+      const tree = await projectTree(env, token, repo, row);
+      return json({ project: asProject(row, repo), revision: tree.revision, files: tree.files });
     }
     if (match[2] === "head" && req.method === "GET") {
       const ref = await github<{ object: { sha: string } }>(
         token,
-        root(repo) + "/git/ref/heads/" + encodeURIComponent(row.branch),
+        root(repo) + "/git/ref/heads/" + refPath(row.branch),
       );
       return json({ revision: ref.object.sha });
     }
     if (match[2] === "file" && req.method === "GET") {
       const id = sha.parse(u.searchParams.get("sha"));
-      const r = await fetch(
-        "https://api.github.com" + root(repo) + "/git/blobs/" + id,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/vnd.github.raw+json",
-            "User-Agent": "AgentsLaTeX",
+      // The deadline covers GitHub's response headers only. The body is streamed to the
+      // browser, so a slow client download must not abort it mid-file; the client
+      // verifies the blob hash of what it received.
+      const deadline = new AbortController();
+      const timer = setTimeout(() => deadline.abort(), 30000);
+      let r: Response;
+      try {
+        r = await githubFetch(
+          "https://api.github.com" + root(repo) + "/git/blobs/" + id,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/vnd.github.raw+json",
+              "User-Agent": "AgentsLaTeX",
+            },
+            signal: deadline.signal,
           },
-          signal: AbortSignal.timeout(30000),
-        },
-      );
+        );
+      } finally {
+        clearTimeout(timer);
+      }
       if (!r.ok)
         throw new ApiError(r.status, "Could not load this file from GitHub.");
       return new Response(r.body, {
