@@ -46,3 +46,17 @@ export function unlinkReference(path: string, references: string[], paths: strin
   return references.flatMap(ref => ref === path ? [] : inFolder(path, ref)
     ? paths.filter(p => p !== path && inFolder(p, ref)) : [ref]);
 }
+/**
+ * The editable .agentlatex.json draft, as the fields a settings write merges with.
+ * The file is editable in the source pane, so an edit that is not valid JSON yet is
+ * refused with a readable message rather than overwritten; a blank file has no edit to lose.
+ */
+export function settingsDraft(content: unknown): Record<string, unknown> {
+  if (typeof content !== "string" || !content.trim()) return {};
+  let parsed: unknown;
+  try { parsed = JSON.parse(content); }
+  catch { throw Error("Finish editing .agentlatex.json first: it is not valid JSON, and changing project settings now would discard that edit."); }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+    throw Error("Finish editing .agentlatex.json first: it must contain a JSON object before project settings can change.");
+  return parsed as Record<string, unknown>;
+}

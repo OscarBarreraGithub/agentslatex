@@ -124,14 +124,16 @@ not deployment acceptance and does not close AL-12. Changes, each with a unit te
 - Saves keep an existing file's executable mode. A project whose saved branch was
   renamed on GitHub follows the current default branch once instead of being
   unopenable; an existing non-default branch is still never redirected.
-- Workspace: malformed `.agentlatex.json` content no longer throws raw parse errors
-  from rename/move/settings, connect returns a clear 400, and automatic refresh defers
+- Workspace: a `.agentlatex.json` edit that is not valid JSON yet stops rename, move,
+  link, delete and settings changes with a readable message instead of being
+  overwritten, connect returns a clear 400, and automatic refresh defers
   to manual Refresh; manual Refresh keeps unchanged blobs loaded; a restored draft
   shows Updates available immediately when its base is behind GitHub.
 - Compiler: bibliography tooling is detected from uncommented source, so the starter's
   commented `\bibliography` line no longer triggers a bibtex run. Text that is not valid
-  UTF-8 decodes as Windows-1252 instead of becoming replacement characters that a save
-  would commit. SyncTeX forward lookup skips an opening vertical box.
+  UTF-8 decodes as Windows-1252 instead of becoming replacement characters, is saved
+  back in that encoding while its characters still fit, and compiles with its legacy
+  inputenc option read as utf8. SyncTeX forward lookup skips an opening vertical box.
 - Layout and footprint (owner request): new projects use `agentlatex/` rather than
   `agentlatex/main/`, and the starter is five files — root AGENTS.md pointer block,
   `.agentlatex.json`, README, `main.tex`, `references.bib`. No `.gitignore`, nested

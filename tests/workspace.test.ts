@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { workspaceConfig, workspacePaths, fileDestination, renamedPath, missingExtension, unlinkReference, joinFolder } from "../shared/workspace";
-import { fileContent } from "../src/file-content";
+import { workspaceConfig, workspacePaths, fileDestination, renamedPath, missingExtension, unlinkReference, joinFolder, settingsDraft } from "../shared/workspace";
+import { fileContent, decodeFile, encodeText, declareUtf8Input } from "../src/file-content";
 import { renderMarkdown } from "../src/markdown";
 import { templateFiles } from "../shared/template";
 
@@ -73,4 +73,32 @@ test("Latin-1 manuscripts keep their characters instead of becoming replacement 
   assert.equal(fileContent("paper/new.bib", utf8), "naïve — ok");
   const binary = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 1]);
   assert.equal(fileContent("figures/plot.png", binary), binary);
+});
+test("Latin-1 manuscripts are saved back in their own encoding and compile as UTF-8", () => {
+  const latin1 = new Uint8Array([0x63, 0x61, 0x66, 0xe9]);
+  const old = decodeFile("paper/old.tex", latin1);
+  assert.equal(old.content, "café");
+  assert.equal(old.encoding, "windows-1252");
+  assert.deepEqual(encodeText("café", "windows-1252"), latin1);
+  assert.equal(decodeFile("paper/new.tex", new TextEncoder().encode("café")).encoding, undefined);
+  // Every byte survives a round trip, including the 0x80–0x9F punctuation range.
+  const all = Uint8Array.from({ length: 256 }, (_, i) => i);
+  const text = decodeFile("paper/all.tex", all);
+  assert.deepEqual(encodeText(text.content as string, text.encoding), all);
+  // A character the old encoding cannot hold converts the file to UTF-8 rather than losing it.
+  assert.deepEqual(encodeText("α", "windows-1252"), new TextEncoder().encode("α"));
+  assert.deepEqual(encodeText("café"), new TextEncoder().encode("café"));
+  // The build reads a legacy declaration as utf8; other options and the saved source are untouched.
+  const tex = "\\usepackage[latin1]{inputenc}\n\\usepackage[T1]{fontenc}\n% \\usepackage[utf8]{inputenc}\n";
+  assert.equal(declareUtf8Input(tex), "\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n% \\usepackage[utf8]{inputenc}\n");
+  assert.equal(declareUtf8Input("\\usepackage[ansinew,T1]{inputenc}"), "\\usepackage[utf8,T1]{inputenc}");
+  assert.equal(declareUtf8Input("\\usepackage[utf8]{inputenc}\\usepackage{inputenc}"), "\\usepackage[utf8]{inputenc}\\usepackage{inputenc}");
+});
+test("a half-typed settings edit is kept rather than overwritten", () => {
+  assert.deepEqual(settingsDraft(undefined), {});
+  assert.deepEqual(settingsDraft("  \n"), {});
+  assert.deepEqual(settingsDraft('{"version": 1, "note": "keep"}'), { version: 1, note: "keep" });
+  for (const draft of ['{"version": 1, "folder": "pap', "[1, 2]", "null", '"text"']) {
+    assert.throws(() => settingsDraft(draft), e => e instanceof Error && /^Finish editing \.agentlatex\.json first/.test(e.message) && !/unexpected|token|position/i.test(e.message));
+  }
 });

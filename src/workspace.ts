@@ -5,8 +5,8 @@ import { stex } from "@codemirror/legacy-modes/mode/stex";
 import { Compartment } from "@codemirror/state";
 import { folderPicker } from "./folder-picker";
 import { renderMarkdown } from "./markdown";
-import { parentFolder, inFolder, joinFolder, workspaceConfig, workspacePaths, fileDestination, renamedPath, missingExtension, unlinkReference } from "../shared/workspace";
-import { fileContent } from "./file-content";
+import { parentFolder, inFolder, joinFolder, workspaceConfig, workspacePaths, fileDestination, renamedPath, missingExtension, unlinkReference, settingsDraft } from "../shared/workspace";
+import { decodeFile, encodeText, declareUtf8Input, type DraftFile } from "./file-content";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { zipSync } from "fflate";
 import type { FileInput } from "texlyre-busytex";
@@ -30,9 +30,9 @@ import {
 import { inferMain } from "./project.mjs";
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
-const bytes = (f: FileInput) =>
+const bytes = (f: DraftFile) =>
   typeof f.content === "string"
-    ? new TextEncoder().encode(f.content)
+    ? encodeText(f.content, f.encoding)
     : f.content;
 export async function mountEditor(
   app: HTMLElement,
@@ -54,7 +54,7 @@ export async function mountEditor(
   let folder = parentFolder(main), references: string[] = [], builtPath = "", markdownTimer: ReturnType<typeof setTimeout> | undefined;
   const language = new Compartment();
   let selected = main,
-    files = new Map<string, FileInput>(cachedDraftFiles(saved, snapshot.files).map(f => [f.path, f])),
+    files = new Map<string, DraftFile>(cachedDraftFiles(saved, snapshot.files).map(f => [f.path, f])),
     dirty = new Set<string>(),
     revision = 0,
     builtRevision = -1,
@@ -321,17 +321,12 @@ export async function mountEditor(
     dropTarget($("file-tree"), folder);
     $("main-label").textContent = "Opens: " + main.split("/").at(-1) + " · " + { pdf: "pdfLaTeX", lua: "LuaLaTeX", xe: "XeLaTeX" }[engine];
   }
+  // The settings file is editable in the source pane. An edit that is not valid JSON yet
+  // is never overwritten: operations that would rewrite the file check first and stop
+  // with a readable message before changing anything.
+  const checkSettings = () => void settingsDraft(files.get(".agentlatex.json")?.content);
   function writeSettings() {
-    const previous = files.get(".agentlatex.json")?.content;
-    // The settings file is editable in the source pane; a half-typed edit must not make
-    // rename, move or settings throw a raw JSON parse error.
-    let preserved: Record<string, unknown> = {};
-    if (typeof previous === "string") {
-      try {
-        const parsed: unknown = JSON.parse(previous);
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) preserved = parsed as Record<string, unknown>;
-      } catch { /* Rewrite the file from the current settings. */ }
-    }
+    const preserved = settingsDraft(files.get(".agentlatex.json")?.content);
     files.set(".agentlatex.json", { path: ".agentlatex.json", content: JSON.stringify({ ...preserved, version: 1, folder, main, references, engine }, null, 2) + "\n" });
     dirty.add(".agentlatex.json");
   }
@@ -344,7 +339,7 @@ export async function mountEditor(
   }
   async function linkFile(path: string) {
     if (!allPaths().includes(path) || busy || syncing || refreshing) throw Error("Try again when the project is ready.");
-    if (!inFolder(path, folder) && !references.includes(path)) { references.push(path); writeSettings(); changed(); }
+    if (!inFolder(path, folder) && !references.includes(path)) { checkSettings(); references.push(path); writeSettings(); changed(); }
     await showFile(path); notify("Linked the original file. Nothing was copied.");
   }
   function clearSelection() {
@@ -364,10 +359,11 @@ export async function mountEditor(
   async function relocateFile(path: string, target: string) {
     if (busy || refreshing || syncing || fileLoads || !project.writable) throw Error("Wait for the project to be ready for editing.");
     if (path === target) return;
+    if (main === path) checkSettings();
     const before = revision;
     const file = await getFile(path);
     if (revision !== before || busy || syncing || refreshing || allPaths().includes(target)) throw Error("The project changed. Please try the move again.");
-    files.set(target, { path: target, content: fileContent(target, bytes(file)) }); removeDraftFile(path);
+    files.set(target, { path: target, ...decodeFile(target, bytes(file)) }); removeDraftFile(path);
     dirty.add(target);
     if (main === path) { main = target; writeSettings(); }
     if (selected === path) selected = target;
@@ -396,6 +392,7 @@ export async function mountEditor(
     $("cancel-remove").onclick = () => d.close();
     $("confirm-remove").onclick = () => void (async () => {
       if (busy || syncing || refreshing || fileLoads || !allPaths().includes(path)) throw Error("The project changed. Please try again.");
+      if (linked || path === main || references.length) checkSettings();
       if (linked) {
         references = unlinkReference(path, references, allPaths()); writeSettings();
       } else {
@@ -439,8 +436,7 @@ export async function mountEditor(
     // or later save bytes that GitHub would not identify as the requested blob.
     if (data.byteLength !== entry.size || (await gitBlobSha(data)) !== entry.sha)
       throw Error(`${entry.path} did not download completely. Check your connection and try again.`);
-    const content = fileContent(entry.path, data);
-    return { path: entry.path, content };
+    return { path: entry.path, ...decodeFile(entry.path, data) };
   }
   async function getFile(path: string, signal?: AbortSignal) {
     signal?.throwIfAborted();
@@ -747,7 +743,13 @@ export async function mountEditor(
     try {
       const all = await loadAll(buildAbort.signal);
       if (cancelled || disposed) throw Error("Build cancelled");
-      const buildFiles = all.map(f => ({ ...f, content: typeof f.content === "string" ? f.content : f.content.slice() }));
+      // The editor holds Unicode text, so a manuscript read from Windows-1252 compiles as
+      // UTF-8: its legacy inputenc option is read as utf8 for this build only. Saved
+      // bytes keep the file's own encoding and declaration (see encodeText).
+      const legacyText = all.some(f => f.encoding === "windows-1252");
+      const buildFiles = all.map(f => ({ ...f, content: typeof f.content === "string"
+        ? (legacyText && /\.tex$/i.test(f.path) ? declareUtf8Input(f.content) : f.content)
+        : f.content.slice() }));
       const signature = await buildSignature(buildFiles.map(f => f.path), snapshot.files, new Map(buildFiles.map(f => [f.path, f])), new Set(dirty), target, buildEngine);
       const result = await compiler.compile(
         buildFiles,
@@ -833,10 +835,7 @@ export async function mountEditor(
                   ? f.webkitRelativePath.slice(root.length + 1)
                   : f.name),
             );
-            return {
-              path,
-              content: fileContent(path, new Uint8Array(await f.arrayBuffer())),
-            };
+            return { path, ...decodeFile(path, new Uint8Array(await f.arrayBuffer())) };
           }),
       );
       const existing = incoming.filter((f) => allPaths().includes(f.path));
@@ -1019,6 +1018,7 @@ export async function mountEditor(
     $("settings-form").onsubmit = e => {
       e.preventDefault();
       void (async () => {
+        checkSettings();
         folder = nextFolder;
         main = $<HTMLSelectElement>("main-select").value || joinFolder(folder, "main.tex");
         engine = $<HTMLSelectElement>("engine-select").value as Engine;
